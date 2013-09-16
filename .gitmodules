@@ -1,0 +1,3 @@
+[submodule "submodules/murmurhash-net"]
+	path = submodules/murmurhash-net
+	url = https://github.com/JesseBuesking/murmurhash-net.git
