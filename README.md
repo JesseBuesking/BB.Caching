@@ -1,7 +1,7 @@
 BB.Caching
 ==========
 
-BB.Caching is a library for (ASP).NET developers with the goal of making caching as simple as possible. With out-of-the-box support for [Redis](http://redis.io), you can be up and running with a fast, distributed cache in less time than it would take for you to write everything from scratch. (I'm purposely setting your expectations as low as possible so that when everything _just works_ you'll end up happier :D)
+BB.Caching is a library for (ASP).NET developers with the goal of making caching as simple as possible. With out-of-the-box support for [Redis](http://redis.io) [on top of booksleeve-net](https://code.google.com/p/booksleeve/), you can be up and running with a fast, distributed cache in less time than it would take for you to write everything from scratch. (I'm purposely setting your expectations as low as possible so that when everything _just works_ you'll end up happier :D)
 
 Note: This code is not production ready, but has a lot of [tests](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/CacheTests.cs) that cover many cases.
 
@@ -18,7 +18,7 @@ Check out the [tests](https://github.com/JesseBuesking/BB.Caching/tree/master/BB
 
 Features
 --------
-1. An in-memory L1 cache (```Cache.Memory.TryGetString...```) and redis-based L2 cache (```Cache.Shared.Strings.GetString...```).
+1. An in-memory L1 cache (```Cache.Memory.TryGetString...```) and redis-based L2 cache utilizing [booksleeve-net](https://code.google.com/p/booksleeve/) (```Cache.Shared.Strings.GetString...```).
 2. Support for serialization and/or smart compression (gzip or raw depending on compression size) of data being cached, [similar to what is used by StackOverflow (or at least similar to what is stated in this answer)](http://meta.stackoverflow.com/a/69172). (See ```Cache.Memory.SetCompress...``` and ```Cache.Memory.SetCompact...```).
 3. Automatic protobufing of objects when serialization is requested. (Note: protobuf indices are automatically stored in Redis and synchronized across servers, but **use at your own risk**!; aka this is a fragile approach that might not work in your case) (See ```ProtoBufSerializer.Instance.Serialize...```)
 4. Uses [consistent hashing](http://en.wikipedia.org/wiki/Consistent_hashing) for redis instances that are added (to support easier horizontal scaling).
