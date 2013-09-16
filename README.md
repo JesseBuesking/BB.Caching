@@ -40,7 +40,7 @@ You'll find that this is rough around the edges, with unused code scattered thro
 
 Issues/Requests
 ---------------
-Feel free to [report any bugs/issues](https://github.com/JesseBuesking/BB.Caching/issues) or make a [pull request](https://github.com/JesseBuesking/BB.Caching/pulls). I might not get to it as soon as you'd like (I have other projects  / a job that also require my attention), but I'll do my best to fix/merge what comes in as soon as I can.
+Feel free to [request features, report any bugs/issues you find](https://github.com/JesseBuesking/BB.Caching/issues), or make a [pull request](https://github.com/JesseBuesking/BB.Caching/pulls). I might not get to it as soon as you'd like (I have other projects  / a job that also require my attention), but I'll do my best to fix/merge what comes in as soon as I can.
 
 Benchmarks
 ----------
