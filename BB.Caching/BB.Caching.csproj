@@ -62,12 +62,9 @@
     <Compile Include="ICache.cs" />
     <Compile Include="ICompactCache.cs" />
     <Compile Include="ICompressCache.cs" />
-    <Compile Include="ICounter.cs" />
     <Compile Include="InMemoryCompactCache.cs" />
     <Compile Include="InMemoryCompressCache.cs" />
-    <Compile Include="IRateLimit.cs" />
     <Compile Include="L1.cs" />
-    <Compile Include="L2\L2Cache.cs" />
     <Compile Include="InMemoryCache.cs" />
     <None Include="Lua\AllBitsSet.lua">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -103,9 +100,7 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="L1\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\..\..\booksleeve\BookSleeve\BookSleeve.csproj">
       <Project>{418634b2-8d66-42db-9fcc-800639ec4540}</Project>
