@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BookSleeve">
+      <HintPath>..\packages\BookSleeve.1.3.38\lib\BookSleeve.dll</HintPath>
+    </Reference>
     <Reference Include="protobuf-net">
       <HintPath>..\packages\protobuf-net.2.0.0.640\lib\net40\protobuf-net.dll</HintPath>
     </Reference>
@@ -93,10 +96,6 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <ProjectReference Include="..\..\..\booksleeve\BookSleeve\BookSleeve.csproj">
-      <Project>{418634b2-8d66-42db-9fcc-800639ec4540}</Project>
-      <Name>BookSleeve</Name>
-    </ProjectReference>
     <ProjectReference Include="..\submodules\murmurhash-net\MurmurHash\MurmurHash.csproj">
       <Project>{5e240b61-4ccd-4c2a-a0f2-f545c5e9939c}</Project>
       <Name>MurmurHash</Name>

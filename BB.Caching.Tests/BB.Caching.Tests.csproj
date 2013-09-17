@@ -76,10 +76,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\booksleeve\BookSleeve\BookSleeve.csproj">
-      <Project>{418634b2-8d66-42db-9fcc-800639ec4540}</Project>
-      <Name>BookSleeve</Name>
-    </ProjectReference>
     <ProjectReference Include="..\BB.Caching\BB.Caching.csproj">
       <Project>{B358F4D6-6E09-4AEC-A56C-8FFD6C0C33BD}</Project>
       <Name>BB.Caching</Name>
