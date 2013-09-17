@@ -41,7 +41,12 @@ namespace BB.Caching.Connection
             this.CreateConnection();
         }
 
-        private bool CreateConnection() {
+        /// <summary>
+        /// Creates a new redis connection (and opens it).
+        /// </summary>
+        /// <returns></returns>
+        private bool CreateConnection()
+        {
             lock (this._lock)
             {
                 if (null != this._connection)
@@ -64,13 +69,19 @@ namespace BB.Caching.Connection
                     return false;
                 }
             }
+
             return true;
         }
 
+        /// <summary>
+        /// Gets the currently opened redis connection (or creates a new one).
+        /// </summary>
+        /// <returns></returns>
         public RedisConnection GetConnection()
         {
             if (this._connection.State != RedisConnectionBase.ConnectionState.Open)
             {
+                // retry several times
                 for (int i = 0; i < 3; i++)
                 {
                     if (this.CreateConnection())

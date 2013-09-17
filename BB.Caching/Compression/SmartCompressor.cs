@@ -18,7 +18,6 @@ namespace BB.Caching.Compression
 
         private SmartCompressor()
         {
-            
         }
 
         public async Task<byte[]> CompressAsync(byte[] value)
@@ -100,7 +99,7 @@ namespace BB.Caching.Compression
 
         public async Task<string> DecompressStringAsync(byte[] value)
         {
-            byte[] decompressed = await DecompressAsync(value);
+            byte[] decompressed = await this.DecompressAsync(value);
             return Encoding.UTF8.GetString(decompressed);
         }
 
@@ -121,7 +120,7 @@ namespace BB.Caching.Compression
 
         public string DecompressString(byte[] value)
         {
-            byte[] decompressed = Decompress(value);
+            byte[] decompressed = this.Decompress(value);
             return Encoding.UTF8.GetString(decompressed);
         }
     }

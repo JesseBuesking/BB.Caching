@@ -32,6 +32,13 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="BookSleeve">
       <HintPath>..\packages\BookSleeve.1.3.38\lib\BookSleeve.dll</HintPath>
@@ -42,19 +49,20 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Caching" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cache.cs" />
     <Compile Include="CacheAggregate.cs" />
+    <Compile Include="CacheBloomFilter.cs" />
+    <Compile Include="CacheCompaction.cs" />
+    <Compile Include="CacheCompression.cs" />
+    <Compile Include="CacheConfig.cs" />
+    <Compile Include="CacheRateLimiter.cs" />
+    <Compile Include="CacheStatistic.cs" />
+    <Compile Include="Compression\Compressor.cs" />
     <Compile Include="Compression\GZipCompressor.cs" />
     <Compile Include="Compression\SmartCompressor.cs" />
     <Compile Include="Compression\ICompress.cs" />
-    <Compile Include="Compressor.cs" />
     <Compile Include="Connection\RedisConnectionGroup.cs" />
     <Compile Include="Connection\SafeRedisConnection.cs" />
     <Compile Include="Hashing\ConsistentHashRing.cs" />
@@ -62,21 +70,20 @@
     <Compile Include="Hashing\IHashRing.cs" />
     <Compile Include="Hashing\Md5.cs" />
     <Compile Include="Hashing\Murmur3.cs" />
-    <Compile Include="ICache.cs" />
-    <Compile Include="ICompactCache.cs" />
-    <Compile Include="ICompressCache.cs" />
-    <Compile Include="InMemoryCompactCache.cs" />
-    <Compile Include="InMemoryCompressCache.cs" />
-    <Compile Include="L1.cs" />
-    <Compile Include="InMemoryCache.cs" />
     <EmbeddedResource Include="Lua\AllBitsSet.lua" />
     <EmbeddedResource Include="Lua\SetMultipleBits.lua" />
     <EmbeddedResource Include="Lua\GetStatistic.lua" />
     <EmbeddedResource Include="Lua\SetStatistic.lua" />
+    <Compile Include="InMemory\ICache.cs" />
+    <Compile Include="InMemory\ICompactCache.cs" />
+    <Compile Include="InMemory\ICompressCache.cs" />
+    <Compile Include="InMemory\InMemoryCache.cs" />
+    <Compile Include="InMemory\InMemoryCompactCache.cs" />
+    <Compile Include="InMemory\InMemoryCompressCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\ISerializer.cs" />
     <Compile Include="Serialization\ProtoBufSerializer.cs" />
-    <Compile Include="Serializer.cs" />
+    <Compile Include="Serialization\Serializer.cs" />
     <Compile Include="Shared\IHashes.cs" />
     <Compile Include="Shared\IKeys.cs" />
     <Compile Include="Shared\ILists.cs" />

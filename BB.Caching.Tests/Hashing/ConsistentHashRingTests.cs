@@ -113,7 +113,7 @@ namespace BB.Caching.Tests.Hashing
                 ring.GetNode(i.ToString(CultureInfo.InvariantCulture));
             long murmurMs = sw.ElapsedMilliseconds;
 
-            Console.WriteLine("{0:#,##0.0#} lookups per ms", (float) iterations / murmurMs);
+            Console.WriteLine("{0:#,##0.0#} lookups per ms", (float) iterations/murmurMs);
             Console.WriteLine();
             Console.WriteLine("total ms: {0:#,##0}ms", murmurMs);
         }

@@ -15,7 +15,6 @@ namespace BB.Caching.Shared
         public IHashes Hashes
         {
             get { return this; }
-
         }
 
         /// <summary>

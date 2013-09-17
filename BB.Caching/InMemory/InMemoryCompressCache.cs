@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Threading.Tasks;
+using BB.Caching.Compression;
 
-namespace BB.Caching
+namespace BB.Caching.InMemory
 {
     public partial class InMemoryCache : ICompressCache
     {

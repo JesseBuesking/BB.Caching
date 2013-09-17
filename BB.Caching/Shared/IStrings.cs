@@ -74,7 +74,8 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/incr
         /// </remarks>
-        Task<long> Increment(string key, long value = 1L);
+        Task<long> Increment(string key, long value = 1L);
+
         /// <summary>
         /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
         /// the value stored at key is not a string, because GET only handles string values.

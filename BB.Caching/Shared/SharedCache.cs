@@ -80,17 +80,17 @@ namespace BB.Caching.Shared
 
         private SharedCache()
         {
-            _consistentHashRing.Init(null, Murmur3.Instance);
+            this._consistentHashRing.Init(null, Murmur3.Instance);
         }
 
         public void AddRedisConnectionGroup(RedisConnectionGroup redisConnectionGroup)
         {
-            _consistentHashRing.Add(redisConnectionGroup);
+            this._consistentHashRing.Add(redisConnectionGroup);
         }
 
         public void RemoveRedisConnectionWrapper(RedisConnectionGroup redisConnectionGroup)
         {
-            _consistentHashRing.Remove(redisConnectionGroup);
+            this._consistentHashRing.Remove(redisConnectionGroup);
         }
 
         public void SetPubSubRedisConnection(SafeRedisConnection safeRedisConnection)
@@ -126,7 +126,7 @@ namespace BB.Caching.Shared
                 {
                     string multipleKeys = Encoding.UTF8.GetString(data);
                     string[] keys = multipleKeys.Split(
-                        new [] {SharedCache._cacheMultipleInvalidationSeparator}, StringSplitOptions.None);
+                        new[] {SharedCache._cacheMultipleInvalidationSeparator}, StringSplitOptions.None);
 
                     foreach (string key in keys)
                     {
@@ -147,12 +147,12 @@ namespace BB.Caching.Shared
 
         public RedisConnection GetReadConnection(string key)
         {
-            return _consistentHashRing.GetNode(key).GetReadConnection();
+            return this._consistentHashRing.GetNode(key).GetReadConnection();
         }
 
         public RedisConnection[] GetWriteConnections(string key)
         {
-            return _consistentHashRing.GetNode(key).GetWriteConnections();
+            return this._consistentHashRing.GetNode(key).GetWriteConnections();
         }
 
         public Dictionary<RedisConnection, string[]> GetReadConnections(string[] keys)
@@ -160,7 +160,7 @@ namespace BB.Caching.Shared
             var result = new Dictionary<RedisConnectionGroup, List<string>>();
             foreach (string key in keys)
             {
-                var connection = _consistentHashRing.GetNode(key);
+                var connection = this._consistentHashRing.GetNode(key);
                 if (!result.ContainsKey(connection))
                     result[connection] = new List<string> {key};
                 else
@@ -175,7 +175,7 @@ namespace BB.Caching.Shared
             var result = new Dictionary<RedisConnectionGroup, List<string>>();
             foreach (string key in keys)
             {
-                var connection = _consistentHashRing.GetNode(key);
+                var connection = this._consistentHashRing.GetNode(key);
                 if (!result.ContainsKey(connection))
                     result[connection] = new List<string> {key};
                 else
@@ -187,21 +187,21 @@ namespace BB.Caching.Shared
 
         public RedisConnection GetRandomReadConnection()
         {
-            return _consistentHashRing.GetAvailableNodes()
-                .ElementAt(_random.Next(0, _consistentHashRing.GetAvailableNodes().Count))
+            return this._consistentHashRing.GetAvailableNodes()
+                .ElementAt(this._random.Next(0, this._consistentHashRing.GetAvailableNodes().Count))
                 .GetReadConnection();
         }
 
         public RedisConnection[] GetAllReadConnections()
         {
-            return _consistentHashRing.GetAvailableNodes()
+            return this._consistentHashRing.GetAvailableNodes()
                 .Select(n => n.GetReadConnection())
                 .ToArray();
         }
 
         public RedisConnection[] GetAllWriteConnections()
         {
-            return _consistentHashRing.GetAvailableNodes()
+            return this._consistentHashRing.GetAvailableNodes()
                 .SelectMany(n => n.GetWriteConnections())
                 .Distinct()
                 .ToArray();

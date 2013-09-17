@@ -9,7 +9,7 @@ namespace BB.Caching.Hashing
     public class Murmur3 : IHashAlgorithm
     {
         private static readonly Lazy<Murmur3> _lazy = new Lazy<Murmur3>(
-            () => new Murmur3(), LazyThreadSafetyMode.ExecutionAndPublication); 
+            () => new Murmur3(), LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static Murmur3 Instance
         {

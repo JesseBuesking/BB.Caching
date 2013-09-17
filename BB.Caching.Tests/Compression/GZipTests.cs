@@ -39,7 +39,7 @@ namespace BB.Caching.Tests.Compression
             Assert.Equal(Value, actual);
         }
 
-        [Fact(Skip="Skipping")]
+        [Fact(Skip = "Skipping")]
         public void AsyncFaster()
         {
             const int iterations = 100000;

@@ -46,8 +46,9 @@ namespace BB.Caching.Serialization
 
             this._typeIndices = typeIndices
                 ?? this._typeIndices
-                ?? new Dictionary<string, Dictionary<string, int>>();
+                    ?? new Dictionary<string, Dictionary<string, int>>();
         }
+
         /// <summary>
         /// Serializes the object into a byte array.
         /// <para>
@@ -354,7 +355,7 @@ namespace BB.Caching.Serialization
 
             List<Tuple<Type, string>> list = fields.Union(props).OrderBy(v => v.Item2).ToList();
             if (null != type.BaseType && "Enum" == type.BaseType.Name)
-                list.Remove(new Tuple<Type, string>(typeof(int), "value__"));
+                list.Remove(new Tuple<Type, string>(typeof (int), "value__"));
 
             names = list.ToArray();
 

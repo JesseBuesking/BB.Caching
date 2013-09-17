@@ -85,7 +85,9 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/decr
         /// </remarks>
+#pragma warning disable 1066
         Task<long> IStrings.Decrement(string key, long value = 1)
+#pragma warning restore 1066
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<long> result = null;
@@ -116,7 +118,9 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/incr
         /// </remarks>
+#pragma warning disable 1066
         Task<long> IStrings.Increment(string key, long value = 1)
+#pragma warning restore 1066
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<long> result = null;
@@ -971,7 +975,9 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/bitcount
         /// </remarks>
+#pragma warning disable 1066
         Task<long> IStrings.CountSetBits(string key, long start = 0, long count = -1)
+#pragma warning restore 1066
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<long> result = null;
@@ -1015,7 +1021,7 @@ namespace BB.Caching.Shared
                         result = task;
                 }
             }
-            // Ops on multiple machines. Need to aggregate results. Boo.
+                // Ops on multiple machines. Need to aggregate results. Boo.
             else
             {
                 // (1) bitwise AND keys on each server into `destination` + "_temp"
@@ -1060,7 +1066,7 @@ namespace BB.Caching.Shared
                         result = task;
                 }
             }
-            // Ops on multiple machines. Need to aggregate results. Boo.
+                // Ops on multiple machines. Need to aggregate results. Boo.
             else
             {
                 // (1) bitwise OR keys on each server into `destination` + "_temp"
@@ -1105,7 +1111,7 @@ namespace BB.Caching.Shared
                         result = task;
                 }
             }
-            // Ops on multiple machines. Need to aggregate results. Boo.
+                // Ops on multiple machines. Need to aggregate results. Boo.
             else
             {
                 // (1) bitwise XOR keys on each server into `destination` + "_temp"
@@ -1145,10 +1151,9 @@ namespace BB.Caching.Shared
                     .BitwiseNot(SharedCache.Instance.Db, destination, key, SharedCache.Instance.QueueJump);
                 return task;
             }
-            // Ops on multiple machines. Need to aggregate results. Boo.
+                // Ops on multiple machines. Need to aggregate results. Boo.
             else
             {
-                Task<long> result = null;
                 // (1) bitwise NOT keys on each server into `destination` + "_temp"
                 // (2) get each `destination` + "_temp" value from each server
                 // (3) get the longest length (to return)
@@ -1157,7 +1162,8 @@ namespace BB.Caching.Shared
                 // (6) delete all `destination` + "_temp" values from each server
                 // TODO this
                 throw new NotImplementedException();
-                return result;
+//                Task<long> result = null;
+//                return result;
             }
         }
 
@@ -1170,7 +1176,7 @@ namespace BB.Caching.Shared
         /// the client should delay and retry.
         /// <para>
         /// It is expected that a well-behaved client will also release the lock in a timely fashion via
-        /// <see cref="ReleaseLock">ReleaseLock</see>.
+        /// <see cref="IStrings.ReleaseLock">ReleaseLock</see>.
         /// </para>
         /// </summary>
         /// 

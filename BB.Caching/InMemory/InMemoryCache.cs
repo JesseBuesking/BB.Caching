@@ -1,18 +1,31 @@
-﻿using System;
+using System;
 using System.Runtime.Caching;
-using System.Text;
 using System.Threading;
 
-namespace BB.Caching
+namespace BB.Caching.InMemory
 {
     public partial class InMemoryCache : ICache
     {
         private static readonly Lazy<InMemoryCache> _lazy = new Lazy<InMemoryCache>(
-            () => new InMemoryCache(), LazyThreadSafetyMode.ExecutionAndPublication); 
+            () => new InMemoryCache(), LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static InMemoryCache Instance
         {
             get { return InMemoryCache._lazy.Value; }
+        }
+
+        /// <summary>
+        /// The <see cref="ObjectCache"/> used to store our in-memory data.
+        /// </summary>
+        public ObjectCache Cache
+        {
+            get;
+            private set;
+        }
+
+        private InMemoryCache()
+        {
+            this.Cache = new MemoryCache("l1-cache");
         }
 
         // TODO need to lock when performing a getset (might be fine without it?)
@@ -26,7 +39,7 @@ namespace BB.Caching
         /// <returns></returns>
         public bool TryGet<TObject>(string key, out TObject value)
         {
-            object o = L1.Instance.Cache.Get(key);
+            object o = this.Cache.Get(key);
             if (null == o)
             {
                 value = default(TObject);
@@ -44,7 +57,7 @@ namespace BB.Caching
         /// <param name="value"></param>
         public void Set(string key, object value)
         {
-            L1.Instance.Cache.Set(key, value, null);
+            this.Cache.Set(key, value, null);
         }
 
         /// <summary>
@@ -56,7 +69,7 @@ namespace BB.Caching
         /// <param name="absoluteExpiration"></param>
         public void Set(string key, object value, TimeSpan absoluteExpiration)
         {
-            L1.Instance.Cache.Set(key, value, new CacheItemPolicy
+            this.Cache.Set(key, value, new CacheItemPolicy
                 {
                     AbsoluteExpiration = DateTime.UtcNow.Add(absoluteExpiration)
                 });
@@ -75,7 +88,7 @@ namespace BB.Caching
         /// <param name="slidingExpiration"></param>
         public void SetSliding(string key, object value, TimeSpan slidingExpiration)
         {
-            L1.Instance.Cache.Set(key, value, new CacheItemPolicy
+            this.Cache.Set(key, value, new CacheItemPolicy
                 {
                     SlidingExpiration = slidingExpiration
                 });
@@ -87,7 +100,7 @@ namespace BB.Caching
         /// <param name="key"></param>
         public void Remove(string key)
         {
-            L1.Instance.Cache.Remove(key);
+            this.Cache.Remove(key);
         }
 
         /// <summary>
@@ -97,7 +110,7 @@ namespace BB.Caching
         /// <returns></returns>
         public bool Exists(string key)
         {
-            return L1.Instance.Cache.Contains(key);
+            return this.Cache.Contains(key);
         }
 
         /// <summary>
@@ -106,7 +119,7 @@ namespace BB.Caching
         /// <returns></returns>
         public long GetCount()
         {
-            return L1.Instance.Cache.GetCount();
+            return this.Cache.GetCount();
         }
 
         /// <summary>
@@ -114,8 +127,8 @@ namespace BB.Caching
         /// </summary>
         public void Clear()
         {
-            foreach (var kvp in L1.Instance.Cache)
-                L1.Instance.Cache.Remove(kvp.Key);
+            foreach (var kvp in this.Cache)
+                this.Cache.Remove(kvp.Key);
         }
 
         /// <summary>
@@ -128,8 +141,8 @@ namespace BB.Caching
         /// <returns></returns>
         public bool TryGetSet<TObject>(string key, object value, out TObject store)
         {
-            object o = L1.Instance.Cache.Get(key);
-            L1.Instance.Cache.Set(key, value, null);
+            object o = this.Cache.Get(key);
+            this.Cache.Set(key, value, null);
             if (null == o)
             {
                 store = default (TObject);
@@ -152,8 +165,8 @@ namespace BB.Caching
         /// <returns></returns>
         public bool TryGetSet<TObject>(string key, object value, TimeSpan absoluteExpiration, out TObject store)
         {
-            object o = L1.Instance.Cache.Get(key);
-            L1.Instance.Cache.Set(key, value, new CacheItemPolicy
+            object o = this.Cache.Get(key);
+            this.Cache.Set(key, value, new CacheItemPolicy
                 {
                     AbsoluteExpiration = DateTime.UtcNow.Add(absoluteExpiration)
                 });
@@ -183,8 +196,8 @@ namespace BB.Caching
         /// <returns></returns>
         public bool TryGetSetSliding<TObject>(string key, object value, TimeSpan slidingExpiration, out TObject store)
         {
-            object o = L1.Instance.Cache.Get(key);
-            L1.Instance.Cache.Set(key, value, new CacheItemPolicy
+            object o = this.Cache.Get(key);
+            this.Cache.Set(key, value, new CacheItemPolicy
                 {
                     SlidingExpiration = slidingExpiration
                 });

@@ -1,7 +1,9 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
+using BB.Caching.Compression;
+using BB.Caching.Serialization;
 
-namespace BB.Caching
+namespace BB.Caching.InMemory
 {
     public partial class InMemoryCache : ICompactCache
     {

@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 
-namespace BB.Caching
+namespace BB.Caching.InMemory
 {
     public interface ICache
     {

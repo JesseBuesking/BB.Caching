@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Runtime.Caching;
 using System.Text;
+using BB.Caching.Compression;
+using BB.Caching.Serialization;
 using Xunit;
 
 namespace BB.Caching.Tests.Experimenting

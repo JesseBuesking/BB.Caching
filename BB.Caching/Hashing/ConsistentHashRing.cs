@@ -166,6 +166,6 @@ namespace BB.Caching.Hashing
         public HashSet<TNode> GetAvailableNodes()
         {
             return new HashSet<TNode>(this._continuum.Values);
-        } 
+        }
     }
 }
