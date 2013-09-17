@@ -33,11 +33,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>false</SignAssembly>
+    <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>
-    </AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>BestBuddies.pfx</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BookSleeve">
@@ -99,6 +98,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Lua\RateLimitIncrement.lua" />
+    <None Include="BestBuddies.pfx" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />
