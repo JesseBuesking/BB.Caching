@@ -66,18 +66,10 @@
     <Compile Include="InMemoryCompressCache.cs" />
     <Compile Include="L1.cs" />
     <Compile Include="InMemoryCache.cs" />
-    <None Include="Lua\AllBitsSet.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Lua\SetMultipleBits.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Lua\GetStatistic.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Lua\SetStatistic.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <EmbeddedResource Include="Lua\AllBitsSet.lua" />
+    <EmbeddedResource Include="Lua\SetMultipleBits.lua" />
+    <EmbeddedResource Include="Lua\GetStatistic.lua" />
+    <EmbeddedResource Include="Lua\SetStatistic.lua" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\ISerializer.cs" />
     <Compile Include="Serialization\ProtoBufSerializer.cs" />
@@ -92,12 +84,11 @@
     <Compile Include="Shared\SharedHashesCache.cs" />
     <Compile Include="Shared\SharedKeysCache.cs" />
     <Compile Include="Shared\SharedStringsCache.cs" />
+    <Compile Include="Utilities\Lua.cs" />
     <Compile Include="Wrapper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Lua\RateLimitIncrement.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <EmbeddedResource Include="Lua\RateLimitIncrement.lua" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />

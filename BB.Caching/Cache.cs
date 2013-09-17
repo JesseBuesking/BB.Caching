@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BB.Caching.Hashing;
 using BB.Caching.Shared;
+using BB.Caching.Utilities;
 
 namespace BB.Caching
 {
@@ -267,41 +268,17 @@ namespace BB.Caching
             {
                 get
                 {
-                    if (String.IsNullOrWhiteSpace(_setStatisticScript))
-                    {
-                        const string path = @"Lua/SetStatistic.lua";
-                        if (!File.Exists(path))
-                            throw new Exception("copy SetStatistic.lua to the correct directory");
-
-                        string[] lines = File.ReadAllLines(path);
-                        _setStatisticScript = String.Join("\n", lines);
-                    }
-
-                    return _setStatisticScript;
+                    return Lua.Instance["SetStatistic"];
                 }
             }
-
-            private static string _setStatisticScript;
 
             private static string GetStatisticScript
             {
                 get
                 {
-                    if (String.IsNullOrWhiteSpace(_getStatisticScript))
-                    {
-                        const string path = @"Lua/GetStatistic.lua";
-                        if (!File.Exists(path))
-                            throw new Exception("copy GetStatistic.lua to the correct directory");
-
-                        string[] lines = File.ReadAllLines(path);
-                        _getStatisticScript = String.Join("\n", lines);
-                    }
-
-                    return _getStatisticScript;
+                    return Lua.Instance["GetStatistic"];
                 }
             }
-
-            private static string _getStatisticScript;
 
             public class Stat
             {
@@ -476,21 +453,9 @@ namespace BB.Caching
             {
                 get
                 {
-                    if (String.IsNullOrWhiteSpace(_rateLimitIncrementScript))
-                    {
-                        const string path = @"Lua/RateLimitIncrement.lua";
-                        if (!File.Exists(path))
-                            throw new Exception("copy RateLimiter.lua to the correct directory");
-
-                        string[] lines = File.ReadAllLines(path);
-                        _rateLimitIncrementScript = String.Join("\n", lines);
-                    }
-
-                    return _rateLimitIncrementScript;
+                    return Lua.Instance["RateLimitIncrement"];
                 }
             }
-
-            private static string _rateLimitIncrementScript;
 
             public static Task<object> Increment(string key, TimeSpan spanSize, TimeSpan bucketSize, long throttle,
                 int increment = 1)
@@ -600,41 +565,17 @@ namespace BB.Caching
             {
                 get
                 {
-                    if (String.IsNullOrWhiteSpace(_allBitsSetScript))
-                    {
-                        const string path = @"Lua/AllBitsSet.lua";
-                        if (!File.Exists(path))
-                            throw new Exception("copy AllBitsSet.lua to the correct directory");
-
-                        string[] lines = File.ReadAllLines(path);
-                        _allBitsSetScript = String.Join("\n", lines);
-                    }
-
-                    return _allBitsSetScript;
+                    return Lua.Instance["AllBitsSet"];
                 }
             }
-
-            private static string _allBitsSetScript;
 
             private static string SetMultipleBitsScript
             {
                 get
                 {
-                    if (String.IsNullOrWhiteSpace(_setMultipleBitsScript))
-                    {
-                        const string path = @"Lua/SetMultipleBits.lua";
-                        if (!File.Exists(path))
-                            throw new Exception("copy SetMultipleBits.lua to the correct directory");
-
-                        string[] lines = File.ReadAllLines(path);
-                        _setMultipleBitsScript = String.Join("\n", lines);
-                    }
-
-                    return _setMultipleBitsScript;
+                    return Lua.Instance["SetMultipleBits"];
                 }
             }
-
-            private static string _setMultipleBitsScript;
 
             public Task Add(string key, string value)
             {
