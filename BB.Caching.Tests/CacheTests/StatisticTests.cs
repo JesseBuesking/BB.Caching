@@ -20,7 +20,7 @@ namespace BB.Caching.Tests.CacheTests
 
             Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27", 6379));
 
-            Cache.Statistic.Prepare();
+            Cache.Stats.Prepare();
 
             Cache.Shared.Keys.Remove(this.Key1).Wait();
         }
@@ -33,13 +33,13 @@ namespace BB.Caching.Tests.CacheTests
         [Fact]
         public void SetAndGet()
         {
-            Cache.Statistic.SetStatistic(this.Key1, 1.0).Wait();
-            Cache.Statistic.SetStatistic(this.Key1, 2.0).Wait();
-            Cache.Statistic.SetStatistic(this.Key1, 3.0).Wait();
-            Cache.Statistic.SetStatistic(this.Key1, 4.0).Wait();
-            Cache.Statistic.SetStatistic(this.Key1, 5.0).Wait();
+            Cache.Stats.SetStatistic(this.Key1, 1.0).Wait();
+            Cache.Stats.SetStatistic(this.Key1, 2.0).Wait();
+            Cache.Stats.SetStatistic(this.Key1, 3.0).Wait();
+            Cache.Stats.SetStatistic(this.Key1, 4.0).Wait();
+            Cache.Stats.SetStatistic(this.Key1, 5.0).Wait();
 
-            var stat = Cache.Statistic.GetStatistic(this.Key1).Result;
+            var stat = Cache.Stats.GetStatistics(this.Key1).Result;
 
             Assert.Equal(5.0, stat.MaximumValue);
             Assert.Equal(3.0, stat.Mean);
@@ -48,7 +48,7 @@ namespace BB.Caching.Tests.CacheTests
             Assert.Equal(Math.Sqrt(5.0d/2.0d), stat.PopulationStandardDeviation);
             Assert.Equal(5.0d/2.0d, stat.PopulationVariance);
 
-            stat = Cache.Statistic.GetStatistic(this.Key1).Result;
+            stat = Cache.Stats.GetStatistics(this.Key1).Result;
 
             Assert.Equal(5.0, stat.MaximumValue);
             Assert.Equal(3.0, stat.Mean);
@@ -74,7 +74,7 @@ namespace BB.Caching.Tests.CacheTests
             var tasks = new Task[amount];
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < amount; i++)
-                tasks[i] = Cache.Statistic.SetStatistic(key, 1.0);
+                tasks[i] = Cache.Stats.SetStatistic(key, 1.0);
 
             Task.WhenAll(tasks);
 

@@ -110,7 +110,8 @@ namespace BB.Caching.Tests.CacheTests
         private static float BloomTest(Cache.BloomFilter bloomFilter, int stringLength, string key)
         {
             var values = new List<string>();
-            for (int i = 0; i < bloomFilter.Option.NumberOfItems*2; i++)
+            long dbl = bloomFilter.Options.NumberOfItems*2;
+            for (int i = 0; i < dbl; i++)
             {
                 int z = i;
                 string s = "";
@@ -137,7 +138,7 @@ namespace BB.Caching.Tests.CacheTests
             foreach (string value in values)
                 fpCount += bloomFilter.IsSet(key, value).Result ? 1 : 0;
 
-            return ((float) fpCount)/bloomFilter.Option.NumberOfItems;
+            return ((float) fpCount)/bloomFilter.Options.NumberOfItems;
         }
     }
 }

@@ -10,33 +10,33 @@ namespace BB.Caching
     {
         public class BloomFilter
         {
-            public class Options
+            internal class BFOptions
             {
                 public long NumberOfBits
                 {
                     get;
-                    set;
+                    private set;
                 }
 
                 public int NumberOfHashes
                 {
                     get;
-                    set;
+                    private set;
                 }
 
-                public long NumberOfItems
+                internal long NumberOfItems
                 {
                     get;
                     set;
                 }
 
-                public float ProbabilityOfFalsePositives
+                private float ProbabilityOfFalsePositives
                 {
                     get;
                     set;
                 }
 
-                public Options(long numberOfItems, float probabilityOfFalsePositives)
+                public BFOptions(long numberOfItems, float probabilityOfFalsePositives)
                 {
                     this.NumberOfItems = numberOfItems;
                     this.ProbabilityOfFalsePositives = probabilityOfFalsePositives;
@@ -59,7 +59,7 @@ namespace BB.Caching
                 }
             }
 
-            public Options Option
+            internal BFOptions Options
             {
                 get;
                 set;
@@ -72,7 +72,7 @@ namespace BB.Caching
             /// <param name="probFalsePos">The probability [0, 1] that there will be false positives.</param>
             public BloomFilter(long numberOfItems = 1000000, float probFalsePos = 0.001f)
             {
-                this.Option = new Options(numberOfItems, probFalsePos);
+                this.Options = new BFOptions(numberOfItems, probFalsePos);
             }
 
             /// <summary>
@@ -98,9 +98,9 @@ namespace BB.Caching
 
             public Task Add(string key, string value)
             {
-                var bits = new long[this.Option.NumberOfHashes];
-                for (int i = 0; i < this.Option.NumberOfHashes; i++)
-                    bits[i] = Murmur3.Instance.ComputeInt(value + i)%this.Option.NumberOfBits;
+                var bits = new long[this.Options.NumberOfHashes];
+                for (int i = 0; i < this.Options.NumberOfHashes; i++)
+                    bits[i] = Murmur3.Instance.ComputeInt(value + i)%this.Options.NumberOfBits;
 
                 this.SetBits(key, bits, true);
                 return Task.FromResult(false);
@@ -124,9 +124,9 @@ namespace BB.Caching
 
             public Task<bool> IsSet(string key, string value)
             {
-                var bits = new long[this.Option.NumberOfHashes];
-                for (int i = 0; i < this.Option.NumberOfHashes; i++)
-                    bits[i] = Murmur3.Instance.ComputeInt(value + i)%this.Option.NumberOfBits;
+                var bits = new long[this.Options.NumberOfHashes];
+                for (int i = 0; i < this.Options.NumberOfHashes; i++)
+                    bits[i] = Murmur3.Instance.ComputeInt(value + i)%this.Options.NumberOfBits;
 
                 return this.AllBitsSet(key, bits);
             }
@@ -160,7 +160,7 @@ namespace BB.Caching
 
             public override string ToString()
             {
-                return this.Option.ToString();
+                return this.Options.ToString();
             }
         }
     }

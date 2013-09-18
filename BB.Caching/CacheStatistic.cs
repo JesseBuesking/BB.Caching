@@ -8,7 +8,7 @@ namespace BB.Caching
 {
     public static partial class Cache
     {
-        public static class Statistic
+        public static class Stats
         {
             public static void Prepare()
             {
@@ -16,8 +16,8 @@ namespace BB.Caching
                 foreach (var connection in connections)
                     connection.Scripting.Prepare(new[]
                         {
-                            Statistic.SetStatisticScript,
-                            Statistic.GetStatisticScript
+                            Stats.SetStatisticScript,
+                            Stats.GetStatisticScript
                         });
             }
 
@@ -28,10 +28,10 @@ namespace BB.Caching
 
             private static string GetStatisticScript
             {
-                get { return Lua.Instance["GetStatistic"]; }
+                get { return Lua.Instance["GetStatistics"]; }
             }
 
-            public class Stat
+            public class Statistics
             {
                 public long NumberOfValues
                 {
@@ -95,7 +95,7 @@ namespace BB.Caching
                     get { return Math.Sqrt(this.Variance); }
                 }
 
-                public Stat(long numberOfValues, double sumOfValues, double sumOfValuesSquared, double minimum,
+                public Statistics(long numberOfValues, double sumOfValues, double sumOfValuesSquared, double minimum,
                     double maximum)
                 {
                     this.NumberOfValues = numberOfValues;
@@ -125,14 +125,14 @@ namespace BB.Caching
                 var connections = SharedCache.Instance.GetWriteConnections(key);
                 foreach (var connection in connections)
                 {
-                    var task = connection.Scripting.Eval(SharedCache.Instance.Db, Statistic.SetStatisticScript,
+                    var task = connection.Scripting.Eval(SharedCache.Instance.Db, Stats.SetStatisticScript,
                         keyArgs, valueArgs, true, false, SharedCache.Instance.QueueJump);
                 }
 
                 return Task.FromResult(false);
             }
 
-            public static Task<Stat> GetStatistic(string key)
+            public static Task<Statistics> GetStatistics(string key)
             {
                 string[] keyArgs = new[] {key};
 
@@ -140,7 +140,7 @@ namespace BB.Caching
                 Task<object> result = null;
                 foreach (var connection in connections)
                 {
-                    var task = connection.Scripting.Eval(SharedCache.Instance.Db, Statistic.GetStatisticScript,
+                    var task = connection.Scripting.Eval(SharedCache.Instance.Db, Stats.GetStatisticScript,
                         keyArgs, new object[0], true, false, SharedCache.Instance.QueueJump);
                     if (null == result)
                         result = task;
@@ -187,7 +187,7 @@ namespace BB.Caching
                         else
                             maximum = res[4] is double ? (double) res[4] : (long) res[4];
 
-                        return new Stat(numberOfValues, sumOfValues, sumOfValuesSquared, minimum, maximum);
+                        return new Statistics(numberOfValues, sumOfValues, sumOfValuesSquared, minimum, maximum);
                     });
             }
         }

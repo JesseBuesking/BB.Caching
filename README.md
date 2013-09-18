@@ -23,7 +23,7 @@ Features
 3. Automatic protobufing of objects when serialization is requested. (Note: protobuf indices are automatically stored in Redis and synchronized across servers, but **use at your own risk**!; aka this is a fragile approach that might not work in your case) (See ```ProtoBufSerializer.Instance.Serialize...```)
 4. Uses [consistent hashing](http://en.wikipedia.org/wiki/Consistent_hashing) for redis instances that are added (to support easier horizontal scaling).
 5. Special configuration store for automatic syncing of settings across servers (See ```Cache.Config...```)
-6. A shared ```Statistic``` object that tracks basic statistics for an object (count, min, max, mean, variance, standard deviation). (See ```Cache.Statistic...```).
+6. A shared ```Statistics``` object that tracks basic statistics for an object (count, min, max, mean, variance, standard deviation). (See ```Cache.Stats...```).
 7. [Rate limiting](http://en.wikipedia.org/wiki/Rate_limiting) capabilities. (See ```Cache.RateLimiter...```)
 8. [Bloom filter](http://en.wikipedia.org/wiki/Bloom_filter) support. (See ```Cache.BloomFilter...```)
 9. Consistent hashing & bloom filter both rely on [Murmur hashing](https://github.com/JesseBuesking/murmurhash-net).
