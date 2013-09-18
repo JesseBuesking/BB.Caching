@@ -13,16 +13,24 @@ namespace BB.Caching.Tests.Serialization
     {
         #region test classes
 
+// ReSharper disable MemberCanBePrivate.Global
         public enum TestEnum
+// ReSharper restore MemberCanBePrivate.Global
         {
+// ReSharper disable UnusedMember.Global
             One = 1,
+// ReSharper restore UnusedMember.Global
 
             Two = 2,
 
+// ReSharper disable UnusedMember.Global
             Three = 3
+// ReSharper restore UnusedMember.Global
         }
 
+// ReSharper disable MemberCanBePrivate.Global
         public class TestHasDateTime
+// ReSharper restore MemberCanBePrivate.Global
         {
             public DateTime DateTime
             {
@@ -33,10 +41,15 @@ namespace BB.Caching.Tests.Serialization
 
         public interface IInterface
         {
+// ReSharper disable UnusedMember.Global
             byte[] Copy();
+
+// ReSharper restore UnusedMember.Global
         }
 
+// ReSharper disable MemberCanBePrivate.Global
         public class TestSubInt : IInterface
+// ReSharper restore MemberCanBePrivate.Global
         {
             public string SubInt
             {
@@ -50,7 +63,9 @@ namespace BB.Caching.Tests.Serialization
             }
         }
 
+// ReSharper disable MemberCanBePrivate.Global
         public class TestSuperInt
+// ReSharper restore MemberCanBePrivate.Global
         {
             public int Super
             {
@@ -74,7 +89,9 @@ namespace BB.Caching.Tests.Serialization
             }
         }
 
+// ReSharper disable MemberCanBePrivate.Global
         public class TestSuper
+// ReSharper restore MemberCanBePrivate.Global
         {
             public string Super
             {
@@ -90,7 +107,9 @@ namespace BB.Caching.Tests.Serialization
         }
 
         [Serializable] // Needed for binary serialization
+// ReSharper disable MemberCanBePrivate.Global
         public class TestClass
+// ReSharper restore MemberCanBePrivate.Global
         {
             public string FirstName
             {
@@ -104,12 +123,15 @@ namespace BB.Caching.Tests.Serialization
                 set;
             }
 
+// ReSharper disable UnusedMember.Global
             public string FullName
             {
                 get { return this.FirstName + " " + this.LastName; }
             }
 
-            public int MyInt;
+// ReSharper restore UnusedMember.Global
+
+            public readonly int MyInt;
 
             public TestClass(int myInt)
             {
@@ -119,28 +141,36 @@ namespace BB.Caching.Tests.Serialization
 
         [ProtoContract]
         [Serializable] // Needed for binary serialization
+// ReSharper disable MemberCanBePrivate.Global
         public class ProtoClass
+// ReSharper restore MemberCanBePrivate.Global
         {
             [ProtoMember(1)]
             public string FirstName
             {
-                get;
+                private get;
                 set;
             }
 
             [ProtoMember(2)]
             public string LastName
             {
-                get;
+                private get;
                 set;
             }
 
+// ReSharper disable UnusedMember.Global
             public string FullName
             {
                 get { return this.FirstName + " " + this.LastName; }
             }
 
+// ReSharper restore UnusedMember.Global
+
+// ReSharper disable NotAccessedField.Global
             [ProtoMember(3)] public int MyInt;
+
+// ReSharper restore NotAccessedField.Global
         }
 
         #endregion // test classes
@@ -155,13 +185,15 @@ namespace BB.Caching.Tests.Serialization
 
             Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27", 6379));
 
-            Cache.Config.Prepare();
+            Cache.Prepare();
         }
 
         [Fact]
         public void TestSerializePrimitives()
         {
+// ReSharper disable JoinDeclarationAndInitializer
             byte[] v;
+// ReSharper restore JoinDeclarationAndInitializer
 
             v = ProtoBufSerializer.Instance.Serialize(1);
             Assert.Equal(1, ProtoBufSerializer.Instance.Deserialize<short>(v));

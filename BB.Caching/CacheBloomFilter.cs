@@ -73,14 +73,6 @@ namespace BB.Caching
             public BloomFilter(long numberOfItems = 1000000, float probFalsePos = 0.001f)
             {
                 this.Options = new BFOptions(numberOfItems, probFalsePos);
-            }
-
-            /// <summary>
-            /// Prepares the bloom filters.
-            /// </summary>
-            /// <returns></returns>
-            public static void Prepare()
-            {
                 var connections = SharedCache.Instance.GetAllWriteConnections();
                 foreach (var connection in connections)
                     connection.Scripting.Prepare(new[] {BloomFilter.SetMultipleBitsScript});

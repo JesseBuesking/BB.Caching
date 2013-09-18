@@ -11,24 +11,26 @@ namespace BB.Caching.Tests.Hashing
 {
     public class ConsistentHashRingTests
     {
-        public class Stats
+        private class Stats
         {
-            public double Mean
+            private double Mean
             {
+// ReSharper disable UnusedAutoPropertyAccessor.Local
                 get;
+// ReSharper restore UnusedAutoPropertyAccessor.Local
                 set;
             }
 
             public double SDev
             {
                 get;
-                set;
+                private set;
             }
 
             public long Count
             {
                 get;
-                set;
+                private set;
             }
 
             public Stats(double mean, double sdev, long count)
@@ -118,7 +120,7 @@ namespace BB.Caching.Tests.Hashing
             Console.WriteLine("total ms: {0:#,##0}ms", murmurMs);
         }
 
-        public Stats RunTest<TNode>(long iterations, ConsistentHashRing<TNode> ring)
+        private Stats RunTest<TNode>(long iterations, ConsistentHashRing<TNode> ring)
         {
             var counts = new Dictionary<TNode, long>(
                 ring.GetAvailableNodes().ToDictionary(n => n, n => 0L));
@@ -126,7 +128,8 @@ namespace BB.Caching.Tests.Hashing
             var random = new Random();
             for (int i = 0; i < iterations; i++)
             {
-                string s = Convert.ToBase64String(Encoding.UTF8.GetBytes(random.Next(10000000, 1000000000).ToString()));
+                string s = Convert.ToBase64String(
+                    Encoding.UTF8.GetBytes(random.Next(10000000, 1000000000).ToString(CultureInfo.InvariantCulture)));
                 counts[ring.GetNode(s)] += 1;
             }
 
@@ -165,7 +168,8 @@ namespace BB.Caching.Tests.Hashing
             var random = new Random();
             for (int i = 0; i < iterations; i++)
             {
-                string s = Convert.ToBase64String(Encoding.UTF8.GetBytes(random.Next(10000000, 1000000000).ToString()));
+                string s = Convert.ToBase64String(
+                    Encoding.UTF8.GetBytes(random.Next(10000000, 1000000000).ToString(CultureInfo.InvariantCulture)));
                 counts[ring.GetNode(s)] += 1;
             }
 
@@ -205,7 +209,8 @@ namespace BB.Caching.Tests.Hashing
             var random = new Random();
             for (int i = 0; i < iterations; i++)
             {
-                string s = Convert.ToBase64String(Encoding.UTF8.GetBytes(random.Next(10000000, 1000000000).ToString()));
+                string s = Convert.ToBase64String(
+                    Encoding.UTF8.GetBytes(random.Next(10000000, 1000000000).ToString(CultureInfo.InvariantCulture)));
                 counts[ring.GetNode(s)] += 1;
             }
 

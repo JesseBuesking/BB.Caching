@@ -6,9 +6,9 @@ using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    internal class StatisticTests
+    public class StatisticTests : IDisposable
     {
-        public string Key1 = "key1";
+        private const string _key = "key1";
 
         public StatisticTests()
         {
@@ -20,26 +20,26 @@ namespace BB.Caching.Tests.CacheTests
 
             Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27", 6379));
 
-            Cache.Stats.Prepare();
+            Cache.Prepare();
 
-            Cache.Shared.Keys.Remove(this.Key1).Wait();
+            Cache.Shared.Keys.Remove(_key).Wait();
         }
 
         public void Dispose()
         {
-            Cache.Shared.Keys.Remove(this.Key1).Wait();
+            Cache.Shared.Keys.Remove(_key).Wait();
         }
 
         [Fact]
         public void SetAndGet()
         {
-            Cache.Stats.SetStatistic(this.Key1, 1.0).Wait();
-            Cache.Stats.SetStatistic(this.Key1, 2.0).Wait();
-            Cache.Stats.SetStatistic(this.Key1, 3.0).Wait();
-            Cache.Stats.SetStatistic(this.Key1, 4.0).Wait();
-            Cache.Stats.SetStatistic(this.Key1, 5.0).Wait();
+            Cache.Stats.SetStatistic(_key, 1.0).Wait();
+            Cache.Stats.SetStatistic(_key, 2.0).Wait();
+            Cache.Stats.SetStatistic(_key, 3.0).Wait();
+            Cache.Stats.SetStatistic(_key, 4.0).Wait();
+            Cache.Stats.SetStatistic(_key, 5.0).Wait();
 
-            var stat = Cache.Stats.GetStatistics(this.Key1).Result;
+            var stat = Cache.Stats.GetStatistics(_key).Result;
 
             Assert.Equal(5.0, stat.MaximumValue);
             Assert.Equal(3.0, stat.Mean);
@@ -48,7 +48,7 @@ namespace BB.Caching.Tests.CacheTests
             Assert.Equal(Math.Sqrt(5.0d/2.0d), stat.PopulationStandardDeviation);
             Assert.Equal(5.0d/2.0d, stat.PopulationVariance);
 
-            stat = Cache.Stats.GetStatistics(this.Key1).Result;
+            stat = Cache.Stats.GetStatistics(_key).Result;
 
             Assert.Equal(5.0, stat.MaximumValue);
             Assert.Equal(3.0, stat.Mean);
@@ -62,7 +62,7 @@ namespace BB.Caching.Tests.CacheTests
         public void Performance()
         {
             const int asyncAmount = 30000;
-            var asyncMs = Get(asyncAmount, this.Key1);
+            var asyncMs = Get(asyncAmount, _key);
 
             Console.WriteLine("{0:#,##0.0#} async ops per ms", (float) asyncAmount/asyncMs);
             Console.WriteLine();

@@ -9,9 +9,9 @@ using Xunit;
 
 namespace BB.Caching.Tests.CacheTests.SharedTests
 {
-    public class StringsTests
+    public class StringsTests : IDisposable
     {
-        private readonly Dictionary<string, string> KVPs = new Dictionary<string, string>
+        private readonly Dictionary<string, string> _kvPs = new Dictionary<string, string>
             {
                 {"key1", "0"},
                 {"key2", "1"},
@@ -21,22 +21,17 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
 
         private string Key
         {
-            get { return this.KVPs.First().Key; }
+            get { return this._kvPs.First().Key; }
         }
 
         private string[] Keys
         {
-            get { return this.KVPs.Keys.ToArray(); }
+            get { return this._kvPs.Keys.ToArray(); }
         }
 
         private string Value
         {
-            get { return this.KVPs.First().Value; }
-        }
-
-        private string[] Values
-        {
-            get { return this.KVPs.Values.ToArray(); }
+            get { return this._kvPs.First().Value; }
         }
 
         public StringsTests()
@@ -48,14 +43,14 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
                 new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
 
             Cache.Shared.Keys.Remove(this.Keys).Wait();
-            foreach (var key in this.KVPs.Keys)
+            foreach (var key in this._kvPs.Keys)
                 Assert.False(Cache.Shared.Keys.Exists(key).Result);
         }
 
         public void Dispose()
         {
             Cache.Shared.Keys.Remove(this.Keys).Wait();
-            foreach (var key in this.KVPs.Keys)
+            foreach (var key in this._kvPs.Keys)
                 Assert.False(Cache.Shared.Keys.Exists(key).Result);
         }
 
@@ -107,7 +102,9 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
             Cache.Shared.Keys.Remove(key).Wait();
         }
 
+// ReSharper disable UnusedParameter.Local
         private static long Get(int amount, string key, string value)
+// ReSharper restore UnusedParameter.Local
         {
             var tasks = new Wrapper<string, string>[amount];
             Stopwatch sw = Stopwatch.StartNew();
@@ -220,10 +217,10 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         [Fact]
         public void GetMultipleByteArray()
         {
-            var dictionary = this.KVPs.ToDictionary(k => k.Key, k => Encoding.UTF8.GetBytes(k.Value));
+            var dictionary = this._kvPs.ToDictionary(k => k.Key, k => Encoding.UTF8.GetBytes(k.Value));
             Cache.Shared.Strings.Set(dictionary).Wait();
 
-            var results = Cache.Shared.Strings.GetByteArray(this.KVPs.Keys.ToArray()).Result;
+            var results = Cache.Shared.Strings.GetByteArray(this._kvPs.Keys.ToArray()).Result;
             int i = 0;
             foreach (var result in results)
             {
@@ -236,14 +233,14 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         [Fact]
         public void GetMultipleStrings()
         {
-            Cache.Shared.Strings.Set(this.KVPs).Wait();
+            Cache.Shared.Strings.Set(this._kvPs).Wait();
 
-            var results = Cache.Shared.Strings.GetString(this.KVPs.Keys.ToArray()).Result;
+            var results = Cache.Shared.Strings.GetString(this._kvPs.Keys.ToArray()).Result;
             int i = 0;
             foreach (var result in results)
             {
                 Assert.False(result.IsNil);
-                Assert.Equal(this.KVPs.ElementAt(i).Value, result.Value);
+                Assert.Equal(this._kvPs.ElementAt(i).Value, result.Value);
                 ++i;
             }
         }
@@ -336,15 +333,15 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         [Fact]
         public void SetMultipleStrings()
         {
-            Cache.Shared.Strings.Set(this.KVPs).Wait();
-            foreach (var kvp in this.KVPs)
+            Cache.Shared.Strings.Set(this._kvPs).Wait();
+            foreach (var kvp in this._kvPs)
                 Assert.Equal(kvp.Value, Cache.Shared.Strings.GetString(kvp.Key).Value);
         }
 
         [Fact]
         public void SetMultipleByteArrays()
         {
-            var dict = this.KVPs.ToDictionary(kvp => kvp.Key, kvp => Encoding.UTF8.GetBytes(kvp.Value));
+            var dict = this._kvPs.ToDictionary(kvp => kvp.Key, kvp => Encoding.UTF8.GetBytes(kvp.Value));
 
             Cache.Shared.Strings.Set(dict).Wait();
             foreach (var kvp in dict)
@@ -354,14 +351,14 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         [Fact]
         public void SetMultipleStringsIfNotExists()
         {
-            Cache.Shared.Strings.Set(this.KVPs).Wait();
-            Assert.False(Cache.Shared.Strings.SetIfNotExists(this.KVPs).Result);
+            Cache.Shared.Strings.Set(this._kvPs).Wait();
+            Assert.False(Cache.Shared.Strings.SetIfNotExists(this._kvPs).Result);
         }
 
         [Fact]
         public void SetMultipleByteArraysIfNotExists()
         {
-            var dict = this.KVPs.ToDictionary(kvp => kvp.Key, kvp => Encoding.UTF8.GetBytes(kvp.Value));
+            var dict = this._kvPs.ToDictionary(kvp => kvp.Key, kvp => Encoding.UTF8.GetBytes(kvp.Value));
 
             Cache.Shared.Strings.Set(dict).Wait();
             Assert.False(Cache.Shared.Strings.SetIfNotExists(dict).Result);

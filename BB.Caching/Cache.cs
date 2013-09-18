@@ -23,5 +23,15 @@ namespace BB.Caching
         {
             get { return InMemoryCache.Instance; }
         }
+
+        /// <summary>
+        /// Calls all sub-class preparation methods.
+        /// </summary>
+        public static void Prepare()
+        {
+            Cache.Config.Prepare();
+            Cache.RateLimiter.Prepare();
+            Cache.Stats.Prepare();
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using BB.Caching.Connection;
@@ -6,9 +7,9 @@ using Xunit;
 
 namespace BB.Caching.Tests.CacheTests.SharedTests
 {
-    public class HashesTests
+    public class HashesTests : IDisposable
     {
-        private readonly Dictionary<string, Dictionary<string, string>> KVPs =
+        private readonly Dictionary<string, Dictionary<string, string>> _kvPs =
             new Dictionary<string, Dictionary<string, string>>
                 {
                     {"key1", new Dictionary<string, string> {{"field1", "0"}, {"field2", "1"}}},
@@ -21,24 +22,24 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         {
             get
             {
-                return this.KVPs.ToDictionary(k => k.Key, v => v.Value.ToDictionary(
+                return this._kvPs.ToDictionary(k => k.Key, v => v.Value.ToDictionary(
                     k => k.Key, w => Encoding.UTF8.GetBytes(w.Value)));
             }
         }
 
         private string Key
         {
-            get { return this.KVPs.First().Key; }
+            get { return this._kvPs.First().Key; }
         }
 
         private string[] Keys
         {
-            get { return this.KVPs.Keys.ToArray(); }
+            get { return this._kvPs.Keys.ToArray(); }
         }
 
         private Dictionary<string, string> Value
         {
-            get { return this.KVPs.First().Value; }
+            get { return this._kvPs.First().Value; }
         }
 
         public HashesTests()
@@ -50,14 +51,14 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
                 new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
 
             Cache.Shared.Keys.Remove(this.Keys).Wait();
-            foreach (var key in this.KVPs.Keys)
+            foreach (var key in this._kvPs.Keys)
                 Assert.False(Cache.Shared.Keys.Exists(key).Result);
         }
 
         public void Dispose()
         {
             Cache.Shared.Keys.Remove(this.Keys).Wait();
-            foreach (var key in this.KVPs.Keys)
+            foreach (var key in this._kvPs.Keys)
                 Assert.False(Cache.Shared.Keys.Exists(key).Result);
         }
 

@@ -6,7 +6,9 @@ namespace BB.Caching.Tests.CacheTests
 {
     public class CompactionTests
     {
+// ReSharper disable MemberCanBePrivate.Global
         public class TestObject
+// ReSharper restore MemberCanBePrivate.Global
         {
             public long Long
             {
@@ -30,7 +32,9 @@ namespace BB.Caching.Tests.CacheTests
                     Long = 1234L,
                     String = "I am a string!"
                 };
+#pragma warning disable 168
             byte[] compressed = Caching.Cache.Memory.SetCompact(key, value);
+#pragma warning restore 168
             TestObject actual;
 
             Assert.True(Caching.Cache.Memory.TryGetDecompact(key, out actual));
@@ -47,7 +51,9 @@ namespace BB.Caching.Tests.CacheTests
                     Long = 1234L,
                     String = "I am a string!"
                 };
+#pragma warning disable 168
             byte[] compressed = Caching.Cache.Memory.SetCompactAsync(key, value).Result;
+#pragma warning restore 168
             var actual = Caching.Cache.Memory.TryGetDecompactAsync<TestObject>(key);
 
             Assert.False(actual.IsNil);
@@ -64,7 +70,9 @@ namespace BB.Caching.Tests.CacheTests
                     Long = 1234L,
                     String = "I am a string!"
                 };
+#pragma warning disable 168
             byte[] compressed = Caching.Cache.Memory.SetCompact(key, value, TimeSpan.FromMilliseconds(100));
+#pragma warning restore 168
             TestObject actual;
 
             Assert.True(Caching.Cache.Memory.TryGetDecompact(key, out actual));
@@ -86,7 +94,9 @@ namespace BB.Caching.Tests.CacheTests
                     Long = 1234L,
                     String = "I am a string!"
                 };
+#pragma warning disable 168
             byte[] compressed = Caching.Cache.Memory.SetCompactAsync(key, value, TimeSpan.FromMilliseconds(100)).Result;
+#pragma warning restore 168
             var actual = Caching.Cache.Memory.TryGetDecompactAsync<TestObject>(key);
 
             Assert.False(actual.IsNil);
@@ -109,7 +119,9 @@ namespace BB.Caching.Tests.CacheTests
                     Long = 1234L,
                     String = "I am a string!"
                 };
+#pragma warning disable 168
             byte[] compressed = Caching.Cache.Memory.SetCompactSliding(key, value, TimeSpan.FromSeconds(2));
+#pragma warning restore 168
             TestObject actual;
 
             Assert.True(Caching.Cache.Memory.TryGetDecompact(key, out actual));
@@ -137,7 +149,9 @@ namespace BB.Caching.Tests.CacheTests
                     Long = 1234L,
                     String = "I am a string!"
                 };
+#pragma warning disable 168
             byte[] compressed = Caching.Cache.Memory.SetCompactSlidingAsync(key, value, TimeSpan.FromSeconds(2)).Result;
+#pragma warning restore 168
             var actual = Caching.Cache.Memory.TryGetDecompactAsync<TestObject>(key);
 
             Assert.False(actual.IsNil);

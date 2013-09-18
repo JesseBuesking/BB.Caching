@@ -12,7 +12,9 @@ namespace BB.Caching.Tests.CacheTests
             const string key = "c-sag-key";
             const string value = "I am a long string. I am a long string. I am a long string. I am a long string. ";
 
+#pragma warning disable 168
             byte[] compressed = Cache.Memory.SetCompress(key, value);
+#pragma warning restore 168
             string actual;
 
             Assert.True(Cache.Memory.TryGetDecompress(key, out actual));
@@ -25,7 +27,9 @@ namespace BB.Caching.Tests.CacheTests
             const string key = "c-saga-key";
             const string value = "I am a long string. I am a long string. I am a long string. I am a long string. ";
 
+#pragma warning disable 168
             byte[] compressed = Cache.Memory.SetCompressAsync(key, value).Result;
+#pragma warning restore 168
             var actual = Cache.Memory.TryGetStringDecompressAsync(key);
 
             Assert.False(actual.IsNil);
@@ -38,7 +42,9 @@ namespace BB.Caching.Tests.CacheTests
             const string key = "c-sagae-key";
             const string value = "c-sagae-value";
 
+#pragma warning disable 168
             byte[] compressed = Cache.Memory.SetCompress(key, value, TimeSpan.FromMilliseconds(100));
+#pragma warning restore 168
             string actual;
 
             Assert.True(Cache.Memory.TryGetDecompress(key, out actual));
@@ -56,7 +62,9 @@ namespace BB.Caching.Tests.CacheTests
             const string key = "c-sagaea-key";
             const string value = "c-sagaea-value";
 
+#pragma warning disable 168
             byte[] compressed = Cache.Memory.SetCompressAsync(key, value, TimeSpan.FromMilliseconds(100)).Result;
+#pragma warning restore 168
             var actual = Cache.Memory.TryGetStringDecompressAsync(key);
 
             Assert.False(actual.IsNil);
@@ -75,7 +83,9 @@ namespace BB.Caching.Tests.CacheTests
             const string key = "c-sagse-key";
             const string value = "c-sagse-value";
 
+#pragma warning disable 168
             byte[] compressed = Cache.Memory.SetCompressSliding(key, value, TimeSpan.FromSeconds(2));
+#pragma warning restore 168
             string actual;
 
             Assert.True(Cache.Memory.TryGetDecompress(key, out actual));
@@ -99,7 +109,9 @@ namespace BB.Caching.Tests.CacheTests
             const string key = "c-sagsea-key";
             const string value = "c-sagsea-value";
 
+#pragma warning disable 168
             byte[] compressed = Cache.Memory.SetCompressSlidingAsync(key, value, TimeSpan.FromSeconds(2)).Result;
+#pragma warning restore 168
             var actual = Cache.Memory.TryGetStringDecompressAsync(key);
 
             Assert.False(actual.IsNil);

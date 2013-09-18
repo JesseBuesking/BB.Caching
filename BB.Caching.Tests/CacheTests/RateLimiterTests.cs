@@ -9,9 +9,9 @@ using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    internal class RateLimiterTests
+    public class RateLimiterTests : IDisposable
     {
-        public string Key1 = "key1";
+        private const string _key = "key1";
 
         public RateLimiterTests()
         {
@@ -23,21 +23,21 @@ namespace BB.Caching.Tests.CacheTests
 
             Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27", 6379));
 
-            Cache.RateLimiter.Prepare();
+            Cache.Prepare();
 
-            Cache.Shared.Keys.Remove(this.Key1).Wait();
+            Cache.Shared.Keys.Remove(_key).Wait();
         }
 
         public void Dispose()
         {
-            Cache.Shared.Keys.Remove(this.Key1).Wait();
+            Cache.Shared.Keys.Remove(_key).Wait();
         }
 
         [Fact]
         public void Performance()
         {
             const int asyncAmount = 30000;
-            var asyncMs = Get(asyncAmount, this.Key1);
+            var asyncMs = Get(asyncAmount, _key);
 
             Console.WriteLine("{0:#,##0.0#} async ops per ms", (float) asyncAmount/asyncMs);
             Console.WriteLine();
@@ -50,15 +50,19 @@ namespace BB.Caching.Tests.CacheTests
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < amount; i++)
             {
+// ReSharper disable RedundantArgumentDefaultValue
                 tasks[i] = Cache.RateLimiter.Increment(
                     key, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1), amount, 1);
+// ReSharper restore RedundantArgumentDefaultValue
             }
 
             Task.WhenAll(tasks);
 
             long total = sw.ElapsedMilliseconds;
 
+#pragma warning disable 168
             long count = Cache.Shared.Hashes.GetAll(key).Result
+#pragma warning restore 168
                 .Where(kvp => "L" != kvp.Key)
                 .Select(kvp => long.Parse(Encoding.UTF8.GetString(kvp.Value)))
                 .Sum();
@@ -73,35 +77,43 @@ namespace BB.Caching.Tests.CacheTests
             TimeSpan span = TimeSpan.FromSeconds(5);
             TimeSpan bucketSize = TimeSpan.FromSeconds(1);
 
-            object result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 2).Result;
+            object result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(2, (long) result);
 
             Thread.Sleep(1000);
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 2).Result;
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(4, (long) result);
 
             Thread.Sleep(1000);
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 2).Result;
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(6, (long) result);
 
             Thread.Sleep(1000);
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 2).Result;
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(8, (long) result);
 
             Thread.Sleep(2000);
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 1).Result;
+// ReSharper disable RedundantArgumentDefaultValue
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 1).Result;
+// ReSharper restore RedundantArgumentDefaultValue
             Assert.Equal(7, (long) result);
 
             Thread.Sleep(2000);
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 1).Result;
+// ReSharper disable RedundantArgumentDefaultValue
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 1).Result;
+// ReSharper restore RedundantArgumentDefaultValue
             Assert.Equal(4, (long) result);
 
             Thread.Sleep(2000);
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 1).Result;
+// ReSharper disable RedundantArgumentDefaultValue
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 1).Result;
+// ReSharper restore RedundantArgumentDefaultValue
             Assert.Equal(3, (long) result);
 
             Thread.Sleep(2000);
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 1).Result;
+// ReSharper disable RedundantArgumentDefaultValue
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 1).Result;
+// ReSharper restore RedundantArgumentDefaultValue
             Assert.Equal(3, (long) result);
         }
 
@@ -111,27 +123,27 @@ namespace BB.Caching.Tests.CacheTests
             TimeSpan span = TimeSpan.FromSeconds(4);
             TimeSpan bucketSize = TimeSpan.FromSeconds(1);
 
-            object result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 2).Result;
+            object result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(2, (long) result);
             Thread.Sleep(2000);
 
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 2).Result;
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(4, (long) result);
             Thread.Sleep(2000);
 
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 2).Result;
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(4, (long) result);
             Thread.Sleep(2000);
 
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 2).Result;
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(4, (long) result);
             Thread.Sleep(2000);
 
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 2).Result;
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(4, (long) result);
             Thread.Sleep(2000);
 
-            result = Cache.RateLimiter.Increment(this.Key1, span, bucketSize, 10, 2).Result;
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(4, (long) result);
             Thread.Sleep(2000);
         }

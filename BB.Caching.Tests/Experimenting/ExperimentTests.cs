@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.Caching;
 using System.Text;
 using BB.Caching.Compression;
@@ -10,35 +11,45 @@ namespace BB.Caching.Tests.Experimenting
 {
     public class ExperimentTests
     {
-        public static Random Random = new Random(1);
+        private static readonly Random _random = new Random(1);
 
+// ReSharper disable MemberCanBePrivate.Global
         public class OneLong
+// ReSharper restore MemberCanBePrivate.Global
         {
             public long Id
             {
+// ReSharper disable UnusedAutoPropertyAccessor.Global
                 get;
+// ReSharper restore UnusedAutoPropertyAccessor.Global
                 set;
             }
         }
 
+// ReSharper disable MemberCanBePrivate.Global
         public class MultipleProperties
+// ReSharper restore MemberCanBePrivate.Global
         {
             public long Id
             {
+// ReSharper disable UnusedAutoPropertyAccessor.Global
                 get;
+// ReSharper restore UnusedAutoPropertyAccessor.Global
                 set;
             }
 
             public string Name
             {
+// ReSharper disable UnusedAutoPropertyAccessor.Global
                 get;
+// ReSharper restore UnusedAutoPropertyAccessor.Global
                 set;
             }
         }
 
         private static long GenerateId()
         {
-            return Random.Next(1, int.MaxValue);
+            return _random.Next(1, int.MaxValue);
         }
 
         /// <summary>
@@ -59,7 +70,7 @@ namespace BB.Caching.Tests.Experimenting
 
             StringBuilder sb = new StringBuilder(length);
             for (int i = 0; i < iterations; i++)
-                sb.Append((char) Random.Next(32, 127), repeatSize);
+                sb.Append((char) _random.Next(32, 127), repeatSize);
             return sb.ToString();
         }
 
@@ -145,7 +156,7 @@ namespace BB.Caching.Tests.Experimenting
              * Compression v Raw Set:   175.661x        99.6618x
              */
 
-            const int iterations = 1000000;
+            const int iterations = 100000;
             const string key = "impt-key";
 
             var value = new OneLong
@@ -168,7 +179,9 @@ namespace BB.Caching.Tests.Experimenting
             {
                 byte[] compressed = (byte[]) cM.Get(key);
                 byte[] decompressed = Compressor.Instance.Decompress(compressed);
+#pragma warning disable 168
                 OneLong result = Serializer.Instance.Deserialize<OneLong>(decompressed);
+#pragma warning restore 168
             }
             long compressGet = sw.ElapsedTicks;
 
@@ -185,7 +198,9 @@ namespace BB.Caching.Tests.Experimenting
             for (int i = 0; i < iterations; i++)
             {
                 byte[] compressed = (byte[]) sM.Get(key);
+#pragma warning disable 168
                 OneLong result = Serializer.Instance.Deserialize<OneLong>(compressed);
+#pragma warning restore 168
             }
             long serializeGet = sw.ElapsedTicks;
 
@@ -201,7 +216,9 @@ namespace BB.Caching.Tests.Experimenting
             for (int i = 0; i < iterations; i++)
             {
                 object o = rM.Get(key);
+#pragma warning disable 168
                 OneLong result = (OneLong) o;
+#pragma warning restore 168
             }
             long rawGet = sw.ElapsedTicks;
 
@@ -269,14 +286,16 @@ namespace BB.Caching.Tests.Experimenting
 
                 byte[] s = Serializer.Instance.Serialize(m);
                 byte[] c = Compressor.Instance.CompressAsync(s).Result;
-                cM.Set(key + i.ToString(), c, null);
+                cM.Set(key + i.ToString(CultureInfo.InvariantCulture), c, null);
             }
             long mCe = GC.GetTotalMemory(true);
             long compressMemory = mCe - mCs;
 
             cM.Trim(100);
             cM.Dispose();
+// ReSharper disable RedundantAssignment
             cM = null;
+// ReSharper restore RedundantAssignment
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -294,14 +313,16 @@ namespace BB.Caching.Tests.Experimenting
                     };
 
                 byte[] s = Serializer.Instance.Serialize(m);
-                sM.Set(key + i.ToString(), s, null);
+                sM.Set(key + i.ToString(CultureInfo.InvariantCulture), s, null);
             }
             long mSe = GC.GetTotalMemory(true);
             long serializeMemory = mSe - mSs;
 
             sM.Trim(100);
             sM.Dispose();
+// ReSharper disable RedundantAssignment
             sM = null;
+// ReSharper restore RedundantAssignment
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -317,14 +338,16 @@ namespace BB.Caching.Tests.Experimenting
                         Id = GenerateId(),
                         Name = GenerateString(maxStringSize, repeatStringSize)
                     };
-                rM.Set(key + i.ToString(), m, null);
+                rM.Set(key + i.ToString(CultureInfo.InvariantCulture), m, null);
             }
             long mRe = GC.GetTotalMemory(true);
             long rawMemory = mRe - mRs;
 
             rM.Trim(100);
             rM.Dispose();
+// ReSharper disable RedundantAssignment
             rM = null;
+// ReSharper restore RedundantAssignment
 
             GC.Collect();
             GC.WaitForPendingFinalizers();

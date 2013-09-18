@@ -9,7 +9,7 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
 {
     public class KeysTests : IDisposable
     {
-        private readonly Dictionary<string, string> KVPs = new Dictionary<string, string>
+        private readonly Dictionary<string, string> _kvPs = new Dictionary<string, string>
             {
                 {"key1", "0"},
                 {"key2", "1"},
@@ -19,22 +19,17 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
 
         private string Key
         {
-            get { return this.KVPs.First().Key; }
+            get { return this._kvPs.First().Key; }
         }
 
         private string[] Keyz
         {
-            get { return this.KVPs.Keys.ToArray(); }
+            get { return this._kvPs.Keys.ToArray(); }
         }
 
         private string Value
         {
-            get { return this.KVPs.First().Value; }
-        }
-
-        private string[] Values
-        {
-            get { return this.KVPs.Values.ToArray(); }
+            get { return this._kvPs.First().Value; }
         }
 
         public KeysTests()
@@ -50,14 +45,14 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
             Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27", 6379));
 
             Cache.Shared.Keys.Remove(this.Keyz).Wait();
-            foreach (var key in this.KVPs.Keys)
+            foreach (var key in this._kvPs.Keys)
                 Assert.False(Cache.Shared.Keys.Exists(key).Result);
         }
 
         public void Dispose()
         {
             Cache.Shared.Keys.Remove(this.Keyz).Wait();
-            foreach (var key in this.KVPs.Keys)
+            foreach (var key in this._kvPs.Keys)
                 Assert.False(Cache.Shared.Keys.Exists(key).Result);
         }
 
@@ -74,15 +69,15 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         [Fact]
         public void RemoveMultiple()
         {
-            foreach (var kvp in this.KVPs)
+            foreach (var kvp in this._kvPs)
                 Cache.Shared.Strings.Set(kvp.Key, kvp.Value).Wait();
 
-            foreach (var key in this.KVPs.Keys)
+            foreach (var key in this._kvPs.Keys)
                 Assert.True(Cache.Shared.Keys.Exists(key).Result);
 
-            Assert.Equal(this.KVPs.Count, Cache.Shared.Keys.Remove(this.Keyz).Result);
+            Assert.Equal(this._kvPs.Count, Cache.Shared.Keys.Remove(this.Keyz).Result);
 
-            foreach (var key in this.KVPs.Keys)
+            foreach (var key in this._kvPs.Keys)
                 Assert.False(Cache.Shared.Keys.Exists(key).Result);
         }
 
@@ -139,7 +134,7 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         [Fact]
         public void Find()
         {
-            Cache.Shared.Strings.Set(this.KVPs).Wait();
+            Cache.Shared.Strings.Set(this._kvPs).Wait();
             string[] keys = Cache.Shared.Keys.Find("key").Result;
 
             Assert.Equal(0, keys.Length);
@@ -196,8 +191,8 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         {
             // 1 b/c bb.cache.config
             Assert.Equal(1, Cache.Shared.Keys.GetLength().Result);
-            Cache.Shared.Strings.Set(this.KVPs);
-            Assert.Equal(this.KVPs.Count + 1, Cache.Shared.Keys.GetLength().Result);
+            Cache.Shared.Strings.Set(this._kvPs);
+            Assert.Equal(this._kvPs.Count + 1, Cache.Shared.Keys.GetLength().Result);
         }
 
         [Fact]
@@ -217,7 +212,9 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
             Assert.True(Cache.Memory.TryGet(this.Key, out value));
             Assert.Equal(this.Value, value);
 
+#pragma warning disable 168
             long receivedBy = Cache.Shared.Keys.Invalidate(this.Key).Result;
+#pragma warning restore 168
 
             Assert.False(Cache.Memory.TryGet(this.Key, out value));
             //Assert.Equal(1, receivedBy);
@@ -226,21 +223,23 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         [Fact]
         public void InvalidateMultiple()
         {
-            foreach (var kvp in this.KVPs)
+            foreach (var kvp in this._kvPs)
                 Cache.Memory.Set(kvp.Key, kvp.Value);
 
             string value;
-            foreach (var kvp in this.KVPs)
+            foreach (var kvp in this._kvPs)
             {
-                Assert.True(Cache.Memory.TryGet(this.Key, out value));
-                Assert.Equal(this.Value, value);
+                Assert.True(Cache.Memory.TryGet(kvp.Key, out value));
+                Assert.Equal(kvp.Value, value);
             }
 
+#pragma warning disable 168
             long receivedBy = Cache.Shared.Keys.Invalidate(this.Keyz).Result;
+#pragma warning restore 168
             //Assert.Equal(1, receivedBy);
 
-            foreach (var kvp in this.KVPs)
-                Assert.False(Cache.Memory.TryGet(this.Key, out value));
+            foreach (var kvp in this._kvPs)
+                Assert.False(Cache.Memory.TryGet(kvp.Key, out value));
         }
     }
 }

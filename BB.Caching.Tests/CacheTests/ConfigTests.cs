@@ -1,12 +1,15 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using BB.Caching.Connection;
 using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    public class ConfigTests
+    public class ConfigTests : IDisposable
     {
+// ReSharper disable MemberCanBePrivate.Global
         public class ConfigDummy
+// ReSharper restore MemberCanBePrivate.Global
         {
             public int One
             {
@@ -21,17 +24,17 @@ namespace BB.Caching.Tests.CacheTests
             }
         }
 
-        public string Key1 = "key1";
+        private const string _key = "key1";
 
-        public ConfigDummy Value1 = new ConfigDummy
+        private readonly ConfigDummy _value = new ConfigDummy
             {
                 One = 1,
                 Two = 2
             };
 
-        public string Key2 = "key2";
+        private const string _key2 = "key2";
 
-        public string Value2 = "value2";
+        private const string _value2 = "value2";
 
         public ConfigTests()
         {
@@ -43,16 +46,16 @@ namespace BB.Caching.Tests.CacheTests
 
             Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27", 6379));
 
-            Cache.Config.Prepare();
+            Cache.Prepare();
 
-            Cache.Shared.Keys.Remove(this.Key1).Wait();
-            Cache.Shared.Keys.Remove(this.Key2).Wait();
+            Cache.Shared.Keys.Remove(_key).Wait();
+            Cache.Shared.Keys.Remove(_key2).Wait();
         }
 
         public void Dispose()
         {
-            Cache.Shared.Keys.Remove(this.Key1).Wait();
-            Cache.Shared.Keys.Remove(this.Key2).Wait();
+            Cache.Shared.Keys.Remove(_key).Wait();
+            Cache.Shared.Keys.Remove(_key2).Wait();
         }
 
         [Fact]
@@ -60,121 +63,121 @@ namespace BB.Caching.Tests.CacheTests
         {
             bool isSet = false;
             ConfigDummy value = null;
-            Cache.Config.SubscribeChange(this.Key1, async () =>
+            Cache.Config.SubscribeChange(_key, async () =>
                 {
                     isSet = true;
-                    value = await Cache.Config.GetAsync<ConfigDummy>(this.Key1);
+                    value = await Cache.Config.GetAsync<ConfigDummy>(_key);
                 });
-            Cache.Config.Set(this.Key1, this.Value1);
+            Cache.Config.Set(_key, this._value);
 
             while (!isSet)
                 Thread.Sleep(100);
 
             Assert.True(isSet);
-            Assert.Equal(this.Value1.One, value.One);
-            Assert.Equal(this.Value1.Two, value.Two);
+            Assert.Equal(this._value.One, value.One);
+            Assert.Equal(this._value.Two, value.Two);
 
-            Cache.Config.Set(this.Key2, this.Value2, false);
+            Cache.Config.Set(_key2, _value2, false);
 
-            ConfigDummy configDummy = Cache.Config.Get<ConfigDummy>(this.Key1);
-            string value2 = Cache.Config.Get<string>(this.Key2);
+            ConfigDummy configDummy = Cache.Config.Get<ConfigDummy>(_key);
+            string value2 = Cache.Config.Get<string>(_key2);
 
-            Assert.Equal(this.Value1.One, configDummy.One);
-            Assert.Equal(this.Value1.Two, configDummy.Two);
-            Assert.Equal(this.Value2, value2);
+            Assert.Equal(this._value.One, configDummy.One);
+            Assert.Equal(this._value.Two, configDummy.Two);
+            Assert.Equal(_value2, value2);
 
-            Cache.Config.Remove(this.Key2, false);
-            value2 = Cache.Config.Get<string>(this.Key2);
+            Cache.Config.Remove(_key2, false);
+            value2 = Cache.Config.Get<string>(_key2);
             Assert.Equal(null, value2);
         }
 
         [Fact]
         public void SetAsync()
         {
-            Cache.Config.SetAsync(this.Key1, this.Value1, false).Wait();
-            Cache.Config.SetAsync(this.Key2, this.Value2, false).Wait();
+            Cache.Config.SetAsync(_key, this._value, false).Wait();
+            Cache.Config.SetAsync(_key2, _value2, false).Wait();
 
-            ConfigDummy configDummy = Cache.Config.GetAsync<ConfigDummy>(this.Key1).Result;
-            string value2 = Cache.Config.GetAsync<string>(this.Key2).Result;
+            ConfigDummy configDummy = Cache.Config.GetAsync<ConfigDummy>(_key).Result;
+            string value2 = Cache.Config.GetAsync<string>(_key2).Result;
 
-            Assert.Equal(this.Value1.One, configDummy.One);
-            Assert.Equal(this.Value1.Two, configDummy.Two);
-            Assert.Equal(this.Value2, value2);
+            Assert.Equal(this._value.One, configDummy.One);
+            Assert.Equal(this._value.Two, configDummy.Two);
+            Assert.Equal(_value2, value2);
 
-            Cache.Config.RemoveAsync(this.Key2, false).Wait();
-            value2 = Cache.Config.GetAsync<string>(this.Key2).Result;
+            Cache.Config.RemoveAsync(_key2, false).Wait();
+            value2 = Cache.Config.GetAsync<string>(_key2).Result;
             Assert.Equal(null, value2);
         }
 
         [Fact]
         public void Get()
         {
-            Cache.Config.Set(this.Key1, this.Value1, false);
-            Cache.Config.Set(this.Key2, this.Value2, false);
+            Cache.Config.Set(_key, this._value, false);
+            Cache.Config.Set(_key2, _value2, false);
 
-            ConfigDummy configDummy = Cache.Config.Get<ConfigDummy>(this.Key1);
-            string value2 = Cache.Config.Get<string>(this.Key2);
+            ConfigDummy configDummy = Cache.Config.Get<ConfigDummy>(_key);
+            string value2 = Cache.Config.Get<string>(_key2);
 
-            Assert.Equal(this.Value1.One, configDummy.One);
-            Assert.Equal(this.Value1.Two, configDummy.Two);
-            Assert.Equal(this.Value2, value2);
+            Assert.Equal(this._value.One, configDummy.One);
+            Assert.Equal(this._value.Two, configDummy.Two);
+            Assert.Equal(_value2, value2);
 
-            Cache.Config.Remove(this.Key2, false);
-            value2 = Cache.Config.Get<string>(this.Key2);
+            Cache.Config.Remove(_key2, false);
+            value2 = Cache.Config.Get<string>(_key2);
             Assert.Equal(null, value2);
         }
 
         [Fact]
         public void GetAsync()
         {
-            Cache.Config.SetAsync(this.Key1, this.Value1, false).Wait();
-            Cache.Config.SetAsync(this.Key2, this.Value2, false).Wait();
+            Cache.Config.SetAsync(_key, this._value, false).Wait();
+            Cache.Config.SetAsync(_key2, _value2, false).Wait();
 
-            ConfigDummy configDummy = Cache.Config.GetAsync<ConfigDummy>(this.Key1).Result;
-            string value2 = Cache.Config.GetAsync<string>(this.Key2).Result;
+            ConfigDummy configDummy = Cache.Config.GetAsync<ConfigDummy>(_key).Result;
+            string value2 = Cache.Config.GetAsync<string>(_key2).Result;
 
-            Assert.Equal(this.Value1.One, configDummy.One);
-            Assert.Equal(this.Value1.Two, configDummy.Two);
-            Assert.Equal(this.Value2, value2);
+            Assert.Equal(this._value.One, configDummy.One);
+            Assert.Equal(this._value.Two, configDummy.Two);
+            Assert.Equal(_value2, value2);
 
-            Cache.Config.RemoveAsync(this.Key2, false).Wait();
-            value2 = Cache.Config.GetAsync<string>(this.Key2).Result;
+            Cache.Config.RemoveAsync(_key2, false).Wait();
+            value2 = Cache.Config.GetAsync<string>(_key2).Result;
             Assert.Equal(null, value2);
         }
 
         [Fact]
         public void Remove()
         {
-            Cache.Config.Set(this.Key1, this.Value1, false);
-            Cache.Config.Set(this.Key2, this.Value2, false);
+            Cache.Config.Set(_key, this._value, false);
+            Cache.Config.Set(_key2, _value2, false);
 
-            ConfigDummy configDummy = Cache.Config.Get<ConfigDummy>(this.Key1);
-            string value2 = Cache.Config.Get<string>(this.Key2);
+            ConfigDummy configDummy = Cache.Config.Get<ConfigDummy>(_key);
+            string value2 = Cache.Config.Get<string>(_key2);
 
-            Assert.Equal(this.Value1.One, configDummy.One);
-            Assert.Equal(this.Value1.Two, configDummy.Two);
-            Assert.Equal(this.Value2, value2);
+            Assert.Equal(this._value.One, configDummy.One);
+            Assert.Equal(this._value.Two, configDummy.Two);
+            Assert.Equal(_value2, value2);
 
-            Cache.Config.Remove(this.Key2, false);
-            value2 = Cache.Config.Get<string>(this.Key2);
+            Cache.Config.Remove(_key2, false);
+            value2 = Cache.Config.Get<string>(_key2);
             Assert.Equal(null, value2);
         }
 
         [Fact]
         public void RemoveAsync()
         {
-            Cache.Config.SetAsync(this.Key1, this.Value1, false).Wait();
-            Cache.Config.SetAsync(this.Key2, this.Value2, false).Wait();
+            Cache.Config.SetAsync(_key, this._value, false).Wait();
+            Cache.Config.SetAsync(_key2, _value2, false).Wait();
 
-            ConfigDummy configDummy = Cache.Config.GetAsync<ConfigDummy>(this.Key1).Result;
-            string value2 = Cache.Config.GetAsync<string>(this.Key2).Result;
+            ConfigDummy configDummy = Cache.Config.GetAsync<ConfigDummy>(_key).Result;
+            string value2 = Cache.Config.GetAsync<string>(_key2).Result;
 
-            Assert.Equal(this.Value1.One, configDummy.One);
-            Assert.Equal(this.Value1.Two, configDummy.Two);
-            Assert.Equal(this.Value2, value2);
+            Assert.Equal(this._value.One, configDummy.One);
+            Assert.Equal(this._value.Two, configDummy.Two);
+            Assert.Equal(_value2, value2);
 
-            Cache.Config.RemoveAsync(this.Key2, false).Wait();
-            value2 = Cache.Config.GetAsync<string>(this.Key2).Result;
+            Cache.Config.RemoveAsync(_key2, false).Wait();
+            value2 = Cache.Config.GetAsync<string>(_key2).Result;
             Assert.Equal(null, value2);
         }
     }

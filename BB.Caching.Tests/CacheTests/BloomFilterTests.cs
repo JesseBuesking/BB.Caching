@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using BB.Caching.Connection;
 using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    internal class BloomFilterTests
+    public class BloomFilterTests : IDisposable
     {
-        public string Key1 = "key1";
+        private const string _key = "key1";
+
+        private const float _falsePositivePercentage = 0.001f;
 
         public BloomFilterTests()
         {
@@ -21,26 +24,24 @@ namespace BB.Caching.Tests.CacheTests
 
             Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27", 6379));
 
-            Cache.BloomFilter.Prepare();
-
-            Cache.Shared.Keys.Remove(this.Key1).Wait();
+            Cache.Shared.Keys.Remove(_key).Wait();
         }
 
         public void Dispose()
         {
-            Cache.Shared.Keys.Remove(this.Key1).Wait();
+            Cache.Shared.Keys.Remove(_key).Wait();
         }
 
         [Fact]
         public void Add()
         {
             var bloomFilter = new Cache.BloomFilter();
-            bloomFilter.Add(this.Key1, "test");
+            bloomFilter.Add(_key, "test");
 
-            var b = bloomFilter.IsSet(this.Key1, "test").Result;
+            var b = bloomFilter.IsSet(_key, "test").Result;
             Assert.True(b);
 
-            b = bloomFilter.IsSet(this.Key1, "again").Result;
+            b = bloomFilter.IsSet(_key, "again").Result;
             Assert.False(b);
         }
 
@@ -48,7 +49,7 @@ namespace BB.Caching.Tests.CacheTests
         public void SetPerformance()
         {
             const int asyncAmount = 30000;
-            var asyncMs = Set(asyncAmount, this.Key1, "test");
+            var asyncMs = Set(asyncAmount, _key, "test");
 
             Console.WriteLine("{0:#,##0.0#} async ops per ms", (float) asyncAmount/asyncMs);
             Console.WriteLine();
@@ -60,8 +61,8 @@ namespace BB.Caching.Tests.CacheTests
         {
             const int asyncAmount = 30000;
             var bloomFilter = new Cache.BloomFilter();
-            bloomFilter.Add(this.Key1, "test");
-            var asyncMs = Get(asyncAmount, this.Key1, "test");
+            bloomFilter.Add(_key, "test");
+            var asyncMs = Get(asyncAmount, _key, "test");
 
             Console.WriteLine("{0:#,##0.0#} async ops per ms", (float) asyncAmount/asyncMs);
             Console.WriteLine();
@@ -70,7 +71,9 @@ namespace BB.Caching.Tests.CacheTests
 
         private static long Set(int amount, string key, string value)
         {
-            var bloomFilter = new Cache.BloomFilter(amount, 0.001f);
+// ReSharper disable RedundantArgumentDefaultValue
+            var bloomFilter = new Cache.BloomFilter(amount, _falsePositivePercentage);
+// ReSharper restore RedundantArgumentDefaultValue
             var tasks = new Task[amount];
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < amount; i++)
@@ -83,7 +86,9 @@ namespace BB.Caching.Tests.CacheTests
 
         private static long Get(int amount, string key, string value)
         {
-            var bloomFilter = new Cache.BloomFilter(amount, 0.001f);
+// ReSharper disable RedundantArgumentDefaultValue
+            var bloomFilter = new Cache.BloomFilter(amount, _falsePositivePercentage);
+// ReSharper restore RedundantArgumentDefaultValue
             var tasks = new Task<bool>[amount];
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < amount; i++)
@@ -98,13 +103,14 @@ namespace BB.Caching.Tests.CacheTests
         public void FalsePositiveTest()
         {
             const int stringLength = 3;
-            const float falsePositivePercentage = 0.001f;
             int half = (int) Math.Pow(26, stringLength)/2;
-            var bloomFilter = new Cache.BloomFilter(half, falsePositivePercentage);
-            float fpPercentage = BloomTest(bloomFilter, 3, this.Key1);
+// ReSharper disable RedundantArgumentDefaultValue
+            var bloomFilter = new Cache.BloomFilter(half, _falsePositivePercentage);
+// ReSharper restore RedundantArgumentDefaultValue
+            float fpPercentage = BloomTest(bloomFilter, 3, _key);
 
             Console.WriteLine("fp: {0:#0.####}, {0:#0.####%}, or 1 in {1:#,###.0#}", fpPercentage, 1/fpPercentage);
-            Assert.True(falsePositivePercentage*2 >= fpPercentage);
+            Assert.True(_falsePositivePercentage*2 >= fpPercentage);
         }
 
         private static float BloomTest(Cache.BloomFilter bloomFilter, int stringLength, string key)
@@ -134,9 +140,7 @@ namespace BB.Caching.Tests.CacheTests
                 values.Add(s);
             }
 
-            int fpCount = 0;
-            foreach (string value in values)
-                fpCount += bloomFilter.IsSet(key, value).Result ? 1 : 0;
+            int fpCount = values.Sum(value => bloomFilter.IsSet(key, value).Result ? 1 : 0);
 
             return ((float) fpCount)/bloomFilter.Options.NumberOfItems;
         }

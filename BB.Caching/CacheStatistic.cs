@@ -28,7 +28,7 @@ namespace BB.Caching
 
             private static string GetStatisticScript
             {
-                get { return Lua.Instance["GetStatistics"]; }
+                get { return Lua.Instance["GetStatistic"]; }
             }
 
             public class Statistics
