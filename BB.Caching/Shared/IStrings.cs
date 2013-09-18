@@ -481,7 +481,9 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/setbit
         /// </remarks>
+// ReSharper disable UnusedMethodReturnValue.Global
         Task<bool> SetBit(string key, long offset, bool value);
+// ReSharper restore UnusedMethodReturnValue.Global
 
         /// <summary>
         /// Count the number of set bits (population counting) in a string.

@@ -16,7 +16,7 @@ namespace BB.Caching.Connection
         /// <summary>
         /// The name of this redis connection wrapper.
         /// </summary>
-        public string Name
+        private string Name
         {
             get;
             set;
@@ -25,12 +25,12 @@ namespace BB.Caching.Connection
         /// <summary>
         /// When creating the read pool, read connections are added with this weight.
         /// </summary>
-        public int ReadWeight = 2;
+        private const int _readWeight = 2;
 
         /// <summary>
         /// When creating the read pool, write connections are added with this weight.
         /// </summary>
-        public int WriteWeight = 1;
+        private const int _writeWeight = 1;
 
         /// <summary>
         /// The connections that we can write to. (Master(s))
@@ -70,7 +70,9 @@ namespace BB.Caching.Connection
         /// Adds a write connection.
         /// </summary>
         /// <param name="connection"></param>
+// ReSharper disable MemberCanBePrivate.Global
         public void AddWriteConnection(SafeRedisConnection connection)
+// ReSharper restore MemberCanBePrivate.Global
         {
             if (null == this._writeConnections)
                 this._writeConnections = new List<SafeRedisConnection> {connection};
@@ -84,7 +86,9 @@ namespace BB.Caching.Connection
         /// Adds a read connection.
         /// </summary>
         /// <param name="connection"></param>
+// ReSharper disable UnusedMember.Global
         public void AddReadConnection(SafeRedisConnection connection)
+// ReSharper restore UnusedMember.Global
         {
             if (null == this._readConnections)
                 this._readConnections = new List<SafeRedisConnection> {connection};
@@ -102,7 +106,7 @@ namespace BB.Caching.Connection
             int writeCount = null == this._writeConnections ? 0 : this._writeConnections.Count;
             int readCount = null == this._readConnections ? 0 : this._readConnections.Count;
 
-            this._readPool = new List<SafeRedisConnection>(writeCount*this.WriteWeight + readCount*this.ReadWeight);
+            this._readPool = new List<SafeRedisConnection>(writeCount*_writeWeight + readCount*_readWeight);
 
             int readIndex = 0;
             int writeIndex = 0;
@@ -111,13 +115,13 @@ namespace BB.Caching.Connection
             {
                 if (null != this._readConnections)
                 {
-                    for (int i = 0; i < this.ReadWeight; i++)
+                    for (int i = 0; i < _readWeight; i++)
                         this._readPool.Add(this._readConnections[readIndex]);
                 }
 
                 if (null != this._writeConnections)
                 {
-                    for (int i = 0; i < this.WriteWeight; i++)
+                    for (int i = 0; i < _writeWeight; i++)
                         this._readPool.Add(this._writeConnections[writeIndex]);
                 }
 

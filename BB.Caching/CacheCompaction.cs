@@ -6,7 +6,9 @@ namespace BB.Caching
 {
     public static partial class Cache
     {
+// ReSharper disable MemberCanBePrivate.Global
         public static class Compaction
+// ReSharper restore MemberCanBePrivate.Global
         {
             public static async Task<byte[]> CompactAsync<TObject>(TObject value)
             {

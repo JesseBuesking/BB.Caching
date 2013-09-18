@@ -16,12 +16,12 @@ namespace BB.Caching.Tests.CacheTests
         public RateLimiterTests()
         {
             Cache.Shared.AddRedisConnectionGroup(
-                new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27", 6379)));
+                new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
 
             Cache.Shared.AddRedisConnectionGroup(
                 new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
 
-            Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27", 6379));
+            Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27"));
 
             Cache.Prepare();
 

@@ -22,7 +22,9 @@ namespace BB.Caching
         /// </summary>
         public Task<bool> IsNilAsync
         {
+// ReSharper disable MemberCanBePrivate.Global
             get;
+// ReSharper restore MemberCanBePrivate.Global
             set;
         }
 

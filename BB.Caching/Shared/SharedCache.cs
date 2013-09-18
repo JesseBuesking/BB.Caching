@@ -88,7 +88,9 @@ namespace BB.Caching.Shared
             this._consistentHashRing.Add(redisConnectionGroup);
         }
 
+// ReSharper disable UnusedMember.Global
         public void RemoveRedisConnectionWrapper(RedisConnectionGroup redisConnectionGroup)
+// ReSharper restore UnusedMember.Global
         {
             this._consistentHashRing.Remove(redisConnectionGroup);
         }
@@ -145,7 +147,9 @@ namespace BB.Caching.Shared
                 });
         }
 
+// ReSharper disable MemberCanBePrivate.Global
         public RedisConnection GetReadConnection(string key)
+// ReSharper restore MemberCanBePrivate.Global
         {
             return this._consistentHashRing.GetNode(key).GetReadConnection();
         }
@@ -155,7 +159,11 @@ namespace BB.Caching.Shared
             return this._consistentHashRing.GetNode(key).GetWriteConnections();
         }
 
+// ReSharper disable ParameterTypeCanBeEnumerable.Global
+// ReSharper disable UnusedMember.Global
         public Dictionary<RedisConnection, string[]> GetReadConnections(string[] keys)
+// ReSharper restore UnusedMember.Global
+// ReSharper restore ParameterTypeCanBeEnumerable.Global
         {
             var result = new Dictionary<RedisConnectionGroup, List<string>>();
             foreach (string key in keys)
@@ -170,7 +178,11 @@ namespace BB.Caching.Shared
             return result.ToDictionary(r => r.Key.GetReadConnection(), r => r.Value.ToArray());
         }
 
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable ParameterTypeCanBeEnumerable.Global
         public Dictionary<RedisConnection[], string[]> GetWriteConnections(string[] keys)
+// ReSharper restore ParameterTypeCanBeEnumerable.Global
+// ReSharper restore MemberCanBePrivate.Global
         {
             var result = new Dictionary<RedisConnectionGroup, List<string>>();
             foreach (string key in keys)
@@ -185,21 +197,27 @@ namespace BB.Caching.Shared
             return result.ToDictionary(r => r.Key.GetWriteConnections(), r => r.Value.ToArray());
         }
 
+// ReSharper disable MemberCanBePrivate.Global
         public RedisConnection GetRandomReadConnection()
+// ReSharper restore MemberCanBePrivate.Global
         {
             return this._consistentHashRing.GetAvailableNodes()
                 .ElementAt(this._random.Next(0, this._consistentHashRing.GetAvailableNodes().Count))
                 .GetReadConnection();
         }
 
+// ReSharper disable MemberCanBePrivate.Global
         public RedisConnection[] GetAllReadConnections()
+// ReSharper restore MemberCanBePrivate.Global
         {
             return this._consistentHashRing.GetAvailableNodes()
                 .Select(n => n.GetReadConnection())
                 .ToArray();
         }
 
+// ReSharper disable ReturnTypeCanBeEnumerable.Global
         public RedisConnection[] GetAllWriteConnections()
+// ReSharper restore ReturnTypeCanBeEnumerable.Global
         {
             return this._consistentHashRing.GetAvailableNodes()
                 .SelectMany(n => n.GetWriteConnections())
@@ -220,7 +238,9 @@ namespace BB.Caching.Shared
             return this.PubSubConnection.GetConnection().Publish(channel, value);
         }
 
+// ReSharper disable UnusedMember.Global
         public Task RedisSubscribe(string channel, string key, Action subscriptionCallback)
+// ReSharper restore UnusedMember.Global
         {
             if (null == this._subscriptions)
                 this._subscriptions = this.PubSubConnection.GetConnection().GetOpenSubscriberChannel();

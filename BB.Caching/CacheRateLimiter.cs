@@ -9,7 +9,9 @@ namespace BB.Caching
     {
         public static class RateLimiter
         {
+// ReSharper disable MemberHidesStaticFromOuterClass
             public static void Prepare()
+// ReSharper restore MemberHidesStaticFromOuterClass
             {
                 var connections = SharedCache.Instance.GetAllWriteConnections();
                 foreach (var connection in connections)

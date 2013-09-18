@@ -27,7 +27,7 @@ namespace BB.Caching
                 internal long NumberOfItems
                 {
                     get;
-                    set;
+                    private set;
                 }
 
                 private float ProbabilityOfFalsePositives
@@ -62,7 +62,7 @@ namespace BB.Caching
             internal BFOptions Options
             {
                 get;
-                set;
+                private set;
             }
 
             /// <summary>
@@ -98,7 +98,9 @@ namespace BB.Caching
                 return Task.FromResult(false);
             }
 
+// ReSharper disable UnusedMethodReturnValue.Local
             private Task SetBits(string key, long[] bits, bool value)
+// ReSharper restore UnusedMethodReturnValue.Local
             {
                 string[] keyArgs = new[] {key};
                 object[] valueArgs = new object[bits.Length + 1];
@@ -108,7 +110,7 @@ namespace BB.Caching
                 var connections = SharedCache.Instance.GetWriteConnections(key);
                 foreach (var connection in connections)
                 {
-                    var task = connection.Scripting.Eval(SharedCache.Instance.Db, BloomFilter.SetMultipleBitsScript,
+                    connection.Scripting.Eval(SharedCache.Instance.Db, BloomFilter.SetMultipleBitsScript,
                         keyArgs, valueArgs, true, false, SharedCache.Instance.QueueJump);
                 }
                 return Task.FromResult(false);

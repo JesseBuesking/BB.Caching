@@ -23,9 +23,11 @@ namespace BB.Caching.Hashing
             this.Config();
         }
 
+// ReSharper disable MemberCanBePrivate.Global
         public void Config(uint seed = 0, bool managed = true)
+// ReSharper restore MemberCanBePrivate.Global
         {
-            this._murmurHash = MurmurHash.Create32(seed); //, managed);
+            this._murmurHash = MurmurHash.Create32(seed, managed);
         }
 
         public uint ComputeInt(string value)

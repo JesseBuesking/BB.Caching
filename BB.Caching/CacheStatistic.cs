@@ -10,7 +10,9 @@ namespace BB.Caching
     {
         public static class Stats
         {
+// ReSharper disable MemberHidesStaticFromOuterClass
             public static void Prepare()
+// ReSharper restore MemberHidesStaticFromOuterClass
             {
                 var connections = SharedCache.Instance.GetAllWriteConnections();
                 foreach (var connection in connections)
@@ -80,7 +82,9 @@ namespace BB.Caching
                     get { return Math.Sqrt(this.PopulationVariance); }
                 }
 
+// ReSharper disable MemberCanBePrivate.Global
                 public double Variance
+// ReSharper restore MemberCanBePrivate.Global
                 {
                     get
                     {
@@ -90,7 +94,9 @@ namespace BB.Caching
                     }
                 }
 
+// ReSharper disable MemberCanBePrivate.Global
                 public double StandardDeviation
+// ReSharper restore MemberCanBePrivate.Global
                 {
                     get { return Math.Sqrt(this.Variance); }
                 }
@@ -125,7 +131,7 @@ namespace BB.Caching
                 var connections = SharedCache.Instance.GetWriteConnections(key);
                 foreach (var connection in connections)
                 {
-                    var task = connection.Scripting.Eval(SharedCache.Instance.Db, Stats.SetStatisticScript,
+                    connection.Scripting.Eval(SharedCache.Instance.Db, Stats.SetStatisticScript,
                         keyArgs, valueArgs, true, false, SharedCache.Instance.QueueJump);
                 }
 

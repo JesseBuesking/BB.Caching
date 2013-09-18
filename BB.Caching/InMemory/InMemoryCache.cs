@@ -17,10 +17,10 @@ namespace BB.Caching.InMemory
         /// <summary>
         /// The <see cref="ObjectCache"/> used to store our in-memory data.
         /// </summary>
-        public ObjectCache Cache
+        private ObjectCache Cache
         {
             get;
-            private set;
+            set;
         }
 
         private InMemoryCache()

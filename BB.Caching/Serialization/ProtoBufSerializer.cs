@@ -33,7 +33,7 @@ namespace BB.Caching.Serialization
         /// </summary>
         private void UpdateSharedCacheUsingTypeIndices()
         {
-            Cache.Config.Set(ProtoBufSerializer._protoIndicesRedisKey, this._typeIndices, true);
+            Cache.Config.Set(ProtoBufSerializer._protoIndicesRedisKey, this._typeIndices);
         }
 
         /// <summary>

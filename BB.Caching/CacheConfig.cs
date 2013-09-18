@@ -24,7 +24,9 @@ namespace BB.Caching
 
             private const string _keyPrefix = "bb.cache.config";
 
+// ReSharper disable MemberHidesStaticFromOuterClass
             public static void Prepare()
+// ReSharper restore MemberHidesStaticFromOuterClass
             {
                 Config.SetupSubscribeRemoval();
             }
@@ -104,7 +106,9 @@ namespace BB.Caching
                     });
             }
 
+// ReSharper disable UnusedMethodReturnValue.Global
             public static Task SubscribeChange(string configKey, Action subscriptionCallback)
+// ReSharper restore UnusedMethodReturnValue.Global
             {
                 return SharedCache.Instance.RedisChannelSubscribe(Config._cacheConfigChangeChannel, (channel, data) =>
                     {
