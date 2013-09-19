@@ -14,10 +14,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{71CAD9
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodules", "submodules", "{9D0CA034-8172-4DD6-9D46-0E1BF2E4622F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MurmurHash", "submodules\murmurhash-net\MurmurHash\MurmurHash.csproj", "{5E240B61-4CCD-4C2A-A0F2-F545C5E9939C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,21 +31,14 @@ Global
 		{B45772C1-3137-4056-B0DF-F0F0DB1E6257}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B45772C1-3137-4056-B0DF-F0F0DB1E6257}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B45772C1-3137-4056-B0DF-F0F0DB1E6257}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{B45772C1-3137-4056-B0DF-F0F0DB1E6257}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B45772C1-3137-4056-B0DF-F0F0DB1E6257}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B45772C1-3137-4056-B0DF-F0F0DB1E6257}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{B45772C1-3137-4056-B0DF-F0F0DB1E6257}.Release|Any CPU.Build.0 = Debug|Any CPU
 		{B45772C1-3137-4056-B0DF-F0F0DB1E6257}.Release|x86.ActiveCfg = Release|Any CPU
-		{5E240B61-4CCD-4C2A-A0F2-F545C5E9939C}.Debug|Any CPU.ActiveCfg = Release|Any CPU
-		{5E240B61-4CCD-4C2A-A0F2-F545C5E9939C}.Debug|Any CPU.Build.0 = Release|Any CPU
-		{5E240B61-4CCD-4C2A-A0F2-F545C5E9939C}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{5E240B61-4CCD-4C2A-A0F2-F545C5E9939C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5E240B61-4CCD-4C2A-A0F2-F545C5E9939C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5E240B61-4CCD-4C2A-A0F2-F545C5E9939C}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B45772C1-3137-4056-B0DF-F0F0DB1E6257} = {A755E258-6316-44F3-A7CC-83BA958DC233}
-		{5E240B61-4CCD-4C2A-A0F2-F545C5E9939C} = {9D0CA034-8172-4DD6-9D46-0E1BF2E4622F}
 	EndGlobalSection
 EndGlobal
