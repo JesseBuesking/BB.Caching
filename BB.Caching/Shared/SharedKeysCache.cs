@@ -233,7 +233,7 @@ namespace BB.Caching.Shared
         {
             Cache.Memory.Remove(key);
             SharedCache.Instance._alreadyInvalidated.Add(key);
-            return SharedCache.Instance.RedisChannelPublish(SharedCache._cacheInvalidationChannel, key);
+            return Cache.PubSub.Publish(SharedCache._cacheInvalidationChannel, key);
         }
 
         /// <summary>
@@ -249,8 +249,8 @@ namespace BB.Caching.Shared
                 SharedCache.Instance._alreadyInvalidated.Add(key);
             }
 
-            string multipleKeys = String.Join(SharedCache._cacheMultipleInvalidationSeparator, keys);
-            return SharedCache.Instance.RedisChannelPublish(SharedCache._cacheMultipleInvalidationChannel, multipleKeys);
+            string multipleKeys = String.Join(Cache.PubSub.MultipleMessageSeparator, keys);
+            return Cache.PubSub.Publish(SharedCache._cacheMultipleInvalidationChannel, multipleKeys);
         }
     }
 }

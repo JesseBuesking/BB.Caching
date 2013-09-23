@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using BB.Caching.Shared;
 
 namespace BB.Caching
 {
@@ -70,7 +67,7 @@ namespace BB.Caching
                 byte[] compact = Cache.Memory.SetCompact(_keyPrefix + key, value);
                 Cache.Shared.Hashes.Set(_keyPrefix, key, compact).Wait();
                 if (broadcast)
-                    Config.PublishChange(key).Wait();
+                    Cache.PubSub.Publish(Config._cacheConfigChangeChannel, key).Wait();
             }
 
             public static Task SetAsync<TType>(string key, TType value, bool broadcast = true)
@@ -80,7 +77,7 @@ namespace BB.Caching
                         var compacted = await Cache.Memory.SetCompactAsync(_keyPrefix + key, value);
                         await Cache.Shared.Hashes.Set(_keyPrefix, key, compacted);
                         if (broadcast)
-                            await Config.PublishChange(key);
+                            await Cache.PubSub.Publish(Config._cacheConfigChangeChannel, key);
                     });
             }
 
@@ -106,39 +103,21 @@ namespace BB.Caching
                     });
             }
 
-// ReSharper disable UnusedMethodReturnValue.Global
-            public static Task SubscribeChange(string configKey, Action subscriptionCallback)
-// ReSharper restore UnusedMethodReturnValue.Global
-            {
-                return SharedCache.Instance.RedisChannelSubscribe(Config._cacheConfigChangeChannel, (channel, data) =>
-                    {
-                        string key = Encoding.UTF8.GetString(data);
-                        if (key == configKey)
-                            subscriptionCallback();
-                    });
-            }
-
             private static void SetupSubscribeRemoval()
             {
-                SharedCache.Instance.RedisChannelSubscribe(Config._cacheConfigRemovedChannel, (channel, data) =>
+                Cache.PubSub.Subscribe(Config._cacheConfigRemovedChannel, data =>
                     {
-                        string key = Encoding.UTF8.GetString(data);
-                        if (Config._alreadyRemoved.Contains(key))
-                            Config._alreadyRemoved.Remove(key);
+                        if (Config._alreadyRemoved.Contains(data))
+                            Config._alreadyRemoved.Remove(data);
                         else
-                            Config.Remove(key, false);
+                            Config.Remove(data, false);
                     });
             }
 
             private static Task PublishRemoval(string configKey)
             {
                 Config._alreadyRemoved.Add(configKey);
-                return SharedCache.Instance.RedisChannelPublish(Config._cacheConfigRemovedChannel, configKey);
-            }
-
-            private static Task PublishChange(string configKey)
-            {
-                return SharedCache.Instance.RedisChannelPublish(Config._cacheConfigChangeChannel, configKey);
+                return Cache.PubSub.Publish(Config._cacheConfigRemovedChannel, configKey);
             }
         }
     }

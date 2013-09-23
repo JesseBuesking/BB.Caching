@@ -68,6 +68,7 @@
     <Compile Include="CacheTests\CompressionTests.cs" />
     <Compile Include="CacheTests\ConfigTests.cs" />
     <Compile Include="CacheTests\MemoryTests.cs" />
+    <Compile Include="CacheTests\PubSubTests.cs" />
     <Compile Include="CacheTests\RateLimiterTests.cs" />
     <Compile Include="CacheTests\SharedTests\HashesTests.cs" />
     <Compile Include="CacheTests\SharedTests\KeysTests.cs" />

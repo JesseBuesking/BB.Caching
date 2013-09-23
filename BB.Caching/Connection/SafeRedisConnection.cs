@@ -27,6 +27,11 @@ namespace BB.Caching.Connection
 
         private readonly Object _lock = new Object();
 
+        /// <summary>
+        /// A boolean to notify the caller if the connection was re-created.
+        /// </summary>
+        public bool WasReCreated;
+
         public SafeRedisConnection(string host, int port = 6379, int ioTimeout = -1, string password = null,
             int maxUnsent = 2147483647, bool allowAdmin = false, int syncTimeout = 10000)
         {
@@ -79,14 +84,18 @@ namespace BB.Caching.Connection
         /// <returns></returns>
         public RedisConnection GetConnection()
         {
+            this.WasReCreated = false;
+
             if (this._connection.State != RedisConnectionBase.ConnectionState.Open)
             {
                 // retry several times
+                // TODO implement backoff
                 for (int i = 0; i < 3; i++)
                 {
                     if (this.CreateConnection())
                         break;
                 }
+                this.WasReCreated = true;
             }
 
             return this._connection;

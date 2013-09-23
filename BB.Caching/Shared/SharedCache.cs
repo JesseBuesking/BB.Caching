@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using BB.Caching.Connection;
 using BB.Caching.Hashing;
 using BookSleeve;
@@ -36,23 +34,6 @@ namespace BB.Caching.Shared
             new ConsistentHashRing<RedisConnectionGroup>();
 
         /// <summary>
-        /// A connection specifically used for transmitting pub/sub information.
-        /// TODO: consider relying on the existing connections + consistent hashing (pub/sub would then happen across
-        /// all the redis instances that are currently running => scales up; minus for cache/invalidate since it'll
-        /// always hash to the same box)
-        /// </summary>
-        private SafeRedisConnection PubSubConnection
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Keeps open all subscription that have been made.
-        /// </summary>
-        private RedisSubscriberConnection _subscriptions;
-
-        /// <summary>
         /// The channel used to publish and subscribe to cache invalidation requests.
         /// </summary>
         private const string _cacheInvalidationChannel = "cache/invalidate";
@@ -61,11 +42,6 @@ namespace BB.Caching.Shared
         /// The channel used to publish and subscribe to multiple cache invalidation requests.
         /// </summary>
         private const string _cacheMultipleInvalidationChannel = "cache/m-invalidate";
-
-        /// <summary>
-        /// The separator used to separate multiple keys for cache invalidation.
-        /// </summary>
-        private const string _cacheMultipleInvalidationSeparator = "||";
 
         /// <summary>
         /// Contains all the keys that have already been invalidated.
@@ -95,40 +71,33 @@ namespace BB.Caching.Shared
             this._consistentHashRing.Remove(redisConnectionGroup);
         }
 
-        public void SetPubSubRedisConnection(SafeRedisConnection safeRedisConnection)
+        public void SetPubSubRedisConnection()
         {
-            this.PubSubConnection = safeRedisConnection;
-
             this.SetupCacheInvalidationSubscription();
             this.SetupMultipleCacheInvalidationsSubscription();
         }
 
         private void SetupCacheInvalidationSubscription()
         {
-            this.RedisChannelSubscribe(SharedCache._cacheInvalidationChannel, (channel, data) =>
+            Cache.PubSub.Subscribe(SharedCache._cacheInvalidationChannel, data =>
                 {
-                    string key = Encoding.UTF8.GetString(data);
-                    if (this._alreadyInvalidated.Contains(key))
+                    if (this._alreadyInvalidated.Contains(data))
                     {
-                        this._alreadyInvalidated.Remove(key);
+                        this._alreadyInvalidated.Remove(data);
                     }
                     else
                     {
-// ReSharper disable RedundantStringFormatCall
 //                        Debug.WriteLine(String.Format("Removed key {0}.", key));
-// ReSharper restore RedundantStringFormatCall
-                        Cache.Memory.Remove(key);
+                        Cache.Memory.Remove(data);
                     }
                 });
         }
 
         private void SetupMultipleCacheInvalidationsSubscription()
         {
-            this.RedisChannelSubscribe(SharedCache._cacheMultipleInvalidationChannel, (channel, data) =>
+            Cache.PubSub.Subscribe(SharedCache._cacheMultipleInvalidationChannel, data =>
                 {
-                    string multipleKeys = Encoding.UTF8.GetString(data);
-                    string[] keys = multipleKeys.Split(
-                        new[] {SharedCache._cacheMultipleInvalidationSeparator}, StringSplitOptions.None);
+                    string[] keys = data.Split(new[] {Cache.PubSub.MultipleMessageSeparator}, StringSplitOptions.None);
 
                     foreach (string key in keys)
                     {
@@ -138,9 +107,7 @@ namespace BB.Caching.Shared
                         }
                         else
                         {
-// ReSharper disable RedundantStringFormatCall
 //                            Debug.WriteLine(String.Format("Removed key {0}.", key));
-// ReSharper restore RedundantStringFormatCall
                             Cache.Memory.Remove(key);
                         }
                     }
@@ -223,34 +190,6 @@ namespace BB.Caching.Shared
                 .SelectMany(n => n.GetWriteConnections())
                 .Distinct()
                 .ToArray();
-        }
-
-        public Task RedisChannelSubscribe(string channel, Action<string, byte[]> subscriptionCallback)
-        {
-            if (null == this._subscriptions)
-                this._subscriptions = this.PubSubConnection.GetConnection().GetOpenSubscriberChannel();
-
-            return this._subscriptions.Subscribe(channel, subscriptionCallback);
-        }
-
-        public Task<long> RedisChannelPublish(string channel, string value)
-        {
-            return this.PubSubConnection.GetConnection().Publish(channel, value);
-        }
-
-// ReSharper disable UnusedMember.Global
-        public Task RedisSubscribe(string channel, string key, Action subscriptionCallback)
-// ReSharper restore UnusedMember.Global
-        {
-            if (null == this._subscriptions)
-                this._subscriptions = this.PubSubConnection.GetConnection().GetOpenSubscriberChannel();
-
-            return this._subscriptions.Subscribe(channel, (_, subValue) =>
-                {
-                    string s = Encoding.UTF8.GetString(subValue);
-                    if (s == key)
-                        subscriptionCallback();
-                });
         }
     }
 }

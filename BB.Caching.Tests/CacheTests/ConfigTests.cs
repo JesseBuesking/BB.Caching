@@ -38,15 +38,22 @@ namespace BB.Caching.Tests.CacheTests
 
         public ConfigTests()
         {
-            Cache.Shared.AddRedisConnectionGroup(
-                new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
+            try
+            {
+                Cache.Shared.AddRedisConnectionGroup(
+                    new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
 
-            Cache.Shared.AddRedisConnectionGroup(
-                new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
+                Cache.Shared.AddRedisConnectionGroup(
+                    new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
 
-            Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27"));
+                Cache.PubSub.Configure(new SafeRedisConnection("192.168.2.27"));
+                Cache.Shared.SetPubSubRedisConnection();
 
-            Cache.Prepare();
+                Cache.Prepare();
+            }
+            catch (Exception)
+            {
+            }
 
             Cache.Shared.Keys.Remove(_key).Wait();
             Cache.Shared.Keys.Remove(_key2).Wait();
@@ -61,34 +68,15 @@ namespace BB.Caching.Tests.CacheTests
         [Fact]
         public void Set()
         {
-            bool isSet = false;
-            ConfigDummy value = null;
-            Cache.Config.SubscribeChange(_key, async () =>
-                {
-                    isSet = true;
-                    value = await Cache.Config.GetAsync<ConfigDummy>(_key);
-                });
-            Cache.Config.Set(_key, this._value);
+            Cache.Config.Set("imatest", "hello");
+            Thread.Sleep(200);
 
-            while (!isSet)
-                Thread.Sleep(100);
+            var value = Cache.Config.Get<string>("imatest");
+            Assert.Equal("hello", value);
+            Cache.Config.Remove("imatest", true);
 
-            Assert.True(isSet);
-            Assert.Equal(this._value.One, value.One);
-            Assert.Equal(this._value.Two, value.Two);
-
-            Cache.Config.Set(_key2, _value2, false);
-
-            ConfigDummy configDummy = Cache.Config.Get<ConfigDummy>(_key);
-            string value2 = Cache.Config.Get<string>(_key2);
-
-            Assert.Equal(this._value.One, configDummy.One);
-            Assert.Equal(this._value.Two, configDummy.Two);
-            Assert.Equal(_value2, value2);
-
-            Cache.Config.Remove(_key2, false);
-            value2 = Cache.Config.Get<string>(_key2);
-            Assert.Equal(null, value2);
+            value = Cache.Config.Get<string>("imatest");
+            Assert.Equal(null, value);
         }
 
         [Fact]

@@ -483,6 +483,7 @@ namespace BB.Caching.Shared
         /// </remarks>
 // ReSharper disable UnusedMethodReturnValue.Global
         Task<bool> SetBit(string key, long offset, bool value);
+
 // ReSharper restore UnusedMethodReturnValue.Global
 
         /// <summary>

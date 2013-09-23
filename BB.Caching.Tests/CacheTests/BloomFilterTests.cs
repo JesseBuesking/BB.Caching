@@ -16,13 +16,20 @@ namespace BB.Caching.Tests.CacheTests
 
         public BloomFilterTests()
         {
-            Cache.Shared.AddRedisConnectionGroup(
-                new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
+            try
+            {
+                Cache.Shared.AddRedisConnectionGroup(
+                    new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
 
-            Cache.Shared.AddRedisConnectionGroup(
-                new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
+                Cache.Shared.AddRedisConnectionGroup(
+                    new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
 
-            Cache.Shared.SetPubSubRedisConnection(new SafeRedisConnection("192.168.2.27"));
+                Cache.PubSub.Configure(new SafeRedisConnection("192.168.2.27"));
+                Cache.Shared.SetPubSubRedisConnection();
+            }
+            catch (Exception)
+            {
+            }
 
             Cache.Shared.Keys.Remove(_key).Wait();
         }

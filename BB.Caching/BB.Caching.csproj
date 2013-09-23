@@ -61,6 +61,7 @@
     <Compile Include="CacheConfig.cs" />
     <Compile Include="CacheRateLimiter.cs" />
     <Compile Include="CacheStatistic.cs" />
+    <Compile Include="CachePubSub.cs" />
     <Compile Include="Compression\Compressor.cs" />
     <Compile Include="Compression\GZipCompressor.cs" />
     <Compile Include="Compression\SmartCompressor.cs" />
