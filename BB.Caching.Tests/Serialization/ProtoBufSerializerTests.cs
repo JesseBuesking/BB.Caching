@@ -194,6 +194,14 @@ namespace BB.Caching.Tests.Serialization
         }
 
         [Fact]
+        public void SerializingAString()
+        {
+            string s = "I'm a string";
+
+            byte[] v = ProtoBufSerializer.Instance.Serialize(s);
+        }
+
+        [Fact]
         public void TestSerializePrimitives()
         {
 // ReSharper disable JoinDeclarationAndInitializer
