@@ -9,7 +9,7 @@ using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    public class RateLimiterTests : IDisposable
+    public class RateLimiterTests : TestBase
     {
         private const string _key = "key1";
 
@@ -18,12 +18,15 @@ namespace BB.Caching.Tests.CacheTests
             try
             {
                 Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
+                    new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, this.TestPort1)));
 
-                Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
+                if (0 != this.TestPort2)
+                {
+                    Cache.Shared.AddRedisConnectionGroup(
+                        new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
+                }
 
-                Cache.PubSub.Configure(new SafeRedisConnection("192.168.2.27"));
+                Cache.PubSub.Configure(new SafeRedisConnection(this.TestIp, this.TestPort1));
                 Cache.Shared.SetPubSubRedisConnection();
 
                 Cache.Prepare();
@@ -46,9 +49,9 @@ namespace BB.Caching.Tests.CacheTests
             const int asyncAmount = 30000;
             var asyncMs = Get(asyncAmount, _key);
 
-            Console.WriteLine("{0:#,##0.0#} async ops per ms", (float) asyncAmount/asyncMs);
-            Console.WriteLine();
-            Console.WriteLine("async ({0:#,##0}): {1:#,##0}ms", asyncAmount, asyncMs);
+            Console.WriteLine("Rate Limiter Ops:");
+            Console.WriteLine("\t{0:#,##0.0#} aops/ms", (float) asyncAmount/asyncMs);
+            Console.WriteLine("\t{0:#,##0.0#} aops/s", (float) asyncAmount*1000/asyncMs);
         }
 
         private static long Get(int amount, string key)

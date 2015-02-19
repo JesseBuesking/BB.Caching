@@ -12,7 +12,7 @@ namespace BB.Caching.Tests.Hashing
         [Fact]
         public void Murmur3VsMd5Performance()
         {
-            const int iterations = 3000000;
+            const int iterations = 300000;
             const string hashMe = "Hash me please!";
             var murmur3 = Murmur3.Instance;
             var md5 = new Md5();
@@ -39,7 +39,10 @@ namespace BB.Caching.Tests.Hashing
             }
             long md5Ms = sw.ElapsedMilliseconds;
 
-            Console.WriteLine("{0:#,##0.0#} murmur3 hashes per ms", (float) iterations/murmur3Ms);
+            Console.WriteLine("Murmur3 Hashes:");
+            Console.WriteLine("\t{0:#,##0.0#} ops/ms", (float) iterations/murmur3Ms);
+            Console.WriteLine("\t{0:#,##0.0#} ops/s", (float) iterations*1000/murmur3Ms);
+
             Console.WriteLine();
             Console.WriteLine("murmur3 vs md5: {0:#,##0.0#}%", ((float) murmur3Ms/(md5Ms))*100);
             Console.WriteLine("murmur3: {0:#,##0}ms", murmur3Ms);

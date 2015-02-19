@@ -9,7 +9,7 @@ using Xunit;
 
 namespace BB.Caching.Tests.CacheTests.SharedTests
 {
-    public class StringsTests : IDisposable
+    public class StringsTests : TestBase
     {
         private readonly Dictionary<string, string> _kvPs = new Dictionary<string, string>
             {
@@ -37,10 +37,13 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         public StringsTests()
         {
             Cache.Shared.AddRedisConnectionGroup(
-                new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
+                new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, this.TestPort1)));
 
-            Cache.Shared.AddRedisConnectionGroup(
-                new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
+            if (0 != this.TestPort2)
+            {
+                Cache.Shared.AddRedisConnectionGroup(
+                    new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
+            }
 
             Cache.Shared.Keys.Remove(this.Keys).Wait();
             foreach (var key in this._kvPs.Keys)
@@ -73,18 +76,20 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
                 Assert.Equal(value, Cache.Shared.Strings.GetString(key).Value);
             long syncMs = sw.ElapsedMilliseconds;
 
-            Console.WriteLine("{0:#,##0.0#} async reads per ms", (float) asyncAmount/asyncMs);
-            Console.WriteLine();
-            Console.WriteLine("shared async vs sync: {0:#,##0.0#}%", ((float) asyncMs/(syncMs*divisor))*100);
-            Console.WriteLine("async ({0:#,##0}): {1:#,##0}ms", asyncAmount, asyncMs);
-            Console.WriteLine("sync ({0:#,##0}): {1:#,##0}ms", syncAmount, syncMs);
+            Console.WriteLine("String Gets:");
+            Console.WriteLine("\tshared async vs sync: {0:#,##0.#}%", ((float) asyncMs/(syncMs*divisor))*100);
+            Console.WriteLine("\t{0:#,##0.0#} aops/ms", (float) asyncAmount/asyncMs);
+            Console.WriteLine("\t{0:#,##0.0#} aops/s", (float) asyncAmount*1000/asyncMs);
+            Console.WriteLine("\t{0:#,##0.0#} sops/ms", (float) syncAmount/syncMs);
+            Console.WriteLine("\t{0:#,##0.0#} sops/s", (float) syncAmount*1000/syncMs);
+
             Assert.True(asyncMs < (syncMs*divisor));
 
             Cache.Shared.Keys.Remove(key).Wait();
         }
 
         [Fact]
-        public void AsyncBenchmark()
+        public void AsyncPerformance()
         {
             const int asyncAmount = 100000;
             const string key = "s-s-gp-key";
@@ -95,9 +100,9 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
 
             var asyncMs = Get(asyncAmount, key, value);
 
-            Console.WriteLine("{0:#,##0.0#} async reads per ms", (float) asyncAmount/asyncMs);
-            Console.WriteLine();
-            Console.WriteLine("async ({0:#,##0}): {1:#,##0}ms", asyncAmount, asyncMs);
+            Console.WriteLine("String Gets:");
+            Console.WriteLine("\t{0:#,##0.0#} aops/ms", (float) asyncAmount/asyncMs);
+            Console.WriteLine("\t{0:#,##0.0#} aops/s", (float) asyncAmount*1000/asyncMs);
 
             Cache.Shared.Keys.Remove(key).Wait();
         }

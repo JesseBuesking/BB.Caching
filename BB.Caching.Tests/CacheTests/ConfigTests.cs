@@ -5,7 +5,7 @@ using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    public class ConfigTests : IDisposable
+    public class ConfigTests : TestBase
     {
 // ReSharper disable MemberCanBePrivate.Global
         public class ConfigDummy
@@ -41,12 +41,15 @@ namespace BB.Caching.Tests.CacheTests
             try
             {
                 Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
+                    new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, this.TestPort1)));
 
-                Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
+                if (0 != this.TestPort2)
+                {
+                    Cache.Shared.AddRedisConnectionGroup(
+                        new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
+                }
 
-                Cache.PubSub.Configure(new SafeRedisConnection("192.168.2.27"));
+                Cache.PubSub.Configure(new SafeRedisConnection(this.TestIp, this.TestPort1));
                 Cache.Shared.SetPubSubRedisConnection();
 
                 Cache.Prepare();

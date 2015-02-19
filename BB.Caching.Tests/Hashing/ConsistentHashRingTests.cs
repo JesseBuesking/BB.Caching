@@ -74,6 +74,7 @@ namespace BB.Caching.Tests.Hashing
             var md5Stats = this.RunTest(iterations, ring);
             long md5Ms = sw.ElapsedMilliseconds;
 
+            Console.WriteLine("Murmur vs MD5:");
             Console.WriteLine("iterations: {0:#,##0}", iterations);
             Console.WriteLine("replications: {0:#,##0}", replications);
             Console.WriteLine("murmur3 sdev: {0:#,##0.0#}%", murmur3Stats.SDev);
@@ -115,9 +116,9 @@ namespace BB.Caching.Tests.Hashing
                 ring.GetNode(i.ToString(CultureInfo.InvariantCulture));
             long murmurMs = sw.ElapsedMilliseconds;
 
-            Console.WriteLine("{0:#,##0.0#} lookups per ms", (float) iterations/murmurMs);
-            Console.WriteLine();
-            Console.WriteLine("total ms: {0:#,##0}ms", murmurMs);
+            Console.WriteLine("Murmur3 Hash Ring Performance:");
+            Console.WriteLine("\t{0:#,##0.0#} ops/ms", (float) iterations/murmurMs);
+            Console.WriteLine("\t{0:#,##0.0#} ops/s", (float) iterations*1000/murmurMs);
         }
 
         private Stats RunTest<TNode>(long iterations, ConsistentHashRing<TNode> ring)
@@ -173,8 +174,10 @@ namespace BB.Caching.Tests.Hashing
                 counts[ring.GetNode(s)] += 1;
             }
 
+            float perUnit = (float) iterations/nodes.Sum(x => x.Value);
+
             foreach (var kvp in counts.OrderBy(k => k.Key))
-                Console.WriteLine("{0}: {1}", kvp.Key, kvp.Value);
+                Console.WriteLine("{0}: {1:#,##0} (target {2:#,##0})", kvp.Key, kvp.Value, nodes[kvp.Key] * perUnit);
 
             double singleWeightExpectedValue = (double) iterations/nodes.Values.Sum();
             double allowedError = singleWeightExpectedValue*0.15;
@@ -214,8 +217,10 @@ namespace BB.Caching.Tests.Hashing
                 counts[ring.GetNode(s)] += 1;
             }
 
+            float perUnit = (float) iterations/nodes.Sum(x => x.Value);
+
             foreach (var kvp in counts.OrderBy(k => k.Key))
-                Console.WriteLine("{0}: {1}", kvp.Key, kvp.Value);
+                Console.WriteLine("{0}: {1:#,##0} (target {2:#,##0})", kvp.Key, kvp.Value, nodes[kvp.Key] * perUnit);
 
             double singleWeightExpectedValue = (double) iterations/nodes.Values.Sum();
             double allowedError = singleWeightExpectedValue*0.15;

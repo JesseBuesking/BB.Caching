@@ -8,7 +8,7 @@ using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    public class BloomFilterTests : IDisposable
+    public class BloomFilterTests : TestBase
     {
         private const string _key = "key1";
 
@@ -19,12 +19,15 @@ namespace BB.Caching.Tests.CacheTests
             try
             {
                 Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
+                    new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, this.TestPort1)));
 
-                Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
+                if (0 != this.TestPort2)
+                {
+                    Cache.Shared.AddRedisConnectionGroup(
+                        new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
+                }
 
-                Cache.PubSub.Configure(new SafeRedisConnection("192.168.2.27"));
+                Cache.PubSub.Configure(new SafeRedisConnection(this.TestIp, this.TestPort1));
                 Cache.Shared.SetPubSubRedisConnection();
             }
             catch (Exception)
@@ -58,9 +61,9 @@ namespace BB.Caching.Tests.CacheTests
             const int asyncAmount = 30000;
             var asyncMs = Set(asyncAmount, _key, "test");
 
-            Console.WriteLine("{0:#,##0.0#} async ops per ms", (float) asyncAmount/asyncMs);
-            Console.WriteLine();
-            Console.WriteLine("async ({0:#,##0}): {1:#,##0}ms", asyncAmount, asyncMs);
+            Console.WriteLine("BloomFilter Sets:");
+            Console.WriteLine("\t{0:#,##0.0#} aops/ms", (float) asyncAmount/asyncMs);
+            Console.WriteLine("\t{0:#,##0.0#} aops/s", (float) asyncAmount*1000/asyncMs);
         }
 
         [Fact]
@@ -71,9 +74,9 @@ namespace BB.Caching.Tests.CacheTests
             bloomFilter.Add(_key, "test");
             var asyncMs = Get(asyncAmount, _key, "test");
 
-            Console.WriteLine("{0:#,##0.0#} async ops per ms", (float) asyncAmount/asyncMs);
-            Console.WriteLine();
-            Console.WriteLine("async ({0:#,##0}): {1:#,##0}ms", asyncAmount, asyncMs);
+            Console.WriteLine("BloomFilter Gets:");
+            Console.WriteLine("\t{0:#,##0.0#} aops/ms", (float) asyncAmount/asyncMs);
+            Console.WriteLine("\t{0:#,##0.0#} aops/s", (float) asyncAmount*1000/asyncMs);
         }
 
         private static long Set(int amount, string key, string value)
@@ -116,7 +119,8 @@ namespace BB.Caching.Tests.CacheTests
 // ReSharper restore RedundantArgumentDefaultValue
             float fpPercentage = BloomTest(bloomFilter, 3, _key);
 
-            Console.WriteLine("fp: {0:#0.####}, {0:#0.####%}, or 1 in {1:#,###.0#}", fpPercentage, 1/fpPercentage);
+            Console.WriteLine("Target false positive percentage: {0:#0.#%}", _falsePositivePercentage);
+            Console.WriteLine("Actual: {0:#0.###%}, or 1 in {1:#,###.#}", fpPercentage, 1/fpPercentage);
             Assert.True(_falsePositivePercentage*2 >= fpPercentage);
         }
 

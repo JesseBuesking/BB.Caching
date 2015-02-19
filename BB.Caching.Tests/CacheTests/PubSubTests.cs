@@ -5,19 +5,22 @@ using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    public class PubSubTests
+    public class PubSubTests : TestBase
     {
         public PubSubTests()
         {
             try
             {
                 Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
+                    new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, this.TestPort1)));
 
-                Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
+                if (0 != this.TestPort2)
+                {
+                    Cache.Shared.AddRedisConnectionGroup(
+                        new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
+                }
 
-                Cache.PubSub.Configure(new SafeRedisConnection("192.168.2.27"));
+                Cache.PubSub.Configure(new SafeRedisConnection(this.TestIp, this.TestPort1));
                 Cache.Shared.SetPubSubRedisConnection();
 
                 Cache.Prepare();

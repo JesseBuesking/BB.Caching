@@ -9,7 +9,7 @@ using Xunit;
 
 namespace BB.Caching.Tests.Serialization
 {
-    public class ProtoBufSerializerTests
+    public class ProtoBufSerializerTests : TestBase
     {
         #region test classes
 
@@ -177,14 +177,18 @@ namespace BB.Caching.Tests.Serialization
 
         public ProtoBufSerializerTests()
         {
-            Cache.PubSub.Configure(new SafeRedisConnection("192.168.2.27"));
+            Cache.PubSub.Configure(new SafeRedisConnection(this.TestIp));
             try
             {
                 Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27")));
+                    new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, this.TestPort1)));
 
-                Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
+                if (0 != this.TestPort2)
+                {
+                    Cache.Shared.AddRedisConnectionGroup(
+                        new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
+                }
+
                 Cache.Shared.SetPubSubRedisConnection();
                 Cache.Prepare();
             }
@@ -352,14 +356,11 @@ namespace BB.Caching.Tests.Serialization
             }
             long binaryTime = sw.ElapsedTicks;
 
-            string debugInfo = "";
-            debugInfo += "auto vs proto size: " + ((float) serializeAuto.Length/serializeProto.Length)*100 + "%\n";
-            debugInfo += "auto vs binary size: " + ((float) serializeAuto.Length/serializeBinary.Length)*100 + "%\n";
-            debugInfo += "\n";
-            debugInfo += "auto vs proto speed: " + ((float) autoTime/protoTime)*100 + "%\n";
-            debugInfo += "auto vs binary speed: " + ((float) autoTime/binaryTime)*100 + "%\n";
-
-            Console.WriteLine(debugInfo);
+            Console.WriteLine("auto vs proto size: {0:0.00}%", ((float) serializeAuto.Length/serializeProto.Length)*100);
+            Console.WriteLine("auto vs binary size: {0:0.00}%", ((float) serializeAuto.Length/serializeBinary.Length)*100);
+            Console.WriteLine("");
+            Console.WriteLine("auto vs proto speed: {0:0.00}%", ((float) autoTime/protoTime)*100);
+            Console.WriteLine("auto vs binary speed: {0:0.00}%", ((float) autoTime/binaryTime)*100);
 
             Assert.Equal(serializeAuto.Length, serializeProto.Length);
             Assert.True(serializeAuto.Length < serializeBinary.Length);

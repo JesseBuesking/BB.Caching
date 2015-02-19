@@ -37,10 +37,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>BestBuddies.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=2.0.0.640, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
@@ -48,6 +49,7 @@
       <HintPath>..\packages\protobuf-net.2.0.0.640\lib\net40\protobuf-net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.XML" />
     <Reference Include="xunit">
@@ -74,6 +76,7 @@
     <Compile Include="CacheTests\SharedTests\KeysTests.cs" />
     <Compile Include="CacheTests\SharedTests\StringsTests.cs" />
     <Compile Include="CacheTests\StatisticTests.cs" />
+    <Compile Include="TestBase.cs" />
     <Compile Include="Compression\ComparisonTests.cs" />
     <Compile Include="Compression\GZipTests.cs" />
     <Compile Include="Compression\SmartTests.cs" />
@@ -84,7 +87,6 @@
     <Compile Include="Serialization\ProtoBufSerializerTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="BestBuddies.pfx" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

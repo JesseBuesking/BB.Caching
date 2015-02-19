@@ -75,7 +75,7 @@ namespace BB.Caching.Tests.Experimenting
         }
 
         [Fact]
-        public void MemorySpeedTrials()
+        public void MemorySpeedPerformance()
         {
             /*
              * Some numbers:
@@ -172,7 +172,7 @@ namespace BB.Caching.Tests.Experimenting
                 byte[] compress = Compressor.Instance.Compress(serialize);
                 cM.Set(key, compress, null);
             }
-            long compressSet = sw.ElapsedTicks;
+            long compressSet = sw.ElapsedMilliseconds;
 
             sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
@@ -183,7 +183,7 @@ namespace BB.Caching.Tests.Experimenting
                 OneLong result = Serializer.Instance.Deserialize<OneLong>(decompressed);
 #pragma warning restore 168
             }
-            long compressGet = sw.ElapsedTicks;
+            long compressGet = sw.ElapsedMilliseconds;
 
             MemoryCache sM = new MemoryCache("sM");
             sw = Stopwatch.StartNew();
@@ -192,7 +192,7 @@ namespace BB.Caching.Tests.Experimenting
                 byte[] serialize = Serializer.Instance.Serialize(value);
                 sM.Set(key, serialize, null);
             }
-            long serializeSet = sw.ElapsedTicks;
+            long serializeSet = sw.ElapsedMilliseconds;
 
             sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
@@ -202,7 +202,7 @@ namespace BB.Caching.Tests.Experimenting
                 OneLong result = Serializer.Instance.Deserialize<OneLong>(compressed);
 #pragma warning restore 168
             }
-            long serializeGet = sw.ElapsedTicks;
+            long serializeGet = sw.ElapsedMilliseconds;
 
             MemoryCache rM = new MemoryCache("rM");
             sw = Stopwatch.StartNew();
@@ -210,7 +210,7 @@ namespace BB.Caching.Tests.Experimenting
             {
                 rM.Set(key, value, null);
             }
-            long rawSet = sw.ElapsedTicks;
+            long rawSet = sw.ElapsedMilliseconds;
 
             sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
@@ -220,28 +220,24 @@ namespace BB.Caching.Tests.Experimenting
                 OneLong result = (OneLong) o;
 #pragma warning restore 168
             }
-            long rawGet = sw.ElapsedTicks;
+            long rawGet = sw.ElapsedMilliseconds;
 
-            string debugInfo = "";
-            debugInfo += "Serialized Set: " + serializeSet + "\n";
-            debugInfo += "Serialized Get: " + serializeGet + "\n";
-            debugInfo += "Compression Set: " + compressSet + "\n";
-            debugInfo += "Decompression Get: " + compressGet + "\n";
-            debugInfo += "Raw Set: " + rawSet + "\n";
-            debugInfo += "Raw Get: " + rawGet + "\n";
-
-            debugInfo += "\n";
-
-            debugInfo += "Serialized v Raw Get: " + ((float) serializeGet/rawGet) + "x\n";
-            debugInfo += "Serialized v Raw Set: " + ((float) serializeSet/rawSet) + "x\n";
-            debugInfo += "Compression v Raw Get: " + ((float) compressGet/rawGet) + "x\n";
-            debugInfo += "Compression v Raw Set: " + ((float) compressSet/rawSet) + "x\n";
-
-            Console.WriteLine(debugInfo);
+            Console.WriteLine("Memory Speed: Ops per Millisecond");
+            Console.WriteLine("Serialized Set: {0:#,##0.0#}", (float) iterations/serializeSet);
+            Console.WriteLine("Serialized Get: {0:#,##0.0#}", (float) iterations/serializeGet);
+            Console.WriteLine("Compression Set: {0:#,##0.0#}", (float) iterations/compressSet);
+            Console.WriteLine("Compression Get: {0:#,##0.0#}", (float) iterations/compressGet);
+            Console.WriteLine("Raw Set: {0:#,##0.0#}", (float) iterations/rawSet);
+            Console.WriteLine("Raw Get: {0:#,##0.0#}", (float) iterations/rawGet);
+            Console.WriteLine("");
+            Console.WriteLine("Serialized vs Raw Get: {0:0.00}x", (float) serializeGet/rawGet);
+            Console.WriteLine("Serialized vs Raw Set: {0:0.00}x", (float) serializeSet/rawSet);
+            Console.WriteLine("Compression vs Raw Get: {0:0.00}x", (float) compressGet/rawGet);
+            Console.WriteLine("Compression vs Raw Set: {0:0.00}x", (float) compressSet/rawSet);
         }
 
         [Fact]
-        public void MemorySizeTrials()
+        public void MemorySizePerformance()
         {
             /*
              * Some numbers:
@@ -264,8 +260,8 @@ namespace BB.Caching.Tests.Experimenting
              * 100,000                  100,000                      50.1%                         0.2%
              */
 
-            const int maxStringSize = 100000;
-            const int repeatStringSize = 100000;
+            const int maxStringSize = 10000;
+            const int repeatStringSize = 10;
             const int iterations = 10000;
             const string key = "impt-key";
 
@@ -354,17 +350,13 @@ namespace BB.Caching.Tests.Experimenting
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
-            string debugInfo = "";
-            debugInfo += "Serialized Memory: " + serializeMemory + "b\n";
-            debugInfo += "Compression Memory: " + compressMemory + "b\n";
-            debugInfo += "Raw Memory: " + rawMemory + "b\n";
-
-            debugInfo += "\n";
-
-            debugInfo += "Serialized v Raw Memory: " + ((float) serializeMemory/rawMemory)*100 + "%\n";
-            debugInfo += "Compression v Raw Memory: " + ((float) compressMemory/rawMemory)*100 + "%\n";
-
-            Console.WriteLine(debugInfo);
+            Console.WriteLine("Memory Size:");
+            Console.WriteLine("Serialized Memory: {0:#,##0.#}KB", serializeMemory/1024.0);
+            Console.WriteLine("Compression Memory: {0:#,##0.#}KB", compressMemory/1024.0);
+            Console.WriteLine("Raw Memory: {0:#,##0.#}KB", rawMemory/1024.0);
+            Console.WriteLine("");
+            Console.WriteLine("Serialized vs Raw Memory: {0:0.00}%", ((float) serializeMemory/rawMemory)*100);
+            Console.WriteLine("Compression vs Raw Memory: {0:0.00}%", ((float) compressMemory/rawMemory)*100);
         }
     }
 }

@@ -7,7 +7,7 @@ using Xunit;
 
 namespace BB.Caching.Tests.CacheTests.SharedTests
 {
-    public class KeysTests : IDisposable
+    public class KeysTests : TestBase
     {
         private readonly Dictionary<string, string> _kvPs = new Dictionary<string, string>
             {
@@ -37,14 +37,17 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
             try
             {
                 Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-0", new SafeRedisConnection("192.168.2.27", 6379,
+                    new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, 6379,
                         // Needed for DebugObject
                         allowAdmin: true)));
 
-                Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-1", new SafeRedisConnection("192.168.2.27", 6380)));
+                if (0 != this.TestPort2)
+                {
+                    Cache.Shared.AddRedisConnectionGroup(
+                        new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
+                }
 
-                Cache.PubSub.Configure(new SafeRedisConnection("192.168.2.27"));
+                Cache.PubSub.Configure(new SafeRedisConnection(this.TestIp));
                 Cache.Shared.SetPubSubRedisConnection();
             }
             catch (Exception)
