@@ -43,8 +43,9 @@
     <Reference Include="BookSleeve">
       <HintPath>..\packages\BookSleeve.1.3.38\lib\BookSleeve.dll</HintPath>
     </Reference>
-    <Reference Include="MurmurHash">
-      <HintPath>..\packages\murmurhash-net.1.0.0\lib\MurmurHash.dll</HintPath>
+    <Reference Include="MurmurHash, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1fc8757597981986, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\murmurhash.1.0.0\lib\net45\MurmurHash.dll</HintPath>
     </Reference>
     <Reference Include="protobuf-net">
       <HintPath>..\packages\protobuf-net.2.0.0.640\lib\net40\protobuf-net.dll</HintPath>
