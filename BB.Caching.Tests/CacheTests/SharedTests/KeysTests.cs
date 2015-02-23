@@ -92,16 +92,16 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
             Cache.Shared.Strings.Set(this.Key, this.Value).Wait();
             Assert.True(Cache.Shared.Keys.Exists(this.Key).Result);
 
-            Thread.Sleep(1000);
+            Thread.Sleep(100);
             Assert.True(Cache.Shared.Keys.Exists(this.Key).Result);
 
-            Cache.Shared.Keys.Expire(this.Key, TimeSpan.FromSeconds(2));
+            Cache.Shared.Keys.Expire(this.Key, TimeSpan.FromSeconds(.5));
             Assert.True(Cache.Shared.Keys.Exists(this.Key).Result);
 
-            Thread.Sleep(1000);
+            Thread.Sleep(400);
             Assert.True(Cache.Shared.Keys.Exists(this.Key).Result);
 
-            Thread.Sleep(1001);
+            Thread.Sleep(150);
             Assert.False(Cache.Shared.Keys.Exists(this.Key).Result);
         }
 
@@ -111,18 +111,17 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
             Cache.Shared.Strings.Set(this.Key, this.Value).Wait();
             Assert.True(Cache.Shared.Keys.Exists(this.Key).Result);
 
-            Thread.Sleep(1000);
+            Thread.Sleep(100);
             Assert.True(Cache.Shared.Keys.Exists(this.Key).Result);
 
-            Cache.Shared.Keys.Expire(this.Key, TimeSpan.FromSeconds(2));
+            Cache.Shared.Keys.Expire(this.Key, TimeSpan.FromSeconds(.5));
             Assert.True(Cache.Shared.Keys.Exists(this.Key).Result);
 
-            Thread.Sleep(1000);
+            Thread.Sleep(400);
             Assert.True(Cache.Shared.Keys.Exists(this.Key).Result);
-
             Assert.True(Cache.Shared.Keys.Persist(this.Key).Result);
 
-            Thread.Sleep(1001);
+            Thread.Sleep(150);
             Assert.True(Cache.Shared.Keys.Exists(this.Key).Result);
         }
 
@@ -166,11 +165,11 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         {
             Cache.Shared.Strings.Set(this.Key, this.Value).Wait();
             Assert.Equal(null, Cache.Shared.Keys.TimeToLive(this.Key).Result);
-            Cache.Shared.Keys.Expire(this.Key, TimeSpan.FromSeconds(3)).Wait();
-            Assert.True(TimeSpan.FromSeconds(3) - Cache.Shared.Keys.TimeToLive(this.Key).Result < TimeSpan.FromSeconds(.01));
-            Thread.Sleep(2000);
-            Assert.True(TimeSpan.FromSeconds(1) - Cache.Shared.Keys.TimeToLive(this.Key).Result < TimeSpan.FromSeconds(.01));
-            Thread.Sleep(1100);
+            Cache.Shared.Keys.Expire(this.Key, TimeSpan.FromSeconds(.5)).Wait();
+            Assert.True(TimeSpan.FromSeconds(.5) - Cache.Shared.Keys.TimeToLive(this.Key).Result < TimeSpan.FromSeconds(.01));
+            Thread.Sleep(250);
+            Assert.True(TimeSpan.FromSeconds(.25) - Cache.Shared.Keys.TimeToLive(this.Key).Result < TimeSpan.FromSeconds(.01));
+            Thread.Sleep(260);
             Assert.False(Cache.Shared.Keys.Exists(this.Key).Result);
         }
 

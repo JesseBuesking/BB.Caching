@@ -295,7 +295,7 @@ namespace BB.Caching.Tests.Serialization
         [Fact]
         public void PerformanceComparison()
         {
-            const int iterations = 1000000;
+            const int iterations = 300000;
             var auto = new TestClass(12)
                 {
                     FirstName = "Jesse",

@@ -300,9 +300,9 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         [Fact]
         public void SetStringExpires()
         {
-            Cache.Shared.Strings.Set(this.Key, this.Value, TimeSpan.FromSeconds(2)).Wait();
+            Cache.Shared.Strings.Set(this.Key, this.Value, TimeSpan.FromSeconds(.2)).Wait();
             Assert.False(Cache.Shared.Strings.GetString(this.Key).Result.IsNull);
-            Thread.Sleep(2010);
+            Thread.Sleep(210);
             Assert.True(Cache.Shared.Strings.GetString(this.Key).Result.IsNull);
         }
 
@@ -440,27 +440,27 @@ namespace BB.Caching.Tests.CacheTests.SharedTests
         [Fact]
         public void TakeLock()
         {
-            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(2)).Result);
-            Assert.False(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(2)).Result);
+            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(.2)).Result);
+            Assert.False(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(.2)).Result);
 
             Cache.Shared.Strings.ReleaseLock(this.Key, this.Value).Wait();
-            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(2)).Result);
+            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(.2)).Result);
 
-            Thread.Sleep(2010);
-            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(2)).Result);
+            Thread.Sleep(210);
+            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(.2)).Result);
         }
 
         [Fact]
         public void ReleaseLock()
         {
-            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(2)).Result);
-            Assert.False(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(2)).Result);
+            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(.2)).Result);
+            Assert.False(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(.2)).Result);
 
             Cache.Shared.Strings.ReleaseLock(this.Key, this.Value).Wait();
-            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(2)).Result);
+            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(.2)).Result);
 
-            Thread.Sleep(2010);
-            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(2)).Result);
+            Thread.Sleep(210);
+            Assert.True(Cache.Shared.Strings.TakeLock(this.Key, this.Value, TimeSpan.FromSeconds(.2)).Result);
         }
 
         [Fact]

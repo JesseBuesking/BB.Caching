@@ -44,7 +44,7 @@ namespace BB.Caching.Tests.Hashing
         [Fact]
         public void Murmur3VsMd5HashRingPerformanceTests()
         {
-            const long iterations = 1000000;
+            const long iterations = 300000;
             const int replications = 120;
             var nodes = new Dictionary<string, int>
                 {
@@ -92,7 +92,7 @@ namespace BB.Caching.Tests.Hashing
         [Fact]
         public void Murmur3HashRingPerformanceTest()
         {
-            const long iterations = 10000000;
+            const long iterations = 3000000;
             const int replications = 500;
             var nodes = new Dictionary<string, int>
                 {
@@ -151,7 +151,7 @@ namespace BB.Caching.Tests.Hashing
         [Fact]
         public void NodeWeightSameTest()
         {
-            const long iterations = 1000000;
+            const long iterations = 100000;
             const int replications = 512;
             var nodes = new Dictionary<string, int>
                 {
@@ -192,7 +192,7 @@ namespace BB.Caching.Tests.Hashing
         [Fact]
         public void NodeWeightVariesTest()
         {
-            const long iterations = 1000000;
+            const long iterations = 100000;
             const int replications = 512;
             var nodes = new Dictionary<string, int>
                 {

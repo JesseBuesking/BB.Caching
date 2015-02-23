@@ -38,7 +38,7 @@ namespace BB.Caching.Tests.CacheTests
         [Fact]
         public void Performance()
         {
-            const int asyncAmount = 30000;
+            const int asyncAmount = 50000;
             var asyncMs = Get(asyncAmount, _key);
 
             Console.WriteLine("Rate Limiter Ops:");
@@ -76,78 +76,66 @@ namespace BB.Caching.Tests.CacheTests
         [Fact]
         public void Increment()
         {
-            TimeSpan span = TimeSpan.FromSeconds(5);
-            TimeSpan bucketSize = TimeSpan.FromSeconds(1);
+            TimeSpan span = TimeSpan.FromSeconds(.4);
+            TimeSpan bucketSize = TimeSpan.FromSeconds(.1);
 
             RedisResult result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(2, (long)result);
 
-            Thread.Sleep(1000);
+            Thread.Sleep(100);
             result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(4, (long)result);
 
-            Thread.Sleep(1000);
+            Thread.Sleep(100);
             result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(6, (long)result);
 
-            Thread.Sleep(1000);
+            Thread.Sleep(100);
             result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(8, (long)result);
 
-            Thread.Sleep(2000);
-            // ReSharper disable RedundantArgumentDefaultValue
+            Thread.Sleep(100);
             result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 1).Result;
-            // ReSharper restore RedundantArgumentDefaultValue
             Assert.Equal(7, (long)result);
 
-            Thread.Sleep(2000);
-            // ReSharper disable RedundantArgumentDefaultValue
+            Thread.Sleep(100);
             result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 1).Result;
-            // ReSharper restore RedundantArgumentDefaultValue
-            Assert.Equal(4, (long)result);
+            Assert.Equal(6, (long)result);
 
-            Thread.Sleep(2000);
-            // ReSharper disable RedundantArgumentDefaultValue
+            Thread.Sleep(100);
             result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 1).Result;
-            // ReSharper restore RedundantArgumentDefaultValue
-            Assert.Equal(3, (long)result);
+            Assert.Equal(5, (long)result);
 
-            Thread.Sleep(2000);
-            // ReSharper disable RedundantArgumentDefaultValue
+            Thread.Sleep(200);
             result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 1).Result;
-            // ReSharper restore RedundantArgumentDefaultValue
             Assert.Equal(3, (long)result);
         }
 
         [Fact]
         public void Edge()
         {
-            TimeSpan span = TimeSpan.FromSeconds(4);
-            TimeSpan bucketSize = TimeSpan.FromSeconds(1);
+            TimeSpan span = TimeSpan.FromSeconds(.2);
+            TimeSpan bucketSize = TimeSpan.FromSeconds(.05);
 
             RedisResult result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(2, (long)result);
-            Thread.Sleep(2000);
+            Thread.Sleep(100);
 
             result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
             Assert.Equal(4, (long)result);
-            Thread.Sleep(2000);
+            Thread.Sleep(100);
+
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 1).Result;
+            Assert.Equal(3, (long)result);
+            Thread.Sleep(100);
+
+            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 1).Result;
+            Assert.Equal(2, (long)result);
+            Thread.Sleep(100);
 
             result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
-            Assert.Equal(4, (long)result);
-            Thread.Sleep(2000);
-
-            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
-            Assert.Equal(4, (long)result);
-            Thread.Sleep(2000);
-
-            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
-            Assert.Equal(4, (long)result);
-            Thread.Sleep(2000);
-
-            result = Cache.RateLimiter.Increment(_key, span, bucketSize, 10, 2).Result;
-            Assert.Equal(4, (long)result);
-            Thread.Sleep(2000);
+            Assert.Equal(3, (long)result);
+            Thread.Sleep(100);
         }
 
         public void SetFixture(DefaultTestFixture data)

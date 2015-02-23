@@ -156,7 +156,7 @@ namespace BB.Caching.Tests.Experimenting
              * Compression v Raw Set:   175.661x        99.6618x
              */
 
-            const int iterations = 100000;
+            const int iterations = 30000;
             const string key = "impt-key";
 
             var value = new OneLong
@@ -262,7 +262,7 @@ namespace BB.Caching.Tests.Experimenting
 
             const int maxStringSize = 10000;
             const int repeatStringSize = 10;
-            const int iterations = 10000;
+            const int iterations = 1000;
             const string key = "impt-key";
 
             GC.Collect();
