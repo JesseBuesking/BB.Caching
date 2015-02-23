@@ -89,12 +89,9 @@
     <Compile Include="Serialization\ISerializer.cs" />
     <Compile Include="Serialization\ProtoBufSerializer.cs" />
     <Compile Include="Serialization\Serializer.cs" />
-    <Compile Include="Shared\IHashes.cs" />
-    <Compile Include="Shared\IKeys.cs" />
     <Compile Include="Shared\ILists.cs" />
     <Compile Include="Shared\ISets.cs" />
     <Compile Include="Shared\ISortedSets.cs" />
-    <Compile Include="Shared\IStrings.cs" />
     <Compile Include="Shared\SharedCache.cs" />
     <Compile Include="Shared\SharedHashesCache.cs" />
     <Compile Include="Shared\SharedKeysCache.cs" />

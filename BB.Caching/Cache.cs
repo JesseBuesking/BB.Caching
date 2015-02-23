@@ -1,5 +1,4 @@
 ﻿using BB.Caching.InMemory;
-using BB.Caching.Shared;
 
 namespace BB.Caching
 {
@@ -8,14 +7,6 @@ namespace BB.Caching
     /// </summary>
     public static partial class Cache
     {
-        /// <summary>
-        /// A cache that is shared across all servers.
-        /// </summary>
-        public static SharedCache Shared
-        {
-            get { return SharedCache.Instance; }
-        }
-
         /// <summary>
         /// An in-memory cache specific to the current machine.
         /// </summary>

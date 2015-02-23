@@ -8,7 +8,7 @@ using StackExchange.Redis;
 
 namespace BB.Caching.Shared
 {
-    public partial class SharedCache
+    public class SharedCache
     {
         private static readonly Lazy<SharedCache> _lazy = new Lazy<SharedCache>(
             () => new SharedCache(), LazyThreadSafetyMode.ExecutionAndPublication);
@@ -23,11 +23,6 @@ namespace BB.Caching.Shared
             get { return 0; }
         }
 
-        public bool QueueJump
-        {
-            get { return false; }
-        }
-
         private readonly Random _random = new Random(0);
 
         private readonly ConsistentHashRing<RedisConnectionGroup> _consistentHashRing =
@@ -36,12 +31,12 @@ namespace BB.Caching.Shared
         /// <summary>
         /// The channel used to publish and subscribe to cache invalidation requests.
         /// </summary>
-        private const string _cacheInvalidationChannel = "cache/invalidate";
+        internal const string CACHE_INVALIDATION_CHANNEL = "cache/invalidate";
 
         /// <summary>
         /// The channel used to publish and subscribe to multiple cache invalidation requests.
         /// </summary>
-        private const string _cacheMultipleInvalidationChannel = "cache/m-invalidate";
+        internal const string CACHE_MULTIPLE_INVALIDATION_CHANNEL = "cache/m-invalidate";
 
         /// <summary>
         /// Contains all the keys that have already been invalidated.
@@ -52,7 +47,7 @@ namespace BB.Caching.Shared
         /// called)
         /// </para>
         /// </summary>
-        private readonly HashSet<string> _alreadyInvalidated = new HashSet<string>();
+        internal readonly HashSet<string> AlreadyInvalidated = new HashSet<string>();
 
         private SharedCache()
         {
@@ -79,11 +74,11 @@ namespace BB.Caching.Shared
 
         private void SetupCacheInvalidationSubscription()
         {
-            Cache.PubSub.Subscribe(SharedCache._cacheInvalidationChannel, data =>
+            Cache.PubSub.Subscribe(SharedCache.CACHE_INVALIDATION_CHANNEL, data =>
                 {
-                    if (this._alreadyInvalidated.Contains(data))
+                    if (this.AlreadyInvalidated.Contains(data))
                     {
-                        this._alreadyInvalidated.Remove(data);
+                        this.AlreadyInvalidated.Remove(data);
                     }
                     else
                     {
@@ -95,15 +90,15 @@ namespace BB.Caching.Shared
 
         private void SetupMultipleCacheInvalidationsSubscription()
         {
-            Cache.PubSub.Subscribe(SharedCache._cacheMultipleInvalidationChannel, data =>
+            Cache.PubSub.Subscribe(SharedCache.CACHE_MULTIPLE_INVALIDATION_CHANNEL, data =>
                 {
                     string[] keys = data.Split(new[] {Cache.PubSub.MultipleMessageSeparator}, StringSplitOptions.None);
 
                     foreach (string key in keys)
                     {
-                        if (this._alreadyInvalidated.Contains(key))
+                        if (this.AlreadyInvalidated.Contains(key))
                         {
-                            this._alreadyInvalidated.Remove(key);
+                            this.AlreadyInvalidated.Remove(key);
                         }
                         else
                         {

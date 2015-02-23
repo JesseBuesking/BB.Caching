@@ -1,5 +1,6 @@
 ﻿using System;
 using BB.Caching.Connection;
+using BB.Caching.Shared;
 using StackExchange.Redis;
 
 namespace BB.Caching.Tests
@@ -24,7 +25,7 @@ namespace BB.Caching.Tests
 
         public DefaultTestFixture()
         {
-            Cache.Shared.AddRedisConnectionGroup(new RedisConnectionGroup(
+            SharedCache.Instance.AddRedisConnectionGroup(new RedisConnectionGroup(
                 "node-0",
                 ConnectionMultiplexer.Connect(String.Format(
                     // allowAdmin is needed for some tests
@@ -34,7 +35,7 @@ namespace BB.Caching.Tests
 
             if (0 != this.TestPort2)
             {
-                Cache.Shared.AddRedisConnectionGroup(new RedisConnectionGroup(
+                SharedCache.Instance.AddRedisConnectionGroup(new RedisConnectionGroup(
                     "node-1",
                     ConnectionMultiplexer.Connect(String.Format("{0}:{1}", this.TestIp, this.TestPort1)))
                 );
@@ -46,7 +47,7 @@ namespace BB.Caching.Tests
 
             try
             {
-                Cache.Shared.SetPubSubRedisConnection();
+                SharedCache.Instance.SetPubSubRedisConnection();
             }
             catch (Exception ex)
             {
