@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BB.Caching.Compression
 {
-    public class GZipCompressor : ICompress
+    public class GZipCompressor
     {
         private static readonly Lazy<GZipCompressor> _lazy = new Lazy<GZipCompressor>(
             () => new GZipCompressor(), LazyThreadSafetyMode.ExecutionAndPublication);

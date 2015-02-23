@@ -168,8 +168,8 @@ namespace BB.Caching.Tests.Experimenting
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
             {
-                byte[] serialize = Serializer.Instance.Serialize(value);
-                byte[] compress = Compressor.Instance.Compress(serialize);
+                byte[] serialize = ProtoBufSerializer.Instance.Serialize(value);
+                byte[] compress = SmartCompressor.Instance.Compress(serialize);
                 cM.Set(key, compress, null);
             }
             long compressSet = sw.ElapsedMilliseconds;
@@ -178,10 +178,8 @@ namespace BB.Caching.Tests.Experimenting
             for (int i = 0; i < iterations; i++)
             {
                 byte[] compressed = (byte[]) cM.Get(key);
-                byte[] decompressed = Compressor.Instance.Decompress(compressed);
-#pragma warning disable 168
-                OneLong result = Serializer.Instance.Deserialize<OneLong>(decompressed);
-#pragma warning restore 168
+                byte[] decompressed = SmartCompressor.Instance.Decompress(compressed);
+                ProtoBufSerializer.Instance.Deserialize<OneLong>(decompressed);
             }
             long compressGet = sw.ElapsedMilliseconds;
 
@@ -189,7 +187,7 @@ namespace BB.Caching.Tests.Experimenting
             sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
             {
-                byte[] serialize = Serializer.Instance.Serialize(value);
+                byte[] serialize = ProtoBufSerializer.Instance.Serialize(value);
                 sM.Set(key, serialize, null);
             }
             long serializeSet = sw.ElapsedMilliseconds;
@@ -198,9 +196,7 @@ namespace BB.Caching.Tests.Experimenting
             for (int i = 0; i < iterations; i++)
             {
                 byte[] compressed = (byte[]) sM.Get(key);
-#pragma warning disable 168
-                OneLong result = Serializer.Instance.Deserialize<OneLong>(compressed);
-#pragma warning restore 168
+                ProtoBufSerializer.Instance.Deserialize<OneLong>(compressed);
             }
             long serializeGet = sw.ElapsedMilliseconds;
 
@@ -215,10 +211,7 @@ namespace BB.Caching.Tests.Experimenting
             sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
             {
-                object o = rM.Get(key);
-#pragma warning disable 168
-                OneLong result = (OneLong) o;
-#pragma warning restore 168
+                rM.Get(key);
             }
             long rawGet = sw.ElapsedMilliseconds;
 
@@ -280,8 +273,8 @@ namespace BB.Caching.Tests.Experimenting
                         Name = GenerateString(maxStringSize, repeatStringSize)
                     };
 
-                byte[] s = Serializer.Instance.Serialize(m);
-                byte[] c = Compressor.Instance.CompressAsync(s).Result;
+                byte[] s = ProtoBufSerializer.Instance.Serialize(m);
+                byte[] c = SmartCompressor.Instance.CompressAsync(s).Result;
                 cM.Set(key + i.ToString(CultureInfo.InvariantCulture), c, null);
             }
             long mCe = GC.GetTotalMemory(true);
@@ -308,7 +301,7 @@ namespace BB.Caching.Tests.Experimenting
                         Name = GenerateString(maxStringSize, repeatStringSize)
                     };
 
-                byte[] s = Serializer.Instance.Serialize(m);
+                byte[] s = ProtoBufSerializer.Instance.Serialize(m);
                 sM.Set(key + i.ToString(CultureInfo.InvariantCulture), s, null);
             }
             long mSe = GC.GetTotalMemory(true);

@@ -9,34 +9,34 @@ namespace BB.Caching.Tests.Compression
 {
     public class GZipTests
     {
-        private const string _value = "I am the string that we want to compress, but it's never smaller! :(";
+        private const string VALUE = "I am the string that we want to compress, but it's never smaller! :(";
 
         [Fact]
         public void SynchronousCompressionTest()
         {
-            byte[] raw = Encoding.UTF8.GetBytes(_value);
-            byte[] compress = GZipCompressor.Instance.Compress(_value);
+            byte[] raw = Encoding.UTF8.GetBytes(VALUE);
+            byte[] compress = GZipCompressor.Instance.Compress(VALUE);
 
             Assert.NotEqual(raw, compress);
 
             byte[] decompress = GZipCompressor.Instance.Decompress(compress);
             string actual = Encoding.UTF8.GetString(decompress);
 
-            Assert.Equal(_value, actual);
+            Assert.Equal(VALUE, actual);
         }
 
         [Fact]
         public void AsynchronousCompressionTest()
         {
-            byte[] raw = Encoding.UTF8.GetBytes(_value);
-            byte[] compress = GZipCompressor.Instance.CompressAsync(_value).Result;
+            byte[] raw = Encoding.UTF8.GetBytes(VALUE);
+            byte[] compress = GZipCompressor.Instance.CompressAsync(VALUE).Result;
 
             Assert.NotEqual(raw, compress);
 
             byte[] decompress = GZipCompressor.Instance.DecompressAsync(compress).Result;
             string actual = Encoding.UTF8.GetString(decompress);
 
-            Assert.Equal(_value, actual);
+            Assert.Equal(VALUE, actual);
         }
 
         [Fact(Skip = "Skipping")]
@@ -53,7 +53,7 @@ namespace BB.Caching.Tests.Compression
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
             {
-                compressSync = GZipCompressor.Instance.Compress(_value);
+                compressSync = GZipCompressor.Instance.Compress(VALUE);
 // ReSharper disable RedundantAssignment
                 decompressSync = GZipCompressor.Instance.Decompress(compressSync);
 // ReSharper restore RedundantAssignment
@@ -71,7 +71,7 @@ namespace BB.Caching.Tests.Compression
             {
                 Task.Run(async () =>
                     {
-                        compressAsync = await GZipCompressor.Instance.CompressAsync(_value);
+                        compressAsync = await GZipCompressor.Instance.CompressAsync(VALUE);
                         decompressAsync = await GZipCompressor.Instance.DecompressAsync(compressAsync);
                     });
             }

@@ -7,14 +7,14 @@ using ProtoBuf.Meta;
 
 namespace BB.Caching.Serialization
 {
-    public class ProtoBufSerializer : ISerializer
+    public class ProtoBufSerializer
     {
         private static readonly Lazy<ProtoBufSerializer> _lazy = new Lazy<ProtoBufSerializer>(
             () => new ProtoBufSerializer(), LazyThreadSafetyMode.ExecutionAndPublication);
 
-        private const string _protoIndicesRedisKey = "protoindices";
+        private const string PROTO_INDICES_REDIS_KEY = "protoindices";
 
-        public static ISerializer Instance
+        public static ProtoBufSerializer Instance
         {
             get { return ProtoBufSerializer._lazy.Value; }
         }
@@ -33,7 +33,7 @@ namespace BB.Caching.Serialization
         /// </summary>
         private void UpdateSharedCacheUsingTypeIndices()
         {
-            Cache.Config.Set(ProtoBufSerializer._protoIndicesRedisKey, this._typeIndices);
+            Cache.Config.Set(ProtoBufSerializer.PROTO_INDICES_REDIS_KEY, this._typeIndices);
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace BB.Caching.Serialization
         private void UpdateTypeIndicesFromSharedCache()
         {
             var typeIndices = Cache.Config.Get<Dictionary<string, Dictionary<string, int>>>(
-                ProtoBufSerializer._protoIndicesRedisKey);
+                ProtoBufSerializer.PROTO_INDICES_REDIS_KEY);
 
             this._typeIndices = typeIndices
                 ?? this._typeIndices

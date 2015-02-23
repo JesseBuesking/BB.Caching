@@ -33,18 +33,18 @@ namespace BB.Caching.Tests.Compression
             }
         }
 
-        private const string _valueBadCompression =
+        private const string VALUE_BAD_COMPRESSION =
             "I am the string that we want to compress, but it's never smaller! :(";
 
-        private const string _valueGoodCompression =
+        private const string VALUE_GOOD_COMPRESSION =
             "I am the string that we want to compress, but it's never smaller! :(" +
                 "I am the string that we want to compress, but it's never smaller! :(";
 
         [Fact]
         public void GZipVsSmartBadCompressionTest()
         {
-            byte[] smartCompress = SmartCompressor.Instance.CompressAsync(_valueBadCompression).Result;
-            byte[] gzipCompress = GZipCompressor.Instance.CompressAsync(_valueBadCompression).Result;
+            byte[] smartCompress = SmartCompressor.Instance.CompressAsync(VALUE_BAD_COMPRESSION).Result;
+            byte[] gzipCompress = GZipCompressor.Instance.CompressAsync(VALUE_BAD_COMPRESSION).Result;
 
             Assert.True(gzipCompress.Length > smartCompress.Length);
         }
@@ -52,8 +52,8 @@ namespace BB.Caching.Tests.Compression
         [Fact]
         public void GZipVsSmartGoodCompressionTest()
         {
-            byte[] smartCompress = SmartCompressor.Instance.CompressAsync(_valueGoodCompression).Result;
-            byte[] gzipCompress = GZipCompressor.Instance.CompressAsync(_valueGoodCompression).Result;
+            byte[] smartCompress = SmartCompressor.Instance.CompressAsync(VALUE_GOOD_COMPRESSION).Result;
+            byte[] gzipCompress = GZipCompressor.Instance.CompressAsync(VALUE_GOOD_COMPRESSION).Result;
 
             Assert.True(gzipCompress.Length + 1 == smartCompress.Length);
         }

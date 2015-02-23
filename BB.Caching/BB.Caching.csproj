@@ -56,52 +56,55 @@
     <Reference Include="System.Runtime.Caching" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cache.cs" />
     <Compile Include="CacheAggregate.cs" />
-    <Compile Include="CacheBloomFilter.cs" />
-    <Compile Include="CacheCompaction.cs" />
-    <Compile Include="CacheCompression.cs" />
-    <Compile Include="CacheConfig.cs" />
-    <Compile Include="CacheRateLimiter.cs" />
-    <Compile Include="CacheStatistic.cs" />
-    <Compile Include="CachePubSub.cs" />
-    <Compile Include="Compression\Compressor.cs" />
+    <Compile Include="Caching\Cache.cs" />
+    <Compile Include="Caching\CompressOption.cs" />
+    <Compile Include="Caching\Config.cs" />
+    <Compile Include="Caching\Memory\InMemoryCompactCache.cs" />
+    <Compile Include="Caching\Memory\InMemoryCompressCache.cs" />
+    <Compile Include="Caching\Memory\Store.cs" />
+    <Compile Include="Caching\Memory\Strings.cs" />
+    <Compile Include="Caching\Shared\ILists.cs" />
+    <Compile Include="Caching\Shared\ISets.cs" />
+    <Compile Include="Caching\Shared\ISortedSets.cs" />
+    <Compile Include="Caching\Shared\SharedCache.cs" />
+    <Compile Include="Caching\Shared\Hashes.cs" />
+    <Compile Include="Caching\Shared\Keys.cs" />
+    <Compile Include="Caching\Shared\Strings.cs" />
+    <Compile Include="Compression\Compaction.cs" />
+    <Compile Include="Compression\Compression.cs" />
     <Compile Include="Compression\GZipCompressor.cs" />
     <Compile Include="Compression\SmartCompressor.cs" />
-    <Compile Include="Compression\ICompress.cs" />
-    <Compile Include="Connection\RedisConnectionGroup.cs" />
     <Compile Include="Hashing\ConsistentHashRing.cs" />
-    <Compile Include="Hashing\IHashAlgorithm.cs" />
-    <Compile Include="Hashing\IHashRing.cs" />
-    <Compile Include="Hashing\Md5.cs" />
+    <Compile Include="Hashing\Core.cs" />
     <Compile Include="Hashing\Murmur3.cs" />
-    <EmbeddedResource Include="Lua\AllBitsSet.lua" />
-    <EmbeddedResource Include="Lua\SetMultipleBits.lua" />
-    <EmbeddedResource Include="Lua\GetStatistic.lua" />
-    <EmbeddedResource Include="Lua\SetStatistic.lua" />
-    <Compile Include="InMemory\ICache.cs" />
-    <Compile Include="InMemory\ICompactCache.cs" />
-    <Compile Include="InMemory\ICompressCache.cs" />
-    <Compile Include="InMemory\InMemoryCache.cs" />
-    <Compile Include="InMemory\InMemoryCompactCache.cs" />
-    <Compile Include="InMemory\InMemoryCompressCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Serialization\ISerializer.cs" />
+    <Compile Include="Redis\BloomFilter.cs" />
+    <Compile Include="Redis\Lua\ScriptLoader.cs" />
+    <Compile Include="Redis\PubSub.cs" />
+    <Compile Include="Redis\RateLimiter.cs" />
+    <Compile Include="Redis\ConnectionGroup.cs" />
+    <Compile Include="Redis\Statistics.cs" />
     <Compile Include="Serialization\ProtoBufSerializer.cs" />
-    <Compile Include="Serialization\Serializer.cs" />
-    <Compile Include="Shared\ILists.cs" />
-    <Compile Include="Shared\ISets.cs" />
-    <Compile Include="Shared\ISortedSets.cs" />
-    <Compile Include="Shared\SharedCache.cs" />
-    <Compile Include="Shared\SharedHashesCache.cs" />
-    <Compile Include="Shared\SharedKeysCache.cs" />
-    <Compile Include="Shared\SharedStringsCache.cs" />
-    <Compile Include="Utilities\Lua.cs" />
     <Compile Include="Wrapper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Lua\RateLimitIncrement.lua" />
     <None Include="packages.config" />
+    <EmbeddedResource Include="Redis\Lua\Scripts\SetStatistic.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Redis\Lua\Scripts\AllBitsSet.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Redis\Lua\Scripts\GetStatistic.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Redis\Lua\Scripts\RateLimitIncrement.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Redis\Lua\Scripts\SetMultipleBits.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

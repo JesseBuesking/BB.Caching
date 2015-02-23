@@ -69,17 +69,17 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="CacheTests\BloomFilterTests.cs" />
-    <Compile Include="CacheTests\CompactionTests.cs" />
-    <Compile Include="CacheTests\CompressionTests.cs" />
-    <Compile Include="CacheTests\ConfigTests.cs" />
-    <Compile Include="CacheTests\MemoryTests.cs" />
-    <Compile Include="CacheTests\PubSubTests.cs" />
-    <Compile Include="CacheTests\RateLimiterTests.cs" />
-    <Compile Include="CacheTests\SharedTests\HashesTests.cs" />
-    <Compile Include="CacheTests\SharedTests\KeysTests.cs" />
-    <Compile Include="CacheTests\SharedTests\StringsTests.cs" />
-    <Compile Include="CacheTests\StatisticTests.cs" />
+    <Compile Include="Redis\BloomFilterTests.cs" />
+    <Compile Include="Compression\CompactionTests.cs" />
+    <Compile Include="Compression\CompressionTests.cs" />
+    <Compile Include="Caching\ConfigTests.cs" />
+    <Compile Include="Caching\Memory\StringsTests.cs" />
+    <Compile Include="Redis\PubSubTests.cs" />
+    <Compile Include="Redis\RateLimiterTests.cs" />
+    <Compile Include="Caching\Shared\HashesTests.cs" />
+    <Compile Include="Caching\Shared\KeysTests.cs" />
+    <Compile Include="Caching\Shared\StringsTests.cs" />
+    <Compile Include="Redis\StatisticTests.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Compression\ComparisonTests.cs" />
     <Compile Include="Compression\GZipTests.cs" />

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BB.Caching.Compression
 {
-    public class SmartCompressor : ICompress
+    public class SmartCompressor
     {
         private static readonly Lazy<SmartCompressor> _lazy = new Lazy<SmartCompressor>(
             () => new SmartCompressor(), LazyThreadSafetyMode.ExecutionAndPublication);

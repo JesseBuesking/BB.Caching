@@ -1,59 +1,37 @@
 ﻿using System;
-using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
-using Murmur;
 
-namespace BB.Caching.Hashing
+namespace BB.Caching
 {
-    public class Murmur3 : IHashAlgorithm
+    public static partial class Hashing
     {
-        private static readonly Lazy<Murmur3> _lazy = new Lazy<Murmur3>(
-            () => new Murmur3(), LazyThreadSafetyMode.ExecutionAndPublication);
-
-        public static Murmur3 Instance
+        public static class Murmur3
         {
-            get { return _lazy.Value; }
-        }
+            public static uint ComputeInt(string value)
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(value);
+                byte[] res = Hashing.Core.Instance.MurmurHash.ComputeHash(bytes);
+                return BitConverter.ToUInt32(res, 0);
+            }
 
-        private HashAlgorithm _murmurHash;
+            public static uint ComputeInt(byte[] value)
+            {
+                byte[] res = Hashing.Core.Instance.MurmurHash.ComputeHash(value);
+                return BitConverter.ToUInt32(res, 0);
+            }
 
-        private Murmur3()
-        {
-            this.Config();
-        }
+            public static byte[] ComputeHash(string value)
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(value);
+                byte[] res = Hashing.Core.Instance.MurmurHash.ComputeHash(bytes);
+                return res;
+            }
 
-// ReSharper disable MemberCanBePrivate.Global
-        public void Config(uint seed = 0, bool managed = true)
-// ReSharper restore MemberCanBePrivate.Global
-        {
-            this._murmurHash = MurmurHash.Create32(seed, managed);
-        }
-
-        public uint ComputeInt(string value)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(value);
-            byte[] res = this._murmurHash.ComputeHash(bytes);
-            return BitConverter.ToUInt32(res, 0);
-        }
-
-        public uint ComputeInt(byte[] value)
-        {
-            byte[] res = this._murmurHash.ComputeHash(value);
-            return BitConverter.ToUInt32(res, 0);
-        }
-
-        public byte[] ComputeHash(string value)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(value);
-            byte[] res = this._murmurHash.ComputeHash(bytes);
-            return res;
-        }
-
-        public byte[] ComputeHash(byte[] value)
-        {
-            byte[] res = this._murmurHash.ComputeHash(value);
-            return res;
+            public static byte[] ComputeHash(byte[] value)
+            {
+                byte[] res = Hashing.Core.Instance.MurmurHash.ComputeHash(value);
+                return res;
+            }
         }
     }
 }

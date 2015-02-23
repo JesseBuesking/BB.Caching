@@ -189,9 +189,8 @@ namespace BB.Caching.Tests.Serialization
         [Fact]
         public void SerializingAString()
         {
-            string s = "I'm a string";
-
-            byte[] v = ProtoBufSerializer.Instance.Serialize(s);
+            const string s = "I'm a string";
+            ProtoBufSerializer.Instance.Serialize(s);
         }
 
         [Fact]

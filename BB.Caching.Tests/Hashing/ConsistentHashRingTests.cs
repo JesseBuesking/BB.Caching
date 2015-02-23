@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using BB.Caching.Hashing;
 using Xunit;
 
 namespace BB.Caching.Tests.Hashing
@@ -42,7 +41,7 @@ namespace BB.Caching.Tests.Hashing
         }
 
         [Fact]
-        public void Murmur3VsMd5HashRingPerformanceTests()
+        public void PerformanceTests()
         {
             const long iterations = 300000;
             const int replications = 120;
@@ -60,37 +59,27 @@ namespace BB.Caching.Tests.Hashing
                     {"node10", 1}
                 };
 
-            var ring = new ConsistentHashRing<string>();
-            ring.Init(nodes, Murmur3.Instance, replications);
+            var ring = new BB.Caching.Hashing.ConsistentHashRing<string>();
+            ring.Init(nodes, replications);
 
             Stopwatch sw = Stopwatch.StartNew();
             var murmur3Stats = this.RunTest(iterations, ring);
             long murmurMs = sw.ElapsedMilliseconds;
 
-            ring = new ConsistentHashRing<string>();
-            ring.Init(nodes, new Md5(), replications);
 
-            sw = Stopwatch.StartNew();
-            var md5Stats = this.RunTest(iterations, ring);
-            long md5Ms = sw.ElapsedMilliseconds;
-
-            Console.WriteLine("Murmur vs MD5:");
+            Console.WriteLine("ConsistentHashRing Stress Test:");
             Console.WriteLine("iterations: {0:#,##0}", iterations);
             Console.WriteLine("replications: {0:#,##0}", replications);
             Console.WriteLine("murmur3 sdev: {0:#,##0.0#}%", murmur3Stats.SDev);
             Console.WriteLine("murmur3 time: {0:#,##0}ms", murmurMs);
-            Console.WriteLine("md5 sdev: {0:#,##0.0#}%", md5Stats.SDev);
-            Console.WriteLine("md5 time: {0:#,##0}ms", md5Ms);
 
             Assert.Equal(iterations, murmur3Stats.Count);
-            Assert.Equal(iterations, md5Stats.Count);
 
-            Assert.True(murmurMs < md5Ms);
             Assert.True(murmur3Stats.SDev < 20.0);
         }
 
         [Fact]
-        public void Murmur3HashRingPerformanceTest()
+        public void HashRingPerformanceTest()
         {
             const long iterations = 3000000;
             const int replications = 500;
@@ -108,20 +97,20 @@ namespace BB.Caching.Tests.Hashing
                     {"node10", 1}
                 };
 
-            var ring = new ConsistentHashRing<string>();
-            ring.Init(nodes, Murmur3.Instance, replications);
+            var ring = new BB.Caching.Hashing.ConsistentHashRing<string>();
+            ring.Init(nodes, replications);
 
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
                 ring.GetNode(i.ToString(CultureInfo.InvariantCulture));
             long murmurMs = sw.ElapsedMilliseconds;
 
-            Console.WriteLine("Murmur3 Hash Ring Performance:");
+            Console.WriteLine("ConsistentHashRing Performance:");
             Console.WriteLine("\t{0:#,##0.0#} ops/ms", (float) iterations/murmurMs);
             Console.WriteLine("\t{0:#,##0.0#} ops/s", (float) iterations*1000/murmurMs);
         }
 
-        private Stats RunTest<TNode>(long iterations, ConsistentHashRing<TNode> ring)
+        private Stats RunTest<TNode>(long iterations, BB.Caching.Hashing.ConsistentHashRing<TNode> ring)
         {
             var counts = new Dictionary<TNode, long>(
                 ring.GetAvailableNodes().ToDictionary(n => n, n => 0L));
@@ -160,8 +149,8 @@ namespace BB.Caching.Tests.Hashing
                     {"node3", 1}
                 };
 
-            var ring = new ConsistentHashRing<string>();
-            ring.Init(nodes, Murmur3.Instance, replications);
+            var ring = new BB.Caching.Hashing.ConsistentHashRing<string>();
+            ring.Init(nodes, replications);
 
             var counts = new Dictionary<string, long>(
                 ring.GetAvailableNodes().ToDictionary(n => n, n => 0L));
@@ -203,8 +192,8 @@ namespace BB.Caching.Tests.Hashing
                     {"node5", 2}
                 };
 
-            var ring = new ConsistentHashRing<string>();
-            ring.Init(nodes, Murmur3.Instance, replications);
+            var ring = new BB.Caching.Hashing.ConsistentHashRing<string>();
+            ring.Init(nodes, replications);
 
             var counts = new Dictionary<string, long>(
                 ring.GetAvailableNodes().ToDictionary(n => n, n => 0L));
