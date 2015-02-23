@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using BB.Caching.Connection;
 using BB.Caching.Hashing;
-using BookSleeve;
+using StackExchange.Redis;
 
 namespace BB.Caching.Shared
 {
@@ -115,29 +115,29 @@ namespace BB.Caching.Shared
         }
 
 // ReSharper disable MemberCanBePrivate.Global
-        public RedisConnection GetReadConnection(string key)
+        public ConnectionMultiplexer GetReadConnection(RedisKey key)
 // ReSharper restore MemberCanBePrivate.Global
         {
             return this._consistentHashRing.GetNode(key).GetReadConnection();
         }
 
-        public RedisConnection[] GetWriteConnections(string key)
+        public ConnectionMultiplexer[] GetWriteConnections(RedisKey key)
         {
             return this._consistentHashRing.GetNode(key).GetWriteConnections();
         }
 
 // ReSharper disable ParameterTypeCanBeEnumerable.Global
 // ReSharper disable UnusedMember.Global
-        public Dictionary<RedisConnection, string[]> GetReadConnections(string[] keys)
+        public Dictionary<ConnectionMultiplexer, RedisKey[]> GetReadConnections(RedisKey[] keys)
 // ReSharper restore UnusedMember.Global
 // ReSharper restore ParameterTypeCanBeEnumerable.Global
         {
-            var result = new Dictionary<RedisConnectionGroup, List<string>>();
-            foreach (string key in keys)
+            var result = new Dictionary<RedisConnectionGroup, List<RedisKey>>();
+            foreach (RedisKey key in keys)
             {
                 var connection = this._consistentHashRing.GetNode(key);
                 if (!result.ContainsKey(connection))
-                    result[connection] = new List<string> {key};
+                    result[connection] = new List<RedisKey> {key};
                 else
                     result[connection].Add(key);
             }
@@ -147,16 +147,16 @@ namespace BB.Caching.Shared
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ParameterTypeCanBeEnumerable.Global
-        public Dictionary<RedisConnection[], string[]> GetWriteConnections(string[] keys)
+        public Dictionary<ConnectionMultiplexer[], RedisKey[]> GetWriteConnections(RedisKey[] keys)
 // ReSharper restore ParameterTypeCanBeEnumerable.Global
 // ReSharper restore MemberCanBePrivate.Global
         {
-            var result = new Dictionary<RedisConnectionGroup, List<string>>();
-            foreach (string key in keys)
+            var result = new Dictionary<RedisConnectionGroup, List<RedisKey>>();
+            foreach (RedisKey key in keys)
             {
                 var connection = this._consistentHashRing.GetNode(key);
                 if (!result.ContainsKey(connection))
-                    result[connection] = new List<string> {key};
+                    result[connection] = new List<RedisKey> {key};
                 else
                     result[connection].Add(key);
             }
@@ -165,7 +165,7 @@ namespace BB.Caching.Shared
         }
 
 // ReSharper disable MemberCanBePrivate.Global
-        public RedisConnection GetRandomReadConnection()
+        public ConnectionMultiplexer GetRandomReadConnection()
 // ReSharper restore MemberCanBePrivate.Global
         {
             return this._consistentHashRing.GetAvailableNodes()
@@ -174,7 +174,7 @@ namespace BB.Caching.Shared
         }
 
 // ReSharper disable MemberCanBePrivate.Global
-        public RedisConnection[] GetAllReadConnections()
+        public ConnectionMultiplexer[] GetAllReadConnections()
 // ReSharper restore MemberCanBePrivate.Global
         {
             return this._consistentHashRing.GetAvailableNodes()
@@ -183,7 +183,7 @@ namespace BB.Caching.Shared
         }
 
 // ReSharper disable ReturnTypeCanBeEnumerable.Global
-        public RedisConnection[] GetAllWriteConnections()
+        public ConnectionMultiplexer[] GetAllWriteConnections()
 // ReSharper restore ReturnTypeCanBeEnumerable.Global
         {
             return this._consistentHashRing.GetAvailableNodes()

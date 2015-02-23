@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using StackExchange.Redis;
 
 namespace BB.Caching
 {
@@ -34,11 +35,11 @@ namespace BB.Caching
                 if (Cache.Memory.TryGetDecompact(_keyPrefix + key, out value))
                     return value;
 
-                var byteArrayWrapper = Cache.Shared.Hashes.GetByteArray(Config._keyPrefix, key);
-                if (byteArrayWrapper.IsNil)
+                Task<RedisValue> byteArrayWrapper = Cache.Shared.Hashes.GetByteArray(Config._keyPrefix, key);
+                if (byteArrayWrapper.Result.IsNull)
                     return default(TType);
 
-                byte[] bytes = byteArrayWrapper.Value;
+                byte[] bytes = byteArrayWrapper.Result;
                 value = Cache.Compaction.Decompact<TType>(bytes);
                 return value;
             }
@@ -52,10 +53,10 @@ namespace BB.Caching
                 var result = Task.Run(async () =>
                     {
                         var byteArrayWrapper = Cache.Shared.Hashes.GetByteArray(Config._keyPrefix, key);
-                        if (byteArrayWrapper.IsNil)
+                        if (byteArrayWrapper.Result.IsNull)
                             return default(TType);
 
-                        byte[] byteArray = await byteArrayWrapper.ValueAsync;
+                        byte[] byteArray = await byteArrayWrapper;
                         TType value = await Cache.Compaction.DecompactAsync<TType>(byteArray);
                         return value;
                     });

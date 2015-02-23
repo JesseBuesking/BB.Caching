@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using StackExchange.Redis;
 
 namespace BB.Caching.Shared
 {
@@ -22,7 +23,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/append
         /// </remarks>
-        Task<long> Append(string key, string value);
+        Task<long> Append(RedisKey key, RedisValue value);
 
         /// <summary>
         /// If key already exists and is a string, this command appends the value at the end of the string. If key does
@@ -36,7 +37,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/append
         /// </remarks>
-        Task<long> Append(string key, byte[] value);
+        Task<long> Append(RedisKey key, byte[] value);
 
         /// <summary>
         /// Decrements the number stored at key by decrement. If the key does not exist, it is set to 0 before
@@ -55,7 +56,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/decr
         /// </remarks>
-        Task<long> Decrement(string key, long value = 1L);
+        Task<long> Decrement(RedisKey key, long value = 1L);
 
         /// <summary>
         /// Increments the number stored at key by increment. If the key does not exist, it is set to 0 before
@@ -74,7 +75,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/incr
         /// </remarks>
-        Task<long> Increment(string key, long value = 1L);
+        Task<long> Increment(RedisKey key, long value = 1L);
 
         /// <summary>
         /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
@@ -88,7 +89,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/get
         /// </remarks>
-        Wrapper<byte[], byte[]> GetByteArray(string key);
+        Task<RedisValue> GetByteArray(RedisKey key);
 
         /// <summary>
         /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
@@ -102,7 +103,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/get
         /// </remarks>
-        Wrapper<string, string> GetString(string key);
+        Task<RedisValue> GetString(RedisKey key);
 
         /// <summary>
         /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
@@ -116,7 +117,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/get
         /// </remarks>
-        Wrapper<long, long?> GetInt64(string key);
+        Task<RedisValue> GetInt64(RedisKey key);
 
         /// <summary>
         /// Returns the substring of the string value stored at key, determined by the offsets start and end (both are
@@ -136,7 +137,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/getrange
         /// </remarks>
-        Wrapper<byte[], byte[]> GetByteArray(string key, int start, int end);
+        Task<RedisValue> GetByteArray(RedisKey key, int start, int end);
 
         /// <summary>
         /// Returns the substring of the string value stored at key, determined by the offsets start and end (both are
@@ -156,7 +157,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/getrange
         /// </remarks>
-        Wrapper<string, string> GetString(string key, int start, int end);
+        Task<RedisValue> GetString(RedisKey key, int start, int end);
 
         /// <summary>
         /// Returns the values of all specified keys. For every key that does not hold a string value or does not exist,
@@ -170,7 +171,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/mget
         /// </remarks>
-        Task<Wrapper<byte[], byte[]>[]> GetByteArray(string[] keys);
+        Task<RedisValue[]> GetByteArray(RedisKey[] keys);
 
         /// <summary>
         /// Returns the values of all specified keys. For every key that does not hold a string value or does not exist,
@@ -184,7 +185,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/mget
         /// </remarks>
-        Task<Wrapper<string, string>[]> GetString(string[] keys);
+        Task<RedisValue[]> GetString(RedisKey[] keys);
 
         /// <summary>
         /// Atomically sets key to value and returns the old value stored at key. Returns an error when key exists but
@@ -198,7 +199,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/getset
         /// </remarks>
-        Wrapper<string, string> GetSet(string key, string value);
+        Task<RedisValue> GetSet(RedisKey key, RedisValue value);
 
         /// <summary>
         /// Atomically sets key to value and returns the old value stored at key. Returns an error when key exists but
@@ -212,7 +213,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/getset
         /// </remarks>
-        Wrapper<byte[], byte[]> GetSet(string key, byte[] value);
+        Task<RedisValue> GetSet(RedisKey key, byte[] value);
 
         /// <summary>
         /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
@@ -221,7 +222,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/set
         /// </remarks>
-        Task Set(string key, string value);
+        Task Set(RedisKey key, RedisValue value);
 
         /// <summary>
         /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
@@ -230,7 +231,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/set
         /// </remarks>
-        Task Set(string key, long value);
+        Task Set(RedisKey key, long value);
 
         /// <summary>
         /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
@@ -239,7 +240,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/set
         /// </remarks>
-        Task Set(string key, byte[] value);
+        Task Set(RedisKey key, byte[] value);
 
         /// <summary>
         /// Set key to hold the string value and set key to timeout after a given number of seconds.
@@ -248,7 +249,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/setex
         /// </remarks>
-        Task Set(string key, string value, TimeSpan expiry);
+        Task Set(RedisKey key, RedisValue value, TimeSpan expiry);
 
         /// <summary>
         /// Set key to hold the string value and set key to timeout after a given number of seconds.
@@ -257,7 +258,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/setex
         /// </remarks>
-        Task Set(string key, byte[] value, TimeSpan expiry);
+        Task Set(RedisKey key, byte[] value, TimeSpan expiry);
 
         /// <summary>
         /// Overwrites part of the string stored at key, starting at the specified offset, for the entire length of
@@ -286,7 +287,7 @@ namespace BB.Caching.Shared
         /// <returns>
         /// the length of the string after it was modified by the command.
         /// </returns>
-        Task<long> Set(string key, long offset, string value);
+        Task<RedisValue> Set(RedisKey key, long offset, RedisValue value);
 
         /// <summary>
         /// Overwrites part of the string stored at key, starting at the specified offset, for the entire length of
@@ -315,7 +316,7 @@ namespace BB.Caching.Shared
         /// <returns>
         /// the length of the string after it was modified by the command.
         /// </returns>
-        Task<long> Set(string key, long offset, byte[] value);
+        Task<RedisValue> Set(RedisKey key, long offset, byte[] value);
 
         /// <summary>
         /// Sets the given keys to their respective values. MSET replaces existing values with new values, just as
@@ -330,22 +331,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/mset
         /// </remarks>
-        Task Set(Dictionary<string, string> values);
-
-        /// <summary>
-        /// Sets the given keys to their respective values. MSET replaces existing values with new values, just as
-        /// regular SET. See MSETNX if you don't want to overwrite existing values.
-        /// </summary>
-        /// 
-        /// <remarks>
-        /// MSET is atomic, so all given keys are set at once. It is not possible for clients to see that some of the
-        /// keys were updated while others are unchanged.
-        /// </remarks>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/mset
-        /// </remarks>
-        Task Set(Dictionary<string, byte[]> values);
+        Task Set(Dictionary<RedisKey, RedisValue> values);
 
         /// <summary>
         /// Sets the given keys to their respective values. MSETNX will not perform any operation at all even if just a
@@ -368,30 +354,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/msetnx
         /// </remarks>
-        Task<bool> SetIfNotExists(Dictionary<string, string> values);
-
-        /// <summary>
-        /// Sets the given keys to their respective values. MSETNX will not perform any operation at all even if just a
-        /// single key already exists.
-        /// </summary>
-        /// 
-        /// <remarks>
-        /// Because of this semantic MSETNX can be used in order to set different keys representing different fields of
-        /// an unique logic object in a way that ensures that either all the fields or none at all are set.
-        /// <para>
-        /// MSETNX is atomic, so all given keys are set at once. It is not possible for clients to see that some of the
-        /// keys were updated while others are unchanged.
-        /// </para>
-        /// </remarks>
-        /// 
-        /// <returns>
-        /// 1 if the all the keys were set, 0 if no key was set (at least one key already existed).
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/msetnx
-        /// </remarks>
-        Task<bool> SetIfNotExists(Dictionary<string, byte[]> values);
+        Task<bool> SetIfNotExists(Dictionary<RedisKey, RedisValue> values);
 
         /// <summary>
         /// Set key to hold string value if key does not exist. In that case, it is equal to SET. When key already holds
@@ -405,21 +368,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/setnx
         /// </remarks>
-        Task<bool> SetIfNotExists(string key, string value);
-
-        /// <summary>
-        /// Set key to hold string value if key does not exist. In that case, it is equal to SET. When key already holds
-        /// a value, no operation is performed.
-        /// </summary>
-        /// 
-        /// <returns>
-        /// 1 if the key was set, 0 if the key was not set
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/setnx
-        /// </remarks>
-        Task<bool> SetIfNotExists(string key, byte[] value);
+        Task<bool> SetIfNotExists(RedisKey key, RedisValue value);
 
         /// <summary>
         /// Returns the bit value at offset in the string value stored at key.
@@ -438,7 +387,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/getbit
         /// </remarks>
-        Task<bool> GetBit(string key, long offset);
+        Task<bool> GetBit(RedisKey key, long offset);
 
         /// <summary>
         /// Returns the length of the string value stored at key. An error is returned when key holds a non-string
@@ -452,7 +401,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/strlen
         /// </remarks>
-        Task<long> GetLength(string key);
+        Task<long> GetLength(RedisKey key);
 
         /// <summary>
         /// Sets or clears the bit at offset in the string value stored at key.
@@ -482,7 +431,7 @@ namespace BB.Caching.Shared
         /// http://redis.io/commands/setbit
         /// </remarks>
 // ReSharper disable UnusedMethodReturnValue.Global
-        Task<bool> SetBit(string key, long offset, bool value);
+        Task<bool> SetBit(RedisKey key, long offset, bool value);
 
 // ReSharper restore UnusedMethodReturnValue.Global
 
@@ -501,67 +450,67 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/bitcount
         /// </remarks>
-        Task<long> CountSetBits(string key, long start = 0L, long count = -1L);
+        Task<long> CountSetBits(RedisKey key, long start = 0L, long count = -1L);
 
-        /// <summary>
-        /// Perform a bitwise AND operation between multiple keys (containing string values) and store the result in the
-        /// destination key.
-        /// </summary>
-        /// 
-        /// <returns>
-        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/bitop
-        /// </remarks>
-        Task<long> BitwiseAnd(string destination, string[] keys);
+        ///// <summary>
+        ///// Perform a bitwise AND operation between multiple keys (containing string values) and store the result in the
+        ///// destination key.
+        ///// </summary>
+        ///// 
+        ///// <returns>
+        ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        ///// </returns>
+        ///// 
+        ///// <remarks>
+        ///// http://redis.io/commands/bitop
+        ///// </remarks>
+        //Task<long> BitwiseAnd(string destination, string[] keys);
 
-        /// <summary>
-        /// Perform a bitwise OR operation between multiple keys (containing string values) and store the result in the
-        /// destination key.
-        /// </summary>
-        /// 
-        /// <returns>
-        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/bitop
-        /// </remarks>
-        Task<long> BitwiseOr(string destination, string[] keys);
+        ///// <summary>
+        ///// Perform a bitwise OR operation between multiple keys (containing string values) and store the result in the
+        ///// destination key.
+        ///// </summary>
+        ///// 
+        ///// <returns>
+        ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        ///// </returns>
+        ///// 
+        ///// <remarks>
+        ///// http://redis.io/commands/bitop
+        ///// </remarks>
+        //Task<long> BitwiseOr(string destination, string[] keys);
 
-        /// <summary>
-        /// Perform a bitwise XOR operation between multiple keys (containing string values) and store the result in the
-        /// destination key.
-        /// </summary>
-        /// 
-        /// <returns>
-        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/bitop
-        /// </remarks>
-        Task<long> BitwiseXOr(string destination, string[] keys);
+        ///// <summary>
+        ///// Perform a bitwise XOR operation between multiple keys (containing string values) and store the result in the
+        ///// destination key.
+        ///// </summary>
+        ///// 
+        ///// <returns>
+        ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        ///// </returns>
+        ///// 
+        ///// <remarks>
+        ///// http://redis.io/commands/bitop
+        ///// </remarks>
+        //Task<long> BitwiseXOr(string destination, string[] keys);
 
-        /// <summary>
-        /// Perform a bitwise NOT operation on a key (containing a string value) and store the result in the destination
-        /// key.
-        /// </summary>
-        /// 
-        /// <returns>
-        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/bitop
-        /// </remarks>
-        Task<long> BitwiseNot(string destination, string key);
+        ///// <summary>
+        ///// Perform a bitwise NOT operation on a key (containing a string value) and store the result in the destination
+        ///// key.
+        ///// </summary>
+        ///// 
+        ///// <returns>
+        ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        ///// </returns>
+        ///// 
+        ///// <remarks>
+        ///// http://redis.io/commands/bitop
+        ///// </remarks>
+        //Task<long> BitwiseNot(string destination, RedisKey key);
 
         /// <summary>
         /// This is a composite helper command, to help with using redis as a lock provider. This is achieved as a
-        /// string key/value pair with timeout. If the lock does not exist (or has expired), then a new string key is
+        /// RedisKey key/value pair with timeout. If the lock does not exist (or has expired), then a new RedisKey key is
         /// created (with the supplied duration), and <c>true</c> is returned to indicate success. If the lock already
         /// exists, then no lock is taken, and <c>false</c> is returned. The value may be fetched separately, but the
         /// meaning is implementation-defined). No change is made if the lock was not successfully taken. In this case,
@@ -581,12 +530,12 @@ namespace BB.Caching.Shared
         /// in one way or another (most commonly: thread-race, or extending the lock duration when failing to take the
         /// lock).
         /// </remarks>
-        Task<bool> TakeLock(string key, string value, TimeSpan expiry);
+        Task<bool> TakeLock(RedisKey key, RedisValue value, TimeSpan expiry);
 
         /// <summary>
         /// Releases a lock that was taken successfully via TakeLock. You should not release a lock that you did not
         /// take, as this will cause problems.
         /// </summary>
-        Task ReleaseLock(string key);
+        Task ReleaseLock(RedisKey key, RedisValue value);
     }
 }

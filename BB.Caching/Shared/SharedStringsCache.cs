@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using StackExchange.Redis;
 
 namespace BB.Caching.Shared
 {
@@ -28,14 +29,16 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/append
         /// </remarks>
-        Task<long> IStrings.Append(string key, string value)
+        Task<long> IStrings.Append(RedisKey key, RedisValue value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<long> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .Append(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringAppendAsync(key, value);
+
                 if (null == result)
                     result = task;
             }
@@ -54,14 +57,16 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/append
         /// </remarks>
-        Task<long> IStrings.Append(string key, byte[] value)
+        Task<long> IStrings.Append(RedisKey key, byte[] value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<long> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .Append(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringAppendAsync(key, value);
+
                 if (null == result)
                     result = task;
             }
@@ -86,15 +91,17 @@ namespace BB.Caching.Shared
         /// http://redis.io/commands/decr
         /// </remarks>
 #pragma warning disable 1066
-        Task<long> IStrings.Decrement(string key, long value = 1)
+        Task<long> IStrings.Decrement(RedisKey key, long value = 1)
 #pragma warning restore 1066
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<long> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .Decrement(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringDecrementAsync(key, value);
+
                 if (null == result)
                     result = task;
             }
@@ -119,15 +126,17 @@ namespace BB.Caching.Shared
         /// http://redis.io/commands/incr
         /// </remarks>
 #pragma warning disable 1066
-        Task<long> IStrings.Increment(string key, long value = 1)
+        Task<long> IStrings.Increment(RedisKey key, long value = 1)
 #pragma warning restore 1066
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<long> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .Increment(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringIncrementAsync(key, value);
+
                 if (null == result)
                     result = task;
             }
@@ -146,15 +155,13 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/get
         /// </remarks>
-        Wrapper<byte[], byte[]> IStrings.GetByteArray(string key)
+        Task<RedisValue> IStrings.GetByteArray(RedisKey key)
         {
-            var wrapper = new Wrapper<byte[], byte[]>
-                {
-                    ValueAsync = SharedCache.Instance.GetReadConnection(key).Strings
-                        .Get(SharedCache.Instance.Db, key, SharedCache.Instance.QueueJump)
-                };
-            wrapper.IsNilAsync = Task.Run(async () => null == await wrapper.ValueAsync);
-            return wrapper;
+            var result = SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .StringGetAsync(key);
+
+            return result;
         }
 
         /// <summary>
@@ -169,15 +176,13 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/get
         /// </remarks>
-        Wrapper<string, string> IStrings.GetString(string key)
+        Task<RedisValue> IStrings.GetString(RedisKey key)
         {
-            var wrapper = new Wrapper<string, string>
-                {
-                    ValueAsync = SharedCache.Instance.GetReadConnection(key).Strings
-                        .GetString(SharedCache.Instance.Db, key, SharedCache.Instance.QueueJump)
-                };
-            wrapper.IsNilAsync = Task.Run(async () => null == await wrapper.ValueAsync);
-            return wrapper;
+            var result = SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .StringGetAsync(key);
+
+            return result;
         }
 
         /// <summary>
@@ -192,22 +197,13 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/get
         /// </remarks>
-        Wrapper<long, long?> IStrings.GetInt64(string key)
+        Task<RedisValue> IStrings.GetInt64(RedisKey key)
         {
-            var wrapper = new Wrapper<long, long?>
-                {
-                    TaskResult = SharedCache.Instance.GetReadConnection(key).Strings
-                        .GetInt64(SharedCache.Instance.Db, key, SharedCache.Instance.QueueJump)
-                };
-            wrapper.ValueAsync = Task.Run(async () =>
-                {
-                    var result = await wrapper.TaskResult;
-                    return result.HasValue
-                        ? result.Value
-                        : 0L;
-                });
-            wrapper.IsNilAsync = Task.Run(async () => !(await wrapper.TaskResult).HasValue);
-            return wrapper;
+            var result = SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .StringGetAsync(key);
+
+            return result;
         }
 
         /// <summary>
@@ -228,15 +224,13 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/getrange
         /// </remarks>
-        Wrapper<byte[], byte[]> IStrings.GetByteArray(string key, int start, int end)
+        Task<RedisValue> IStrings.GetByteArray(RedisKey key, int start, int end)
         {
-            var wrapper = new Wrapper<byte[], byte[]>
-                {
-                    ValueAsync = SharedCache.Instance.GetReadConnection(key).Strings
-                        .Get(SharedCache.Instance.Db, key, start, end, SharedCache.Instance.QueueJump)
-                };
-            wrapper.IsNilAsync = Task.Run(async () => null == await wrapper.ValueAsync);
-            return wrapper;
+            var result = SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .StringGetRangeAsync(key, start, end);
+
+            return result;
         }
 
         /// <summary>
@@ -257,15 +251,13 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/getrange
         /// </remarks>
-        Wrapper<string, string> IStrings.GetString(string key, int start, int end)
+        Task<RedisValue> IStrings.GetString(RedisKey key, int start, int end)
         {
-            var wrapper = new Wrapper<string, string>
-                {
-                    ValueAsync = SharedCache.Instance.GetReadConnection(key).Strings
-                        .GetString(SharedCache.Instance.Db, key, start, end, SharedCache.Instance.QueueJump)
-                };
-            wrapper.IsNilAsync = Task.Run(async () => null == await wrapper.ValueAsync);
-            return wrapper;
+            var result = SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .StringGetRangeAsync(key, start, end);
+
+            return result;
         }
 
         /// <summary>
@@ -280,31 +272,33 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/mget
         /// </remarks>
-        Task<Wrapper<byte[], byte[]>[]> IStrings.GetByteArray(string[] keys)
+        Task<RedisValue[]> IStrings.GetByteArray(RedisKey[] keys)
         {
             var dictionary = SharedCache.Instance.GetWriteConnections(keys);
-            var tasks = new Task<byte[][]>[dictionary.Count];
+            var tasks = new Task<RedisValue[]>[dictionary.Count];
             for (int i = 0; i < dictionary.Count; i++)
             {
                 foreach (var connection in dictionary.ElementAt(i).Key)
                 {
-                    var task = connection.Strings
-                        .Get(SharedCache.Instance.Db, dictionary.ElementAt(i).Value, SharedCache.Instance.QueueJump);
+                    var task = connection
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .StringGetAsync(dictionary.ElementAt(i).Value);
+
                     if (null == tasks[i])
                         tasks[i] = task;
                 }
             }
 
-            Task<Wrapper<byte[], byte[]>[]> result = Task.Run(async () =>
+            Task<RedisValue[]> result = Task.Run(async () =>
                 {
-                    var wrapper = new Wrapper<byte[], byte[]>[keys.Length];
+                    var ret = new RedisValue[keys.Length];
                     int counter = 0;
                     int[] indexes = new int[tasks.Length];
 
                     // Caching results after we've awaited them.
-                    byte[][][] results = new byte[tasks.Length][][];
+                    RedisValue[][] results = new RedisValue[tasks.Length][];
 
-                    foreach (string key in keys)
+                    foreach (RedisKey key in keys)
                     {
                         // Which task index contains the data for the next key?
                         int i = 0;
@@ -319,16 +313,12 @@ namespace BB.Caching.Shared
                             results[i] = await tasks[i];
 
                         // Store a local copy of the data (so our inner tasks return the correct value).
-                        byte[] bytes = results[i][indexes[i]];
-                        wrapper[counter] = new Wrapper<byte[], byte[]>
-                            {
-                                ValueAsync = Task.Run(() => bytes),
-                                IsNilAsync = Task.Run(() => null == bytes)
-                            };
+                        RedisValue val = results[i][indexes[i]];
+                        ret[counter] = val;
                         ++indexes[i];
                         ++counter;
                     }
-                    return wrapper;
+                    return ret;
                 });
             return result;
         }
@@ -345,32 +335,33 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/mget
         /// </remarks>
-        Task<Wrapper<string, string>[]> IStrings.GetString(string[] keys)
+        Task<RedisValue[]> IStrings.GetString(RedisKey[] keys)
         {
             var dictionary = SharedCache.Instance.GetWriteConnections(keys);
-            var tasks = new Task<string[]>[dictionary.Count];
+            var tasks = new Task<RedisValue[]>[dictionary.Count];
             for (int i = 0; i < dictionary.Count; i++)
             {
                 foreach (var connection in dictionary.ElementAt(i).Key)
                 {
-                    var task = connection.Strings
-                        .GetString(SharedCache.Instance.Db, dictionary.ElementAt(i).Value,
-                            SharedCache.Instance.QueueJump);
+                    var task = connection
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .StringGetAsync(dictionary.ElementAt(i).Value);
+
                     if (null == tasks[i])
                         tasks[i] = task;
                 }
             }
 
-            Task<Wrapper<string, string>[]> result = Task.Run(async () =>
+            Task<RedisValue[]> result = Task.Run(async () =>
                 {
-                    var wrapper = new Wrapper<string, string>[keys.Length];
+                    var ret = new RedisValue[keys.Length];
                     int counter = 0;
                     int[] indexes = new int[tasks.Length];
 
                     // Caching results after we've awaited them.
-                    string[][] results = new string[tasks.Length][];
+                    RedisValue[][] results = new RedisValue[tasks.Length][];
 
-                    foreach (string key in keys)
+                    foreach (RedisKey key in keys)
                     {
                         // Which task index contains the data for the next key?
                         int i = 0;
@@ -385,16 +376,11 @@ namespace BB.Caching.Shared
                             results[i] = await tasks[i];
 
                         // Store a local copy of the data (so our inner tasks return the correct value).
-                        string s = results[i][indexes[i]];
-                        wrapper[counter] = new Wrapper<string, string>
-                            {
-                                ValueAsync = Task.Run(() => s),
-                                IsNilAsync = Task.Run(() => null == s)
-                            };
+                        ret[counter] = results[i][indexes[i]];
                         ++indexes[i];
                         ++counter;
                     }
-                    return wrapper;
+                    return ret;
                 });
             return result;
         }
@@ -411,23 +397,18 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/getset
         /// </remarks>
-        Wrapper<string, string> IStrings.GetSet(string key, string value)
+        Task<RedisValue> IStrings.GetSet(RedisKey key, RedisValue value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
-            Wrapper<string, string> result = null;
+            Task<RedisValue> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .GetSet(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringGetSetAsync(key, value);
+
                 if (null == result)
-                {
-                    result = new Wrapper<string, string>
-                        {
-                            ValueAsync = task
-                        };
-                    Wrapper<string, string> resultCopy = result;
-                    result.IsNilAsync = Task.Run(async () => null == await resultCopy.ValueAsync);
-                }
+                    result = task;
             }
             return result;
         }
@@ -444,42 +425,16 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/getset
         /// </remarks>
-        Wrapper<byte[], byte[]> IStrings.GetSet(string key, byte[] value)
+        Task<RedisValue> IStrings.GetSet(RedisKey key, byte[] value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
-            Wrapper<byte[], byte[]> result = null;
+            Task<RedisValue> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .GetSet(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
-                if (null == result)
-                {
-                    result = new Wrapper<byte[], byte[]>
-                        {
-                            ValueAsync = task
-                        };
-                    Wrapper<byte[], byte[]> resultCopy = result;
-                    result.IsNilAsync = Task.Run(async () => null == await resultCopy.ValueAsync);
-                }
-            }
-            return result;
-        }
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringGetSetAsync(key, value);
 
-        /// <summary>
-        /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
-        /// </summary>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/set
-        /// </remarks>
-        Task IStrings.Set(string key, string value)
-        {
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            Task result = null;
-            foreach (var connection in connections)
-            {
-                var task = connection.Strings
-                    .Set(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
                 if (null == result)
                     result = task;
             }
@@ -493,14 +448,16 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/set
         /// </remarks>
-        Task IStrings.Set(string key, long value)
+        Task IStrings.Set(RedisKey key, RedisValue value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .Set(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringSetAsync(key, value);
+
                 if (null == result)
                     result = task;
             }
@@ -514,14 +471,39 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/set
         /// </remarks>
-        Task IStrings.Set(string key, byte[] value)
+        Task IStrings.Set(RedisKey key, long value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .Set(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringSetAsync(key, value);
+
+                if (null == result)
+                    result = task;
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// 
+        /// <remarks>
+        /// http://redis.io/commands/set
+        /// </remarks>
+        Task IStrings.Set(RedisKey key, byte[] value)
+        {
+            var connections = SharedCache.Instance.GetWriteConnections(key);
+            Task result = null;
+            foreach (var connection in connections)
+            {
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringSetAsync(key, value);
+
                 if (null == result)
                     result = task;
             }
@@ -535,14 +517,16 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/setex
         /// </remarks>
-        Task IStrings.Set(string key, string value, TimeSpan expiry)
+        Task IStrings.Set(RedisKey key, RedisValue value, TimeSpan expiry)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings.Set(
-                    SharedCache.Instance.Db, key, value, (long) expiry.TotalSeconds, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringSetAsync(key, value, expiry);
+
                 if (null == result)
                     result = task;
             }
@@ -556,14 +540,16 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/setex
         /// </remarks>
-        Task IStrings.Set(string key, byte[] value, TimeSpan expiry)
+        Task IStrings.Set(RedisKey key, byte[] value, TimeSpan expiry)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings.Set(
-                    SharedCache.Instance.Db, key, value, (long) expiry.TotalSeconds, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringSetAsync(key, value, expiry);
+
                 if (null == result)
                     result = task;
             }
@@ -597,14 +583,16 @@ namespace BB.Caching.Shared
         /// <returns>
         /// the length of the string after it was modified by the command.
         /// </returns>
-        Task<long> IStrings.Set(string key, long offset, string value)
+        Task<RedisValue> IStrings.Set(RedisKey key, long offset, RedisValue value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
-            Task<long> result = null;
+            Task<RedisValue> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .Set(SharedCache.Instance.Db, key, offset, value, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringSetRangeAsync(key, offset, value);
+
                 if (null == result)
                     result = task;
             }
@@ -638,14 +626,16 @@ namespace BB.Caching.Shared
         /// <returns>
         /// the length of the string after it was modified by the command.
         /// </returns>
-        Task<long> IStrings.Set(string key, long offset, byte[] value)
+        Task<RedisValue> IStrings.Set(RedisKey key, long offset, byte[] value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
-            Task<long> result = null;
+            Task<RedisValue> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .Set(SharedCache.Instance.Db, key, offset, value, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringSetRangeAsync(key, offset, value);
+
                 if (null == result)
                     result = task;
             }
@@ -665,7 +655,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/mset
         /// </remarks>
-        Task IStrings.Set(Dictionary<string, string> values)
+        Task IStrings.Set(Dictionary<RedisKey, RedisValue> values)
         {
             var connections = SharedCache.Instance.GetWriteConnections(values.Keys.ToArray());
             var results = new Task[connections.Count];
@@ -673,44 +663,16 @@ namespace BB.Caching.Shared
             {
                 var dictionary = values
                     .Where(k => connections.ElementAt(i).Value.Contains(k.Key))
-                    .ToDictionary(d => d.Key, d => d.Value);
-                foreach (var connection in connections.ElementAt(i).Key)
-                {
-                    var task = connection.Strings
-                        .Set(SharedCache.Instance.Db, dictionary, SharedCache.Instance.QueueJump);
-                    if (null == results[i])
-                        results[i] = task;
-                }
-            }
-            return Task.WhenAll(results);
-        }
+                    .ToDictionary(d => d.Key, d => d.Value)
+                    .ToArray();
 
-        /// <summary>
-        /// Sets the given keys to their respective values. MSET replaces existing values with new values, just as
-        /// regular SET. See MSETNX if you don't want to overwrite existing values.
-        /// </summary>
-        /// 
-        /// <remarks>
-        /// MSET is atomic, so all given keys are set at once. It is not possible for clients to see that some of the
-        /// keys were updated while others are unchanged.
-        /// </remarks>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/mset
-        /// </remarks>
-        Task IStrings.Set(Dictionary<string, byte[]> values)
-        {
-            var connections = SharedCache.Instance.GetWriteConnections(values.Keys.ToArray());
-            var results = new Task[connections.Count];
-            for (int i = 0; i < connections.Count; i++)
-            {
-                var dictionary = values
-                    .Where(k => connections.ElementAt(i).Value.Contains(k.Key))
-                    .ToDictionary(d => d.Key, d => d.Value);
                 foreach (var connection in connections.ElementAt(i).Key)
                 {
-                    var task = connection.Strings
-                        .Set(SharedCache.Instance.Db, dictionary, SharedCache.Instance.QueueJump);
+                    var task = connection
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .StringSetAsync(dictionary);
+
+
                     if (null == results[i])
                         results[i] = task;
                 }
@@ -739,7 +701,7 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/msetnx
         /// </remarks>
-        Task<bool> IStrings.SetIfNotExists(Dictionary<string, string> values)
+        Task<bool> IStrings.SetIfNotExists(Dictionary<RedisKey, RedisValue> values)
         {
             var connections = SharedCache.Instance.GetWriteConnections(values.Keys.ToArray());
             var results = new Task<bool>[connections.Count];
@@ -747,69 +709,20 @@ namespace BB.Caching.Shared
             {
                 var dictionary = values
                     .Where(k => connections.ElementAt(i).Value.Contains(k.Key))
-                    .ToDictionary(d => d.Key, d => d.Value);
+                    .ToDictionary(d => d.Key, d => d.Value)
+                    .ToArray();
+
                 foreach (var connection in connections.ElementAt(i).Key)
                 {
-                    var task = connection.Strings
-                        .SetIfNotExists(SharedCache.Instance.Db, dictionary, SharedCache.Instance.QueueJump);
+                    var task = connection
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .StringSetAsync(dictionary, When.NotExists);
+
                     if (null == results[i])
                         results[i] = task;
                 }
             }
-            var result = Task.Run(async () =>
-                {
-                    bool[] blah = await Task.WhenAll(results);
-                    bool res = blah.All(b => b);
-                    if (res)
-                        return true;
 
-                    res = blah.All(b => !b);
-                    if (res)
-                        return false;
-
-                    throw new Exception("inconsistent results");
-                });
-            return result;
-        }
-
-        /// <summary>
-        /// Sets the given keys to their respective values. MSETNX will not perform any operation at all even if just a
-        /// single key already exists.
-        /// </summary>
-        /// 
-        /// <remarks>
-        /// Because of this semantic MSETNX can be used in order to set different keys representing different fields of
-        /// an unique logic object in a way that ensures that either all the fields or none at all are set.
-        /// <para>
-        /// MSETNX is atomic, so all given keys are set at once. It is not possible for clients to see that some of the
-        /// keys were updated while others are unchanged.
-        /// </para>
-        /// </remarks>
-        /// 
-        /// <returns>
-        /// 1 if the all the keys were set, 0 if no key was set (at least one key already existed).
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/msetnx
-        /// </remarks>
-        Task<bool> IStrings.SetIfNotExists(Dictionary<string, byte[]> values)
-        {
-            var connections = SharedCache.Instance.GetWriteConnections(values.Keys.ToArray());
-            var results = new Task<bool>[connections.Count];
-            for (int i = 0; i < connections.Count; i++)
-            {
-                var dictionary = values
-                    .Where(k => connections.ElementAt(i).Value.Contains(k.Key))
-                    .ToDictionary(d => d.Key, d => d.Value);
-                foreach (var connection in connections.ElementAt(i).Key)
-                {
-                    var task = connection.Strings
-                        .SetIfNotExists(SharedCache.Instance.Db, dictionary, SharedCache.Instance.QueueJump);
-                    if (null == results[i])
-                        results[i] = task;
-                }
-            }
             var result = Task.Run(async () =>
                 {
                     bool[] blah = await Task.WhenAll(results);
@@ -838,40 +751,16 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/setnx
         /// </remarks>
-        Task<bool> IStrings.SetIfNotExists(string key, string value)
+        Task<bool> IStrings.SetIfNotExists(RedisKey key, RedisValue value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<bool> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .SetIfNotExists(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
-                if (null == result)
-                    result = task;
-            }
-            return result;
-        }
+                    var task = connection
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .StringSetAsync(key, value, when: When.NotExists);
 
-        /// <summary>
-        /// Set key to hold string value if key does not exist. In that case, it is equal to SET. When key already holds
-        /// a value, no operation is performed.
-        /// </summary>
-        /// 
-        /// <returns>
-        /// 1 if the key was set, 0 if the key was not set
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/setnx
-        /// </remarks>
-        Task<bool> IStrings.SetIfNotExists(string key, byte[] value)
-        {
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            Task<bool> result = null;
-            foreach (var connection in connections)
-            {
-                var task = connection.Strings
-                    .SetIfNotExists(SharedCache.Instance.Db, key, value, SharedCache.Instance.QueueJump);
                 if (null == result)
                     result = task;
             }
@@ -895,10 +784,11 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/getbit
         /// </remarks>
-        Task<bool> IStrings.GetBit(string key, long offset)
+        Task<bool> IStrings.GetBit(RedisKey key, long offset)
         {
-            return SharedCache.Instance.GetReadConnection(key).Strings
-                .GetBit(SharedCache.Instance.Db, key, offset, SharedCache.Instance.QueueJump);
+            return SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .StringGetBitAsync(key, offset);
         }
 
         /// <summary>
@@ -913,10 +803,11 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/strlen
         /// </remarks>
-        Task<long> IStrings.GetLength(string key)
+        Task<long> IStrings.GetLength(RedisKey key)
         {
-            return SharedCache.Instance.GetReadConnection(key).Strings
-                .GetLength(SharedCache.Instance.Db, key, SharedCache.Instance.QueueJump);
+            return SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .StringLengthAsync(key);
         }
 
         /// <summary>
@@ -946,14 +837,16 @@ namespace BB.Caching.Shared
         /// <remarks>
         /// http://redis.io/commands/setbit
         /// </remarks>
-        Task<bool> IStrings.SetBit(string key, long offset, bool value)
+        Task<bool> IStrings.SetBit(RedisKey key, long offset, bool value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<bool> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .SetBit(SharedCache.Instance.Db, key, offset, value, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringSetBitAsync(key, offset, value);
+
                 if (null == result)
                     result = task;
             }
@@ -976,200 +869,202 @@ namespace BB.Caching.Shared
         /// http://redis.io/commands/bitcount
         /// </remarks>
 #pragma warning disable 1066
-        Task<long> IStrings.CountSetBits(string key, long start = 0, long count = -1)
+        Task<long> IStrings.CountSetBits(RedisKey key, long start = 0, long count = -1)
 #pragma warning restore 1066
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<long> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings
-                    .CountSetBits(SharedCache.Instance.Db, key, start, count, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .StringBitCountAsync(key, start, count);
+
                 if (null == result)
                     result = task;
             }
             return result;
         }
 
-        /// <summary>
-        /// Perform a bitwise AND operation between multiple keys (containing string values) and store the result in the
-        /// destination key.
-        /// </summary>
-        /// 
-        /// <returns>
-        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/bitop
-        /// </remarks>
-        Task<long> IStrings.BitwiseAnd(string destination, string[] keys)
-        {
-            var connections = SharedCache.Instance.GetWriteConnections(keys);
-            var dest = SharedCache.Instance.GetWriteConnections(destination);
-            Task<long> result = null;
-            // All ops performed on same machine, so we can do this in a MUCH faster way.
-            if (1 == connections.Count
-                && connections.ElementAt(0).Key[0].Host == dest[0].Host
-                && connections.ElementAt(0).Key[0].Port == dest[0].Port)
-            {
-                foreach (var connection in connections.ElementAt(0).Key)
-                {
-                    var task = connection.Strings
-                        .BitwiseAnd(SharedCache.Instance.Db, destination, keys, SharedCache.Instance.QueueJump);
-                    if (null == result)
-                        result = task;
-                }
-            }
-                // Ops on multiple machines. Need to aggregate results. Boo.
-            else
-            {
-                // (1) bitwise AND keys on each server into `destination` + "_temp"
-                // (2) get each `destination` + "_temp" value from each server
-                // (3) get the longest length (to return)
-                // (4) bitwise AND all of the values retrieved
-                // (5) store the final bitwise'd result into `destination`
-                // (6) delete all `destination` + "_temp" values from each server
-                // TODO this
-                throw new NotImplementedException();
-            }
-            return result;
-        }
+        ///// <summary>
+        ///// Perform a bitwise AND operation between multiple keys (containing string values) and store the result in the
+        ///// destination key.
+        ///// </summary>
+        ///// 
+        ///// <returns>
+        ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        ///// </returns>
+        ///// 
+        ///// <remarks>
+        ///// http://redis.io/commands/bitop
+        ///// </remarks>
+        //Task<long> IStrings.BitwiseAnd(RedisKey destination, RedisKey[] keys)
+        //{
+        //    var connections = SharedCache.Instance.GetWriteConnections(keys);
+        //    var dest = SharedCache.Instance.GetWriteConnections(destination);
+        //    Task<long> result = null;
+        //    // All ops performed on same machine, so we can do this in a MUCH faster way.
+        //    if (1 == connections.Count
+        //        && connections.ElementAt(0).Key[0].Host == dest[0].Host
+        //        && connections.ElementAt(0).Key[0].Port == dest[0].Port)
+        //    {
+        //        foreach (var connection in connections.ElementAt(0).Key)
+        //        {
+        //            var task = connection.Strings
+        //                .BitwiseAnd(SharedCache.Instance.Db, destination, keys, SharedCache.Instance.QueueJump);
+        //            if (null == result)
+        //                result = task;
+        //        }
+        //    }
+        //    // Ops on multiple machines. Need to aggregate results. Boo.
+        //    else
+        //    {
+        //        // (1) bitwise AND keys on each server into `destination` + "_temp"
+        //        // (2) get each `destination` + "_temp" value from each server
+        //        // (3) get the longest length (to return)
+        //        // (4) bitwise AND all of the values retrieved
+        //        // (5) store the final bitwise'd result into `destination`
+        //        // (6) delete all `destination` + "_temp" values from each server
+        //        // TODO this
+        //        throw new NotImplementedException();
+        //    }
+        //    return result;
+        //}
 
-        /// <summary>
-        /// Perform a bitwise OR operation between multiple keys (containing string values) and store the result in the
-        /// destination key.
-        /// </summary>
-        /// 
-        /// <returns>
-        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/bitop
-        /// </remarks>
-        Task<long> IStrings.BitwiseOr(string destination, string[] keys)
-        {
-            var connections = SharedCache.Instance.GetWriteConnections(keys);
-            var dest = SharedCache.Instance.GetWriteConnections(destination);
-            Task<long> result = null;
-            // All ops performed on same machine, so we can do this in a MUCH faster way.
-            if (1 == connections.Count
-                && connections.ElementAt(0).Key[0].Host == dest[0].Host
-                && connections.ElementAt(0).Key[0].Port == dest[0].Port)
-            {
-                foreach (var connection in connections.ElementAt(0).Key)
-                {
-                    var task = connection.Strings
-                        .BitwiseOr(SharedCache.Instance.Db, destination, keys, SharedCache.Instance.QueueJump);
-                    if (null == result)
-                        result = task;
-                }
-            }
-                // Ops on multiple machines. Need to aggregate results. Boo.
-            else
-            {
-                // (1) bitwise OR keys on each server into `destination` + "_temp"
-                // (2) get each `destination` + "_temp" value from each server
-                // (3) get the longest length (to return)
-                // (4) bitwise OR all of the values retrieved
-                // (5) store the final bitwise'd result into `destination`
-                // (6) delete all `destination` + "_temp" values from each server
-                // TODO this
-                throw new NotImplementedException();
-            }
-            return result;
-        }
+        ///// <summary>
+        ///// Perform a bitwise OR operation between multiple keys (containing string values) and store the result in the
+        ///// destination key.
+        ///// </summary>
+        ///// 
+        ///// <returns>
+        ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        ///// </returns>
+        ///// 
+        ///// <remarks>
+        ///// http://redis.io/commands/bitop
+        ///// </remarks>
+        //Task<long> IStrings.BitwiseOr(string destination, string[] keys)
+        //{
+        //    var connections = SharedCache.Instance.GetWriteConnections(keys);
+        //    var dest = SharedCache.Instance.GetWriteConnections(destination);
+        //    Task<long> result = null;
+        //    // All ops performed on same machine, so we can do this in a MUCH faster way.
+        //    if (1 == connections.Count
+        //        && connections.ElementAt(0).Key[0].Host == dest[0].Host
+        //        && connections.ElementAt(0).Key[0].Port == dest[0].Port)
+        //    {
+        //        foreach (var connection in connections.ElementAt(0).Key)
+        //        {
+        //            var task = connection.Strings
+        //                .BitwiseOr(SharedCache.Instance.Db, destination, keys, SharedCache.Instance.QueueJump);
+        //            if (null == result)
+        //                result = task;
+        //        }
+        //    }
+        //    // Ops on multiple machines. Need to aggregate results. Boo.
+        //    else
+        //    {
+        //        // (1) bitwise OR keys on each server into `destination` + "_temp"
+        //        // (2) get each `destination` + "_temp" value from each server
+        //        // (3) get the longest length (to return)
+        //        // (4) bitwise OR all of the values retrieved
+        //        // (5) store the final bitwise'd result into `destination`
+        //        // (6) delete all `destination` + "_temp" values from each server
+        //        // TODO this
+        //        throw new NotImplementedException();
+        //    }
+        //    return result;
+        //}
 
-        /// <summary>
-        /// Perform a bitwise XOR operation between multiple keys (containing string values) and store the result in the
-        /// destination key.
-        /// </summary>
-        /// 
-        /// <returns>
-        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/bitop
-        /// </remarks>
-        Task<long> IStrings.BitwiseXOr(string destination, string[] keys)
-        {
-            var connections = SharedCache.Instance.GetWriteConnections(keys);
-            var dest = SharedCache.Instance.GetWriteConnections(destination);
-            Task<long> result = null;
-            // All ops performed on same machine, so we can do this in a MUCH faster way.
-            if (1 == connections.Count
-                && connections.ElementAt(0).Key[0].Host == dest[0].Host
-                && connections.ElementAt(0).Key[0].Port == dest[0].Port)
-            {
-                foreach (var connection in connections.ElementAt(0).Key)
-                {
-                    var task = connection.Strings
-                        .BitwiseXOr(SharedCache.Instance.Db, destination, keys, SharedCache.Instance.QueueJump);
-                    if (null == result)
-                        result = task;
-                }
-            }
-                // Ops on multiple machines. Need to aggregate results. Boo.
-            else
-            {
-                // (1) bitwise XOR keys on each server into `destination` + "_temp"
-                // (2) get each `destination` + "_temp" value from each server
-                // (3) get the longest length (to return)
-                // (4) bitwise XOR all of the values retrieved
-                // (5) store the final bitwise'd result into `destination`
-                // (6) delete all `destination` + "_temp" values from each server
-                // TODO this
-                throw new NotImplementedException();
-            }
-            return result;
-        }
+        ///// <summary>
+        ///// Perform a bitwise XOR operation between multiple keys (containing string values) and store the result in the
+        ///// destination key.
+        ///// </summary>
+        ///// 
+        ///// <returns>
+        ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        ///// </returns>
+        ///// 
+        ///// <remarks>
+        ///// http://redis.io/commands/bitop
+        ///// </remarks>
+        //Task<long> IStrings.BitwiseXOr(string destination, string[] keys)
+        //{
+        //    var connections = SharedCache.Instance.GetWriteConnections(keys);
+        //    var dest = SharedCache.Instance.GetWriteConnections(destination);
+        //    Task<long> result = null;
+        //    // All ops performed on same machine, so we can do this in a MUCH faster way.
+        //    if (1 == connections.Count
+        //        && connections.ElementAt(0).Key[0].Host == dest[0].Host
+        //        && connections.ElementAt(0).Key[0].Port == dest[0].Port)
+        //    {
+        //        foreach (var connection in connections.ElementAt(0).Key)
+        //        {
+        //            var task = connection.Strings
+        //                .BitwiseXOr(SharedCache.Instance.Db, destination, keys, SharedCache.Instance.QueueJump);
+        //            if (null == result)
+        //                result = task;
+        //        }
+        //    }
+        //    // Ops on multiple machines. Need to aggregate results. Boo.
+        //    else
+        //    {
+        //        // (1) bitwise XOR keys on each server into `destination` + "_temp"
+        //        // (2) get each `destination` + "_temp" value from each server
+        //        // (3) get the longest length (to return)
+        //        // (4) bitwise XOR all of the values retrieved
+        //        // (5) store the final bitwise'd result into `destination`
+        //        // (6) delete all `destination` + "_temp" values from each server
+        //        // TODO this
+        //        throw new NotImplementedException();
+        //    }
+        //    return result;
+        //}
 
-        /// <summary>
-        /// Perform a bitwise NOT operation on a key (containing a string value) and store the result in the destination
-        /// key.
-        /// </summary>
-        /// 
-        /// <returns>
-        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
-        /// </returns>
-        /// 
-        /// <remarks>
-        /// http://redis.io/commands/bitop
-        /// </remarks>
-        Task<long> IStrings.BitwiseNot(string destination, string key)
-        {
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            var dest = SharedCache.Instance.GetWriteConnections(destination);
-            // All ops performed on same machine, so we can do this in a MUCH faster way.
-            if (1 == connections.Length
-                && connections[0].Host == dest[0].Host
-                && connections[0].Port == dest[0].Port)
-            {
-                var task = connections[0].Strings
-                    .BitwiseNot(SharedCache.Instance.Db, destination, key, SharedCache.Instance.QueueJump);
-                return task;
-            }
-                // Ops on multiple machines. Need to aggregate results. Boo.
-            else
-            {
-                // (1) bitwise NOT keys on each server into `destination` + "_temp"
-                // (2) get each `destination` + "_temp" value from each server
-                // (3) get the longest length (to return)
-                // (4) bitwise NOT all of the values retrieved
-                // (5) store the final bitwise'd result into `destination`
-                // (6) delete all `destination` + "_temp" values from each server
-                // TODO this
-                throw new NotImplementedException();
-//                Task<long> result = null;
-//                return result;
-            }
-        }
+        ///// <summary>
+        ///// Perform a bitwise NOT operation on a key (containing a string value) and store the result in the destination
+        ///// key.
+        ///// </summary>
+        ///// 
+        ///// <returns>
+        ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        ///// </returns>
+        ///// 
+        ///// <remarks>
+        ///// http://redis.io/commands/bitop
+        ///// </remarks>
+        //Task<long> IStrings.BitwiseNot(string destination, RedisKey key)
+        //{
+        //    var connections = SharedCache.Instance.GetWriteConnections(key);
+        //    var dest = SharedCache.Instance.GetWriteConnections(destination);
+        //    // All ops performed on same machine, so we can do this in a MUCH faster way.
+        //    if (1 == connections.Length
+        //        && connections[0].Host == dest[0].Host
+        //        && connections[0].Port == dest[0].Port)
+        //    {
+        //        var task = connections[0].Strings
+        //            .BitwiseNot(SharedCache.Instance.Db, destination, key, SharedCache.Instance.QueueJump);
+        //        return task;
+        //    }
+        //    // Ops on multiple machines. Need to aggregate results. Boo.
+        //    else
+        //    {
+        //        // (1) bitwise NOT keys on each server into `destination` + "_temp"
+        //        // (2) get each `destination` + "_temp" value from each server
+        //        // (3) get the longest length (to return)
+        //        // (4) bitwise NOT all of the values retrieved
+        //        // (5) store the final bitwise'd result into `destination`
+        //        // (6) delete all `destination` + "_temp" values from each server
+        //        // TODO this
+        //        throw new NotImplementedException();
+        //        //                Task<long> result = null;
+        //        //                return result;
+        //    }
+        //}
 
         /// <summary>
         /// This is a composite helper command, to help with using redis as a lock provider. This is achieved as a
-        /// string key/value pair with timeout. If the lock does not exist (or has expired), then a new string key is
+        /// RedisKey key/value pair with timeout. If the lock does not exist (or has expired), then a new RedisKey key is
         /// created (with the supplied duration), and <c>true</c> is returned to indicate success. If the lock already
         /// exists, then no lock is taken, and <c>false</c> is returned. The value may be fetched separately, but the
         /// meaning is implementation-defined). No change is made if the lock was not successfully taken. In this case,
@@ -1189,14 +1084,16 @@ namespace BB.Caching.Shared
         /// in one way or another (most commonly: thread-race, or extending the lock duration when failing to take the
         /// lock).
         /// </remarks>
-        Task<bool> IStrings.TakeLock(string key, string value, TimeSpan expiry)
+        Task<bool> IStrings.TakeLock(RedisKey key, RedisValue value, TimeSpan expiry)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<bool> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Strings.TakeLock(SharedCache.Instance.Db, key, value, (int) expiry.TotalSeconds,
-                    SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .LockTakeAsync(key, value, expiry);
+
                 if (null == result)
                     result = task;
             }
@@ -1207,11 +1104,15 @@ namespace BB.Caching.Shared
         /// Releases a lock that was taken successfully via TakeLock. You should not release a lock that you did not
         /// take, as this will cause problems.
         /// </summary>
-        Task IStrings.ReleaseLock(string key)
+        Task IStrings.ReleaseLock(RedisKey key, RedisValue value)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             foreach (var connection in connections)
-                connection.Strings.ReleaseLock(SharedCache.Instance.Db, key, SharedCache.Instance.QueueJump);
+            {
+                connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .LockReleaseAsync(key, value);
+            }
             return Task.FromResult(false);
         }
     }

@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using StackExchange.Redis;
 
 namespace BB.Caching.Shared
 {
@@ -14,14 +15,14 @@ namespace BB.Caching.Shared
         /// </summary>
         /// <returns>True if the key was removed.</returns>
         /// <remarks>http://redis.io/commands/del</remarks>
-        Task<bool> Remove(string key);
+        Task<bool> Remove(RedisKey key);
 
         /// <summary>
         /// Removes the specified keys. A key is ignored if it does not exist.
         /// </summary>
         /// <returns>The number of keys that were removed.</returns>
         /// <remarks>http://redis.io/commands/del</remarks>
-        Task<long> Remove(string[] keys);
+        Task<long> Remove(RedisKey[] keys);
 
         /// <summary>
         /// Returns if key exists.
@@ -55,25 +56,25 @@ namespace BB.Caching.Shared
         /// <remarks>http://redis.io/commands/persist</remarks>
         Task<bool> Persist(string key);
 
-        /// <summary>
-        /// Returns all keys matching pattern.
-        /// </summary>
-        /// <remarks>
-        /// Warning: consider KEYS as a command that should only be used in production environments with
-        /// extreme care. It may ruin performance when it is executed against large databases. This command is intended
-        /// for debugging and special operations, such as changing your keyspace layout. Don't use KEYS in your regular
-        /// application code. If you're looking for a way to find keys in a subset of your keyspace, consider using
-        /// sets.
-        /// </remarks>
-        /// <remarks>http://redis.io/commands/keys</remarks>
-        Task<string[]> Find(string pattern);
+        ///// <summary>
+        ///// Returns all keys matching pattern.
+        ///// </summary>
+        ///// <remarks>
+        ///// Warning: consider KEYS as a command that should only be used in production environments with
+        ///// extreme care. It may ruin performance when it is executed against large databases. This command is intended
+        ///// for debugging and special operations, such as changing your keyspace layout. Don't use KEYS in your regular
+        ///// application code. If you're looking for a way to find keys in a subset of your keyspace, consider using
+        ///// sets.
+        ///// </remarks>
+        ///// <remarks>http://redis.io/commands/keys</remarks>
+        //Task<string[]> Find(string pattern);
 
         /// <summary>
         /// Return a random key from the currently selected database.
         /// </summary>
         /// <returns>the random key, or nil when the database is empty.</returns>
         /// <remarks>http://redis.io/commands/randomkey</remarks>
-        Task<string> Random();
+        Task<RedisKey> Random();
 
         /// <summary>
         /// Renames key to newkey. It returns an error when the source and destination names are the same, or when key
@@ -95,7 +96,7 @@ namespace BB.Caching.Shared
         /// </summary>
         /// <returns>TTL in seconds or -1 when key does not exist or does not have a timeout.</returns>
         /// <remarks>http://redis.io/commands/ttl</remarks>
-        Task<long> TimeToLive(string key);
+        Task<TimeSpan?> TimeToLive(string key);
 
         /// <summary>
         /// Returns the string representation of the type of the value stored at key. The different types that can be
@@ -103,13 +104,13 @@ namespace BB.Caching.Shared
         /// </summary>
         /// <returns> type of key, or none when key does not exist.</returns>
         /// <remarks>http://redis.io/commands/type</remarks>
-        Task<string> Type(string key);
+        RedisType Type(string key);
 
         /// <summary>
         /// Return the number of keys in the currently selected database.
         /// </summary>
         /// <remarks>http://redis.io/commands/dbsize</remarks>
-        Task<long> GetLength();
+        long GetLength();
 
         /// <summary>
         /// Returns or stores the elements contained in the list, set or sorted set at key. By default, sorting is
@@ -132,7 +133,7 @@ namespace BB.Caching.Shared
         /// unless you have good reason, and then avoided anyway.
         /// </summary>
         /// <remarks>http://redis.io/commands/debug-object</remarks>
-        Task<string> DebugObject(string key);
+        RedisValue DebugObject(string key);
 
         /// <summary>
         /// Invalidates the object stored at the key's location in Cache.Memory.

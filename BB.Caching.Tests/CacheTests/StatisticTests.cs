@@ -1,37 +1,28 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using BB.Caching.Connection;
 using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    public class StatisticTests : TestBase
+    public class StatisticTestsFixture : IDisposable
+    {
+        public StatisticTestsFixture()
+        {
+            Cache.Prepare();
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    public class StatisticTests : IUseFixture<DefaultTestFixture>, IUseFixture<StatisticTestsFixture>, IDisposable
     {
         private const string _key = "key1";
 
         public StatisticTests()
         {
-            try
-            {
-                Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, this.TestPort1)));
-
-                if (0 != this.TestPort2)
-                {
-                    Cache.Shared.AddRedisConnectionGroup(
-                        new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
-                }
-
-                Cache.PubSub.Configure(new SafeRedisConnection(this.TestIp, this.TestPort1));
-                Cache.Shared.SetPubSubRedisConnection();
-
-                Cache.Prepare();
-            }
-            catch (Exception)
-            {
-            }
-
             Cache.Shared.Keys.Remove(_key).Wait();
         }
 
@@ -89,6 +80,14 @@ namespace BB.Caching.Tests.CacheTests
             Task.WhenAll(tasks);
 
             return sw.ElapsedMilliseconds;
+        }
+
+        public void SetFixture(DefaultTestFixture data)
+        {
+        }
+
+        public void SetFixture(StatisticTestsFixture data)
+        {
         }
     }
 }

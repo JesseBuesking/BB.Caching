@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using BB.Caching.Shared;
 using BB.Caching.Utilities;
+using StackExchange.Redis;
 
 namespace BB.Caching
 {
@@ -13,21 +14,29 @@ namespace BB.Caching
             public static void Prepare()
 // ReSharper restore MemberHidesStaticFromOuterClass
             {
+                var script = Lua.Instance["RateLimitIncrement"];
                 var connections = SharedCache.Instance.GetAllWriteConnections();
                 foreach (var connection in connections)
-                    connection.Scripting.Prepare(new[] {RateLimiter.RateLimitIncrementScript});
+                {
+                    foreach (var endpoint in connection.GetEndPoints())
+                    {
+                        RateLimiter._rateLimitIncrementHash = connection.GetServer(endpoint).ScriptLoad(script);
+                    }
+                }
             }
 
-            private static string RateLimitIncrementScript
+            private static byte[] RateLimitIncrementHash
             {
-                get { return Lua.Instance["RateLimitIncrement"]; }
+                get { return RateLimiter._rateLimitIncrementHash; }
             }
 
-            public static Task<object> Increment(string key, TimeSpan spanSize, TimeSpan bucketSize, long throttle,
+            private static byte[] _rateLimitIncrementHash;
+
+            public static Task<RedisResult> Increment(string key, TimeSpan spanSize, TimeSpan bucketSize, long throttle,
                 int increment = 1)
             {
-                string[] keyArgs = new[] {key};
-                object[] valueArgs = new object[]
+                RedisKey[] keyArgs = {key};
+                RedisValue[] valueArgs = new RedisValue[]
                     {
                         DateTime.UtcNow.Ticks/TimeSpan.TicksPerMillisecond,
                         (long) spanSize.TotalMilliseconds,
@@ -37,11 +46,18 @@ namespace BB.Caching
                     };
 
                 var connections = SharedCache.Instance.GetWriteConnections(key);
-                Task<object> result = null;
+                Task<RedisResult> result = null;
                 foreach (var connection in connections)
                 {
-                    var task = connection.Scripting.Eval(SharedCache.Instance.Db, RateLimiter.RateLimitIncrementScript,
-                        keyArgs, valueArgs, true, false, SharedCache.Instance.QueueJump);
+                    var task = connection.GetDatabase(SharedCache.Instance.Db)
+                        .ScriptEvaluateAsync(
+                            RateLimiter.RateLimitIncrementHash,
+                            keys: keyArgs,
+                            values: valueArgs,
+                            flags: CommandFlags.None
+                        );
+
+
                     if (null == result)
                         result = task;
                 }

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
-using System.Linq;
-using BookSleeve;
+using StackExchange.Redis;
 
 namespace BB.Caching.Connection
 {
@@ -35,12 +34,12 @@ namespace BB.Caching.Connection
         /// <summary>
         /// The connections that we can write to. (Master(s))
         /// </summary>
-        private List<SafeRedisConnection> _writeConnections;
+        private List<ConnectionMultiplexer> _writeConnections;
 
         /// <summary>
         /// The slaves we can read from. (Slave(s))
         /// </summary>
-        private List<SafeRedisConnection> _readConnections;
+        private List<ConnectionMultiplexer> _readConnections;
 
         /// <summary>
         /// The pool of read connections to select from.
@@ -48,7 +47,7 @@ namespace BB.Caching.Connection
         /// Will include both read and write connections, and will round-robin on the available connections.
         /// </remarks>
         /// </summary>
-        private List<SafeRedisConnection> _readPool;
+        private List<ConnectionMultiplexer> _readPool;
 
         /// <summary>
         /// The last-used read pool connection. This is used for round-robining the connections.
@@ -60,7 +59,7 @@ namespace BB.Caching.Connection
         /// </summary>
         /// <param name="name"></param>
         /// <param name="defaultWriteConnection"></param>
-        public RedisConnectionGroup(string name, SafeRedisConnection defaultWriteConnection)
+        public RedisConnectionGroup(string name, ConnectionMultiplexer defaultWriteConnection)
         {
             this.Name = name;
             this.AddWriteConnection(defaultWriteConnection);
@@ -71,11 +70,11 @@ namespace BB.Caching.Connection
         /// </summary>
         /// <param name="connection"></param>
 // ReSharper disable MemberCanBePrivate.Global
-        public void AddWriteConnection(SafeRedisConnection connection)
+        public void AddWriteConnection(ConnectionMultiplexer connection)
 // ReSharper restore MemberCanBePrivate.Global
         {
             if (null == this._writeConnections)
-                this._writeConnections = new List<SafeRedisConnection> {connection};
+                this._writeConnections = new List<ConnectionMultiplexer> {connection};
             else
                 this._writeConnections.Add(connection);
 
@@ -87,11 +86,11 @@ namespace BB.Caching.Connection
         /// </summary>
         /// <param name="connection"></param>
 // ReSharper disable UnusedMember.Global
-        public void AddReadConnection(SafeRedisConnection connection)
+        public void AddReadConnection(ConnectionMultiplexer connection)
 // ReSharper restore UnusedMember.Global
         {
             if (null == this._readConnections)
-                this._readConnections = new List<SafeRedisConnection> {connection};
+                this._readConnections = new List<ConnectionMultiplexer> {connection};
             else
                 this._readConnections.Add(connection);
 
@@ -106,7 +105,7 @@ namespace BB.Caching.Connection
             int writeCount = null == this._writeConnections ? 0 : this._writeConnections.Count;
             int readCount = null == this._readConnections ? 0 : this._readConnections.Count;
 
-            this._readPool = new List<SafeRedisConnection>(writeCount*_writeWeight + readCount*_readWeight);
+            this._readPool = new List<ConnectionMultiplexer>(writeCount*_writeWeight + readCount*_readWeight);
 
             int readIndex = 0;
             int writeIndex = 0;
@@ -134,19 +133,19 @@ namespace BB.Caching.Connection
         /// Retrieves a connection from the read pool on a round-robin basis.
         /// </summary>
         /// <returns></returns>
-        public RedisConnection GetReadConnection()
+        public ConnectionMultiplexer GetReadConnection()
         {
             this._readPoolIndex = (this._readPoolIndex + 1)%this._readPool.Count;
-            return this._readPool[this._readPoolIndex].GetConnection();
+            return this._readPool[this._readPoolIndex];
         }
 
         /// <summary>
         /// Retrieves the available write connections.
         /// </summary>
         /// <returns></returns>
-        public RedisConnection[] GetWriteConnections()
+        public ConnectionMultiplexer[] GetWriteConnections()
         {
-            return this._writeConnections.Select(s => s.GetConnection()).ToArray();
+            return this._writeConnections.ToArray();
         }
 
         /// <summary>

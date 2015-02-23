@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using StackExchange.Redis;
 
 namespace BB.Caching.Shared
 {
@@ -20,13 +21,16 @@ namespace BB.Caching.Shared
         /// </summary>
         /// <returns>True if the key was removed.</returns>
         /// <remarks>http://redis.io/commands/del</remarks>
-        Task<bool> IKeys.Remove(string key)
+        Task<bool> IKeys.Remove(RedisKey key)
         {
             var connections = SharedCache.Instance.GetWriteConnections(key);
             Task<bool> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Keys.Remove(SharedCache.Instance.Db, key, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .KeyDeleteAsync(key);
+
                 if (null == result)
                     result = task;
             }
@@ -38,7 +42,7 @@ namespace BB.Caching.Shared
         /// </summary>
         /// <returns>The number of keys that were removed.</returns>
         /// <remarks>http://redis.io/commands/del</remarks>
-        async Task<long> IKeys.Remove(string[] keys)
+        async Task<long> IKeys.Remove(RedisKey[] keys)
         {
             var dictionary = SharedCache.Instance.GetWriteConnections(keys);
             var tasks = new Task<long>[dictionary.Count];
@@ -46,8 +50,10 @@ namespace BB.Caching.Shared
             {
                 foreach (var connection in dictionary.ElementAt(i).Key)
                 {
-                    var task = connection.Keys.Remove(
-                        SharedCache.Instance.Db, dictionary.ElementAt(i).Value, SharedCache.Instance.QueueJump);
+                    var task = connection
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyDeleteAsync(dictionary.ElementAt(i).Value);
+
                     if (null == tasks[i])
                         tasks[i] = task;
                 }
@@ -63,8 +69,9 @@ namespace BB.Caching.Shared
         /// <remarks>http://redis.io/commands/exists</remarks>
         Task<bool> IKeys.Exists(string key)
         {
-            return SharedCache.Instance.GetReadConnection(key).Keys
-                .Exists(SharedCache.Instance.Db, key, SharedCache.Instance.QueueJump);
+            return SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .KeyExistsAsync(key);
         }
 
         /// <summary>
@@ -86,8 +93,10 @@ namespace BB.Caching.Shared
             Task<bool> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Keys
-                    .Expire(SharedCache.Instance.Db, key, (int) expiry.TotalSeconds, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .KeyExpireAsync(key, expiry);
+
                 if (null == result)
                     result = task;
             }
@@ -108,43 +117,53 @@ namespace BB.Caching.Shared
             Task<bool> result = null;
             foreach (var connection in connections)
             {
-                var task = connection.Keys.Persist(SharedCache.Instance.Db, key, SharedCache.Instance.QueueJump);
+                var task = connection
+                    .GetDatabase(SharedCache.Instance.Db)
+                    .KeyPersistAsync(key);
+
                 if (null == result)
                     result = task;
             }
             return result;
         }
 
-        /// <summary>
-        /// Returns all keys matching pattern.
-        /// </summary>
-        /// <remarks>
-        /// Warning: consider KEYS as a command that should only be used in production environments with
-        /// extreme care. It may ruin performance when it is executed against large databases. This command is intended
-        /// for debugging and special operations, such as changing your keyspace layout. Don't use KEYS in your regular
-        /// application code. If you're looking for a way to find keys in a subset of your keyspace, consider using
-        /// sets.
-        /// </remarks>
-        /// <remarks>http://redis.io/commands/keys</remarks>
-        async Task<string[]> IKeys.Find(string pattern)
-        {
-            var connections = SharedCache.Instance.GetAllReadConnections();
-            var tasks = new Task<string[]>[connections.Length];
-            for (int i = 0; i < connections.Length; i++)
-                tasks[i] = connections[i].Keys.Find(SharedCache.Instance.Db, pattern, SharedCache.Instance.QueueJump);
-            var results = await Task.WhenAll(tasks);
-            return results.SelectMany(s => s).ToArray();
-        }
+        ///// <summary>
+        ///// Returns all keys matching pattern.
+        ///// </summary>
+        ///// <remarks>
+        ///// Warning: consider KEYS as a command that should only be used in production environments with
+        ///// extreme care. It may ruin performance when it is executed against large databases. This command is intended
+        ///// for debugging and special operations, such as changing your keyspace layout. Don't use KEYS in your regular
+        ///// application code. If you're looking for a way to find keys in a subset of your keyspace, consider using
+        ///// sets.
+        ///// </remarks>
+        ///// <remarks>http://redis.io/commands/keys</remarks>
+        //async Task<string[]> IKeys.Find(string pattern)
+        //{
+        //    var connections = SharedCache.Instance.GetAllReadConnections();
+        //    var tasks = new Task<string[]>[connections.Length];
+
+        //    for (int i = 0; i < connections.Length; i++)
+        //    {
+        //        tasks[i] = connections[i]
+        //            .GetDatabase(SharedCache.Instance.Db)
+        //            .key(SharedCache.Instance.Db, pattern, SharedCache.Instance.QueueJump);
+        //    }
+
+        //    var results = await Task.WhenAll(tasks);
+        //    return results.SelectMany(s => s).ToArray();
+        //}
 
         /// <summary>
         /// Return a random key from the currently selected database.
         /// </summary>
         /// <returns>the random key, or nil when the database is empty.</returns>
         /// <remarks>http://redis.io/commands/randomkey</remarks>
-        Task<string> IKeys.Random()
+        Task<RedisKey> IKeys.Random()
         {
-            return SharedCache.Instance.GetRandomReadConnection().Keys
-                .Random(SharedCache.Instance.Db, SharedCache.Instance.QueueJump);
+            return SharedCache.Instance.GetRandomReadConnection()
+                .GetDatabase(SharedCache.Instance.Db)
+                .KeyRandomAsync();
         }
 
         Task IKeys.Rename(string fromKey, string toKey)
@@ -158,15 +177,16 @@ namespace BB.Caching.Shared
         }
 
         /// <summary>
-        /// Returns the remaining time to live (seconds) of a key that has a timeout.  This introspection capability
-        /// allows a Redis client to check how many seconds a given key will continue to be part of the dataset.
+        /// Returns the remaining time to live of a key that has a timeout. This introspection capability allows a
+        /// Redis client to check how many seconds a given key will continue to be part of the dataset.
         /// </summary>
         /// <returns>TTL in seconds or -1 when key does not exist or does not have a timeout.</returns>
         /// <remarks>http://redis.io/commands/ttl</remarks>
-        Task<long> IKeys.TimeToLive(string key)
+        Task<TimeSpan?> IKeys.TimeToLive(string key)
         {
-            return SharedCache.Instance.GetReadConnection(key).Keys
-                .TimeToLive(SharedCache.Instance.Db, key, SharedCache.Instance.QueueJump);
+            return SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .KeyTimeToLiveAsync(key);
         }
 
         /// <summary>
@@ -175,24 +195,28 @@ namespace BB.Caching.Shared
         /// </summary>
         /// <returns> type of key, or none when key does not exist.</returns>
         /// <remarks>http://redis.io/commands/type</remarks>
-        Task<string> IKeys.Type(string key)
+        RedisType IKeys.Type(string key)
         {
-            return SharedCache.Instance.GetReadConnection(key).Keys
-                .Type(SharedCache.Instance.Db, key, SharedCache.Instance.QueueJump);
+            return SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .KeyType(key);
         }
 
         /// <summary>
         /// Return the number of keys in the currently selected database.
         /// </summary>
         /// <remarks>http://redis.io/commands/dbsize</remarks>
-        async Task<long> IKeys.GetLength()
+        long IKeys.GetLength()
         {
             var connections = SharedCache.Instance.GetAllReadConnections();
-            var tasks = new Task<long>[connections.Length];
+            var results = new string[connections.Length];
             for (int i = 0; i < connections.Length; i++)
-                tasks[i] = connections[i].Keys.GetLength(SharedCache.Instance.Db, SharedCache.Instance.QueueJump);
-            var results = await Task.WhenAll(tasks);
-            return results.Sum();
+            {
+                results[i] = connections[i]
+                    .GetStatus();
+            }
+
+            return results.Select(long.Parse).Sum();
         }
 
 #pragma warning disable 1066
@@ -200,9 +224,9 @@ namespace BB.Caching.Shared
             long offset = 0, long count = -1, bool alpha = false, bool @ascending = true)
 #pragma warning restore 1066
         {
-//            return SharedCache.Instance.GetConnection(key).Keys
-//                .SortString(SharedCache.Instance.Db, key, byPattern, getPattern, offset, count, alpha, @ascending,
-//                    SharedCache.Instance.QueueJump);
+            //            return SharedCache.Instance.GetConnection(key).Keys
+            //                .SortString(SharedCache.Instance.Db, key, byPattern, getPattern, offset, count, alpha, @ascending,
+            //                    SharedCache.Instance.QueueJump);
             throw new NotImplementedException();
         }
 
@@ -219,9 +243,11 @@ namespace BB.Caching.Shared
         /// unless you have good reason, and then avoided anyway.
         /// </summary>
         /// <remarks>http://redis.io/commands/debug-object</remarks>
-        Task<string> IKeys.DebugObject(string key)
+        RedisValue IKeys.DebugObject(string key)
         {
-            return SharedCache.Instance.GetReadConnection(key).Keys.DebugObject(SharedCache.Instance.Db, key);
+            return SharedCache.Instance.GetReadConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .DebugObject(key);
         }
 
         /// <summary>

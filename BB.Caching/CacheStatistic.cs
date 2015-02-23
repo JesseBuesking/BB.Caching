@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BB.Caching.Shared;
 using BB.Caching.Utilities;
+using StackExchange.Redis;
 
 namespace BB.Caching
 {
@@ -14,24 +15,35 @@ namespace BB.Caching
             public static void Prepare()
 // ReSharper restore MemberHidesStaticFromOuterClass
             {
+                var setScript = Lua.Instance["SetStatistic"];
+                var getScript = Lua.Instance["GetStatistic"];
                 var connections = SharedCache.Instance.GetAllWriteConnections();
+
                 foreach (var connection in connections)
-                    connection.Scripting.Prepare(new[]
-                        {
-                            Stats.SetStatisticScript,
-                            Stats.GetStatisticScript
-                        });
+                {
+                    foreach (var endpoint in connection.GetEndPoints())
+                    {
+                        Stats._getStatisticHash = connection.GetServer(endpoint)
+                            .ScriptLoad(getScript);
+                        Stats._setStatisticHash = connection.GetServer(endpoint)
+                            .ScriptLoad(setScript);
+                    }
+                }
             }
 
-            private static string SetStatisticScript
+            private static byte[] SetStatisticHash
             {
-                get { return Lua.Instance["SetStatistic"]; }
+                get { return _setStatisticHash; }
             }
 
-            private static string GetStatisticScript
+            private static byte[] _setStatisticHash;
+
+            private static byte[] GetStatisticHash
             {
-                get { return Lua.Instance["GetStatistic"]; }
+                get { return _getStatisticHash; }
             }
+
+            private static byte[] _getStatisticHash;
 
             public class Statistics
             {
@@ -125,14 +137,19 @@ namespace BB.Caching
 
             public static Task SetStatistic(string key, double value)
             {
-                string[] keyArgs = new[] {key};
-                object[] valueArgs = new object[] {value};
+                RedisKey[] keyArgs = {key};
+                RedisValue[] valueArgs = {value};
 
                 var connections = SharedCache.Instance.GetWriteConnections(key);
                 foreach (var connection in connections)
                 {
-                    connection.Scripting.Eval(SharedCache.Instance.Db, Stats.SetStatisticScript,
-                        keyArgs, valueArgs, true, false, SharedCache.Instance.QueueJump);
+                    connection.GetDatabase(SharedCache.Instance.Db)
+                        .ScriptEvaluateAsync(
+                            Stats.SetStatisticHash,
+                            keys: keyArgs,
+                            values: valueArgs,
+                            flags: CommandFlags.None
+                        );
                 }
 
                 return Task.FromResult(false);
@@ -140,14 +157,20 @@ namespace BB.Caching
 
             public static Task<Statistics> GetStatistics(string key)
             {
-                string[] keyArgs = new[] {key};
+                RedisKey[] keyArgs = {key};
+                RedisValue[] valueArgs = new RedisValue[0];
 
                 var connections = SharedCache.Instance.GetWriteConnections(key);
-                Task<object> result = null;
+                Task<RedisResult> result = null;
                 foreach (var connection in connections)
                 {
-                    var task = connection.Scripting.Eval(SharedCache.Instance.Db, Stats.GetStatisticScript,
-                        keyArgs, new object[0], true, false, SharedCache.Instance.QueueJump);
+                    var task = connection.GetDatabase(SharedCache.Instance.Db)
+                        .ScriptEvaluateAsync(
+                            Stats.GetStatisticHash,
+                            keys: keyArgs,
+                            values: valueArgs,
+                            flags: CommandFlags.None
+                        );
                     if (null == result)
                         result = task;
                 }
@@ -157,41 +180,12 @@ namespace BB.Caching
                         if (null == result)
                             return null;
 
-                        object[] res = (object[]) await result;
-                        long numberOfValues;
-                        byte[] bytes = res[0] as byte[];
-                        if (null != bytes)
-                            numberOfValues = long.Parse(Encoding.UTF8.GetString(bytes));
-                        else
-                            numberOfValues = (long) res[0];
-
-                        double sumOfValues;
-                        bytes = res[1] as byte[];
-                        if (null != bytes)
-                            sumOfValues = double.Parse(Encoding.UTF8.GetString(bytes));
-                        else
-                            sumOfValues = res[1] is double ? (double) res[1] : (long) res[1];
-
-                        double sumOfValuesSquared;
-                        bytes = res[2] as byte[];
-                        if (null != bytes)
-                            sumOfValuesSquared = double.Parse(Encoding.UTF8.GetString((byte[]) res[2]));
-                        else
-                            sumOfValuesSquared = res[2] is double ? (double) res[2] : (long) res[2];
-
-                        double minimum;
-                        bytes = res[3] as byte[];
-                        if (null != bytes)
-                            minimum = double.Parse(Encoding.UTF8.GetString((byte[]) res[3]));
-                        else
-                            minimum = res[3] is double ? (double) res[3] : (long) res[3];
-
-                        double maximum;
-                        bytes = res[4] as byte[];
-                        if (null != bytes)
-                            maximum = double.Parse(Encoding.UTF8.GetString((byte[]) res[4]));
-                        else
-                            maximum = res[4] is double ? (double) res[4] : (long) res[4];
+                        RedisResult[] res = (RedisResult[]) await result;
+                        long numberOfValues = (long) res[0];
+                        double sumOfValues = (double) res[1];
+                        double sumOfValuesSquared = (double) res[2];
+                        double minimum = (double) res[3];
+                        double maximum = (double) res[4];
 
                         return new Statistics(numberOfValues, sumOfValues, sumOfValuesSquared, minimum, maximum);
                     });

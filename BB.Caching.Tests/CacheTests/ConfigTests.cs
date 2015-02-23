@@ -1,15 +1,35 @@
 ﻿using System;
 using System.Threading;
-using BB.Caching.Connection;
 using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    public class ConfigTests : TestBase
+    public class ConfigTestsFixture : IDisposable
     {
-// ReSharper disable MemberCanBePrivate.Global
+        private const string _key = "key1";
+
+        private const string _key2 = "key2";
+
+        public ConfigTestsFixture()
+        {
+            Cache.Prepare();
+
+            Cache.Shared.Keys.Remove(_key).Wait();
+            Cache.Shared.Keys.Remove(_key2).Wait();
+        }
+
+        public void Dispose()
+        {
+            Cache.Shared.Keys.Remove(_key).Wait();
+            Cache.Shared.Keys.Remove(_key2).Wait();
+        }
+    }
+
+    public class ConfigTests : IUseFixture<DefaultTestFixture>, IUseFixture<ConfigTestsFixture>
+    {
+        // ReSharper disable MemberCanBePrivate.Global
         public class ConfigDummy
-// ReSharper restore MemberCanBePrivate.Global
+        // ReSharper restore MemberCanBePrivate.Global
         {
             public int One
             {
@@ -35,38 +55,6 @@ namespace BB.Caching.Tests.CacheTests
         private const string _key2 = "key2";
 
         private const string _value2 = "value2";
-
-        public ConfigTests()
-        {
-            try
-            {
-                Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, this.TestPort1)));
-
-                if (0 != this.TestPort2)
-                {
-                    Cache.Shared.AddRedisConnectionGroup(
-                        new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
-                }
-
-                Cache.PubSub.Configure(new SafeRedisConnection(this.TestIp, this.TestPort1));
-                Cache.Shared.SetPubSubRedisConnection();
-
-                Cache.Prepare();
-            }
-            catch (Exception)
-            {
-            }
-
-            Cache.Shared.Keys.Remove(_key).Wait();
-            Cache.Shared.Keys.Remove(_key2).Wait();
-        }
-
-        public void Dispose()
-        {
-            Cache.Shared.Keys.Remove(_key).Wait();
-            Cache.Shared.Keys.Remove(_key2).Wait();
-        }
 
         [Fact]
         public void Set()
@@ -170,6 +158,14 @@ namespace BB.Caching.Tests.CacheTests
             Cache.Config.RemoveAsync(_key2, false).Wait();
             value2 = Cache.Config.GetAsync<string>(_key2).Result;
             Assert.Equal(null, value2);
+        }
+
+        public void SetFixture(ConfigTestsFixture data)
+        {
+        }
+
+        public void SetFixture(DefaultTestFixture data)
+        {
         }
     }
 }

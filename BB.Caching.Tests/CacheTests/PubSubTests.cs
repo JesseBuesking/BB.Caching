@@ -1,35 +1,23 @@
 ﻿using System;
 using System.Threading;
-using BB.Caching.Connection;
 using Xunit;
 
 namespace BB.Caching.Tests.CacheTests
 {
-    public class PubSubTests : TestBase
+    public class PubSubTestsFixture : IDisposable
     {
-        public PubSubTests()
+        public PubSubTestsFixture()
         {
-            try
-            {
-                Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, this.TestPort1)));
-
-                if (0 != this.TestPort2)
-                {
-                    Cache.Shared.AddRedisConnectionGroup(
-                        new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
-                }
-
-                Cache.PubSub.Configure(new SafeRedisConnection(this.TestIp, this.TestPort1));
-                Cache.Shared.SetPubSubRedisConnection();
-
-                Cache.Prepare();
-            }
-            catch (Exception)
-            {
-            }
+            Cache.Prepare();
         }
 
+        public void Dispose()
+        {
+        }
+    }
+
+    public class PubSubTests : IUseFixture<DefaultTestFixture>, IUseFixture<PubSubTestsFixture>
+    {
         [Fact]
         public void SubscriptionIsCalled()
         {
@@ -45,6 +33,14 @@ namespace BB.Caching.Tests.CacheTests
                 Thread.Sleep(20);
 
             Assert.True(isSet);
+        }
+
+        public void SetFixture(DefaultTestFixture data)
+        {
+        }
+
+        public void SetFixture(PubSubTestsFixture data)
+        {
         }
     }
 }

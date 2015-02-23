@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using BB.Caching.Hashing;
 using BB.Caching.Shared;
 using BB.Caching.Utilities;
+using StackExchange.Redis;
 
 namespace BB.Caching
 {
@@ -72,25 +74,38 @@ namespace BB.Caching
             /// <param name="probFalsePos">The probability [0, 1] that there will be false positives.</param>
             public BloomFilter(long numberOfItems = 1000000, float probFalsePos = 0.001f)
             {
+                var allScript = Lua.Instance["AllBitsSet"];
+                var multipleScript = Lua.Instance["SetMultipleBits"];
+
                 this.Options = new BFOptions(numberOfItems, probFalsePos);
                 var connections = SharedCache.Instance.GetAllWriteConnections();
                 foreach (var connection in connections)
-                    connection.Scripting.Prepare(new[] {BloomFilter.SetMultipleBitsScript});
+                {
+                    foreach (var endpoint in connection.GetEndPoints())
+                    {
+                        BloomFilter._allBitsSetHash = connection.GetServer(endpoint).ScriptLoad(allScript);
+                        BloomFilter._setMultipleBitsHash = connection.GetServer(endpoint).ScriptLoad(multipleScript);
+                    }
+                }
             }
 
-            private static string AllBitsSetScript
+            private static byte[] AllBitsSetHash
             {
-                get { return Lua.Instance["AllBitsSet"]; }
+                get { return _allBitsSetHash; }
             }
 
-            private static string SetMultipleBitsScript
+            private static byte[] _allBitsSetHash;
+
+            private static byte[] SetMultipleBitsHash
             {
-                get { return Lua.Instance["SetMultipleBits"]; }
+                get { return _setMultipleBitsHash; }
             }
+
+            private static byte[] _setMultipleBitsHash;
 
             public Task Add(string key, string value)
             {
-                var bits = new long[this.Options.NumberOfHashes];
+                var bits = new RedisValue[this.Options.NumberOfHashes];
                 for (int i = 0; i < this.Options.NumberOfHashes; i++)
                     bits[i] = Murmur3.Instance.ComputeInt(value + i)%this.Options.NumberOfBits;
 
@@ -99,45 +114,56 @@ namespace BB.Caching
             }
 
 // ReSharper disable UnusedMethodReturnValue.Local
-            private Task SetBits(string key, long[] bits, bool value)
+            private Task SetBits(string key, RedisValue[] bits, bool value)
 // ReSharper restore UnusedMethodReturnValue.Local
             {
-                string[] keyArgs = new[] {key};
-                object[] valueArgs = new object[bits.Length + 1];
+                RedisKey[] keyArgs = {key};
+                RedisValue[] valueArgs = new RedisValue[bits.Length + 1];
                 valueArgs[0] = value;
                 bits.CopyTo(valueArgs, 1);
 
                 var connections = SharedCache.Instance.GetWriteConnections(key);
                 foreach (var connection in connections)
                 {
-                    connection.Scripting.Eval(SharedCache.Instance.Db, BloomFilter.SetMultipleBitsScript,
-                        keyArgs, valueArgs, true, false, SharedCache.Instance.QueueJump);
+                    connection.GetDatabase(SharedCache.Instance.Db)
+                        .ScriptEvaluateAsync(
+                            BloomFilter.SetMultipleBitsHash,
+                            keys: keyArgs,
+                            values: valueArgs,
+                            flags: CommandFlags.None
+                        );
                 }
                 return Task.FromResult(false);
             }
 
             public Task<bool> IsSet(string key, string value)
             {
-                var bits = new long[this.Options.NumberOfHashes];
+                var bits = new RedisValue[this.Options.NumberOfHashes];
                 for (int i = 0; i < this.Options.NumberOfHashes; i++)
                     bits[i] = Murmur3.Instance.ComputeInt(value + i)%this.Options.NumberOfBits;
 
                 return this.AllBitsSet(key, bits);
             }
 
-            private Task<bool> AllBitsSet(string key, long[] bits)
+            private Task<bool> AllBitsSet(string key, RedisValue[] bits)
             {
-                string[] keyArgs = new[] {key};
-                object[] valueArgs = new object[bits.Length];
+                RedisKey[] keyArgs = {key};
+                RedisValue[] valueArgs = new RedisValue[bits.Length];
                 bits.CopyTo(valueArgs, 0);
 
-                Task<object> result = null;
+                Task<RedisResult> result = null;
 
                 var connections = SharedCache.Instance.GetWriteConnections(key);
                 foreach (var connection in connections)
                 {
-                    var task = connection.Scripting.Eval(SharedCache.Instance.Db, BloomFilter.AllBitsSetScript,
-                        keyArgs, valueArgs, true, false, SharedCache.Instance.QueueJump);
+                    var task = connection.GetDatabase(SharedCache.Instance.Db)
+                        .ScriptEvaluateAsync(
+                            BloomFilter.AllBitsSetHash,
+                            keys: keyArgs,
+                            values: valueArgs,
+                            flags: CommandFlags.None
+                        );
+
                     if (null == result)
                         result = task;
                 }
@@ -147,8 +173,8 @@ namespace BB.Caching
                         if (null == result)
                             return false;
 
-                        object value = await result;
-                        return null != value && 1 == (long) value;
+                        RedisResult value = await result;
+                        return !value.IsNull && 1L == (long)value;
                     });
             }
 

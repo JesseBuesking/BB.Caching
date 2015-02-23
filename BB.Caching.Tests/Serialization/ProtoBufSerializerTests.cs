@@ -2,14 +2,25 @@
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using BB.Caching.Connection;
 using BB.Caching.Serialization;
 using ProtoBuf;
 using Xunit;
 
 namespace BB.Caching.Tests.Serialization
 {
-    public class ProtoBufSerializerTests : TestBase
+    public class ProtoBufSerializerTestsFixture : IDisposable
+    {
+        public ProtoBufSerializerTestsFixture()
+        {
+            Cache.Prepare();
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    public class ProtoBufSerializerTests : IUseFixture<DefaultTestFixture>, IUseFixture<ProtoBufSerializerTestsFixture>
     {
         #region test classes
 
@@ -174,28 +185,6 @@ namespace BB.Caching.Tests.Serialization
         }
 
         #endregion // test classes
-
-        public ProtoBufSerializerTests()
-        {
-            Cache.PubSub.Configure(new SafeRedisConnection(this.TestIp));
-            try
-            {
-                Cache.Shared.AddRedisConnectionGroup(
-                    new RedisConnectionGroup("node-0", new SafeRedisConnection(this.TestIp, this.TestPort1)));
-
-                if (0 != this.TestPort2)
-                {
-                    Cache.Shared.AddRedisConnectionGroup(
-                        new RedisConnectionGroup("node-1", new SafeRedisConnection(this.TestIp, this.TestPort2)));
-                }
-
-                Cache.Shared.SetPubSubRedisConnection();
-                Cache.Prepare();
-            }
-            catch (Exception)
-            {
-            }
-        }
 
         [Fact]
         public void SerializingAString()
@@ -364,6 +353,14 @@ namespace BB.Caching.Tests.Serialization
 
             Assert.Equal(serializeAuto.Length, serializeProto.Length);
             Assert.True(serializeAuto.Length < serializeBinary.Length);
+        }
+
+        public void SetFixture(DefaultTestFixture data)
+        {
+        }
+
+        public void SetFixture(ProtoBufSerializerTestsFixture data)
+        {
         }
     }
 }

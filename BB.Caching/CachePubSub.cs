@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using BB.Caching.Connection;
-using BookSleeve;
+using StackExchange.Redis;
 
 namespace BB.Caching
 {
@@ -15,6 +14,14 @@ namespace BB.Caching
         /// </summary>
         public static class PubSub
         {
+            public class ChannelAlreadySubscribedException : Exception
+            {
+                public ChannelAlreadySubscribedException(string message) : base(message)
+                {
+                    
+                }
+            }
+
             private class PubSubSingleton
             {
                 private static readonly Lazy<PubSubSingleton> _lazy = new Lazy<PubSubSingleton>(
@@ -31,25 +38,25 @@ namespace BB.Caching
                 /// all the redis instances that are currently running => scales up; minus for cache/invalidate since it'll
                 /// always hash to the same box)
                 /// </summary>
-                private SafeRedisConnection _pubSubConnection;
+                private ConnectionMultiplexer _pubSubConnection;
 
                 /// <summary>
                 /// Keeps open all subscriptions that have been made.
                 /// </summary>
-                private RedisSubscriberConnection Subscriptions
+                private ISubscriber Subscriptions
                 {
                     get
                     {
 // ReSharper disable ConvertIfStatementToNullCoalescingExpression
                         if (null == this._subscriptions)
 // ReSharper restore ConvertIfStatementToNullCoalescingExpression
-                            this._subscriptions = this.GetConnection().GetOpenSubscriberChannel();
+                            this._subscriptions = this.GetConnection().GetSubscriber();
                         return this._subscriptions;
                     }
                     set { this._subscriptions = value; }
                 }
 
-                private RedisSubscriberConnection _subscriptions;
+                private ISubscriber _subscriptions;
 
                 /// <summary>
                 /// All of the active subscriptions that are key-unspecific.
@@ -79,7 +86,7 @@ namespace BB.Caching
                 /// Configures the singleton.
                 /// </summary>
                 /// <param name="connection"></param>
-                public void Init(SafeRedisConnection connection)
+                public void Init(ConnectionMultiplexer connection)
                 {
                     this._pubSubConnection = connection;
                 }
@@ -89,20 +96,28 @@ namespace BB.Caching
                 /// re-created.
                 /// </summary>
                 /// <returns></returns>
-                private RedisConnection GetConnection()
+                private ConnectionMultiplexer GetConnection()
                 {
-                    var connection = this._pubSubConnection.GetConnection();
-                    if (this._pubSubConnection.WasReCreated)
-                    {
-                        foreach (var kvp in this.ActiveKeylessSubscriptions)
-                            this.Sub(kvp.Key, kvp.Value);
+                    var connection = this._pubSubConnection;
 
-                        foreach (var kvp in this.ActiveKeyedSubscriptions)
-                            foreach (var subKvp in kvp.Value)
-                                this.Sub(kvp.Key, subKvp.Key, subKvp.Value);
+                    // TODO verify that we don't need to resubscribe
+                    //if (this._pubSubConnection.WasRecreated)
+                    //{
+                    //    foreach (var kvp in this.ActiveKeylessSubscriptions)
+                    //    {
+                    //        this.SubscribeAsync(kvp.Key, kvp.Value);
+                    //    }
 
-                        this._subscriptions = null;
-                    }
+                    //    foreach (var kvp in this.ActiveKeyedSubscriptions)
+                    //    {
+                    //        foreach (var subKvp in kvp.Value)
+                    //        {
+                    //            this.SubscribeAsync(kvp.Key, subKvp.Key, subKvp.Value);
+                    //        }
+                    //    }
+
+                    //    this._subscriptions = null;
+                    //}
                     return connection;
                 }
 
@@ -112,16 +127,20 @@ namespace BB.Caching
                 /// <param name="channel">The channel of the subscription.</param>
                 /// <param name="subscriptionCallback">The callback method.</param>
                 /// <returns></returns>
-                public Task Sub(string channel, Action<string> subscriptionCallback)
+                public Task SubscribeAsync(string channel, Action<string> subscriptionCallback)
                 {
                     // Check to make sure we're not re-creating an existing subscription first.
                     if (this.ActiveKeylessSubscriptions.ContainsKey(channel))
-                        throw new Exception(string.Format("subscription to channel {0} already exists", channel));
+                    {
+                        throw new ChannelAlreadySubscribedException(
+                            string.Format("subscription to channel {0} already exists", channel)
+                        );
+                    }
 
                     // Let's add this subscription to our cache. We'll need to remember it so that we can re-subscribe
                     // if we lose our connection at any point.
                     this.ActiveKeylessSubscriptions[channel] = subscriptionCallback;
-                    return this.Subscriptions.Subscribe(channel, (sameAsChannel, data) =>
+                    return this.Subscriptions.SubscribeAsync(channel, (sameAsChannel, data) =>
                         {
                             string value = Encoding.UTF8.GetString(data);
                             subscriptionCallback(value);
@@ -135,7 +154,7 @@ namespace BB.Caching
                 /// <param name="key">The key to target.</param>
                 /// <param name="subscriptionCallback">The callback method.</param>
                 /// <returns></returns>
-                public Task Sub(string channel, string key, Action<string> subscriptionCallback)
+                public Task SubscribeAsync(string channel, string key, Action<string> subscriptionCallback)
                 {
                     // Check to make sure we're not re-creating an existing subscription first.
                     Dictionary<string, Action<string>> result;
@@ -153,7 +172,7 @@ namespace BB.Caching
 
                     this.ActiveKeyedSubscriptions[channel][key] = subscriptionCallback;
 
-                    return this.Subscriptions.Subscribe(channel, (sameAsChannel, data) =>
+                    return this.Subscriptions.SubscribeAsync(channel, (sameAsChannel, data) =>
                         {
                             string value = Encoding.UTF8.GetString(data);
                             int idx = value.IndexOf(':');
@@ -178,10 +197,10 @@ namespace BB.Caching
                 /// <param name="channel">The channel to publish to.</param>
                 /// <param name="value">The value of the message.</param>
                 /// <returns></returns>
-                public Task<long> Pub(string channel, string value)
+                public Task<long> PublishAsync(string channel, string value)
                 {
-                    return this.GetConnection()
-                        .Publish(channel, value);
+                    return this.Subscriptions
+                        .PublishAsync(channel, value);
                 }
 
                 /// <summary>
@@ -191,17 +210,17 @@ namespace BB.Caching
                 /// <param name="key">The key to target.</param>
                 /// <param name="value">The value of the message.</param>
                 /// <returns></returns>
-                public Task<long> Pub(string channel, string key, string value)
+                public Task<long> PublishAsync(string channel, string key, string value)
                 {
                     string concat = key + ":" + value;
-                    return this.GetConnection()
-                        .Publish(channel, concat);
+                    return this.Subscriptions
+                        .PublishAsync(channel, concat);
                 }
             }
 
-            public static void Configure(SafeRedisConnection safeRedisConnection)
+            public static void Configure(ConnectionMultiplexer connection)
             {
-                PubSubSingleton.Instance.Init(safeRedisConnection);
+                PubSubSingleton.Instance.Init(connection);
             }
 
             /// <summary>
@@ -217,7 +236,7 @@ namespace BB.Caching
             /// <returns></returns>
             public static Task Subscribe(string channel, Action<string> subscriptionCallback)
             {
-                return PubSubSingleton.Instance.Sub(channel, subscriptionCallback);
+                return PubSubSingleton.Instance.SubscribeAsync(channel, subscriptionCallback);
             }
 
             /// <summary>
@@ -229,7 +248,7 @@ namespace BB.Caching
             /// <returns></returns>
             public static Task Subscribe(string channel, string key, Action<string> subscriptionCallback)
             {
-                return PubSubSingleton.Instance.Sub(channel, key, subscriptionCallback);
+                return PubSubSingleton.Instance.SubscribeAsync(channel, key, subscriptionCallback);
             }
 
             /// <summary>
@@ -240,7 +259,7 @@ namespace BB.Caching
             /// <returns></returns>
             public static Task<long> Publish(string channel, string value)
             {
-                return PubSubSingleton.Instance.Pub(channel, value);
+                return PubSubSingleton.Instance.PublishAsync(channel, value);
             }
 
             /// <summary>
@@ -252,7 +271,7 @@ namespace BB.Caching
             /// <returns></returns>
             public static Task<long> Publish(string channel, string key, string value)
             {
-                return PubSubSingleton.Instance.Pub(channel, key, value);
+                return PubSubSingleton.Instance.PublishAsync(channel, key, value);
             }
         }
     }
