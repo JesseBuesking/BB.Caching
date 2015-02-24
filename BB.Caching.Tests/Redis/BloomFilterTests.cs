@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using BB.Caching.Redis;
 using Xunit;
 
@@ -10,7 +8,7 @@ namespace BB.Caching.Tests.Redis
 {
     public class BloomFilterTests : IUseFixture<DefaultTestFixture>, IUseFixture<BloomFilterTests.BloomFilterFixture>
     {
-        private const string KEY = "key1";
+        private const string KEY = "BloomFilterTests.Key";
 
         private const float FALSE_POSITIVE_PERCENTAGE = 0.001f;
 
@@ -38,60 +36,6 @@ namespace BB.Caching.Tests.Redis
 
             b = bloomFilter.IsSet(KEY, "again").Result;
             Assert.False(b);
-        }
-
-        [Fact]
-        public void SetPerformance()
-        {
-            const int asyncAmount = 30000;
-            var asyncMs = Set(asyncAmount, KEY, "test");
-
-            Console.WriteLine("BloomFilter Sets:");
-            Console.WriteLine("\t{0:#,##0.0#} aops/ms", (float)asyncAmount / asyncMs);
-            Console.WriteLine("\t{0:#,##0.0#} aops/s", (float)asyncAmount * 1000 / asyncMs);
-        }
-
-        [Fact]
-        public void GetPerformance()
-        {
-            const int asyncAmount = 30000;
-            var bloomFilter = new BloomFilter();
-            bloomFilter.Add(KEY, "test");
-            var asyncMs = Get(asyncAmount, KEY, "test");
-
-            Console.WriteLine("BloomFilter Gets:");
-            Console.WriteLine("\t{0:#,##0.0#} aops/ms", (float)asyncAmount / asyncMs);
-            Console.WriteLine("\t{0:#,##0.0#} aops/s", (float)asyncAmount * 1000 / asyncMs);
-        }
-
-        private static long Set(int amount, string key, string value)
-        {
-            // ReSharper disable RedundantArgumentDefaultValue
-            var bloomFilter = new BloomFilter(amount, FALSE_POSITIVE_PERCENTAGE);
-            // ReSharper restore RedundantArgumentDefaultValue
-            var tasks = new Task[amount];
-            Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < amount; i++)
-                tasks[i] = bloomFilter.Add(key, value);
-
-            Task.WhenAll(tasks);
-
-            return sw.ElapsedMilliseconds;
-        }
-
-        private static long Get(int amount, string key, string value)
-        {
-            // ReSharper disable RedundantArgumentDefaultValue
-            var bloomFilter = new BloomFilter(amount, FALSE_POSITIVE_PERCENTAGE);
-            // ReSharper restore RedundantArgumentDefaultValue
-            var tasks = new Task<bool>[amount];
-            Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < amount; i++)
-                tasks[i] = bloomFilter.IsSet(key, value);
-
-            Task.WhenAll(tasks);
-
-            return sw.ElapsedMilliseconds;
         }
 
         [Fact]

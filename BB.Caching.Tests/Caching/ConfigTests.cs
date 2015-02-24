@@ -4,32 +4,26 @@ using Xunit;
 
 namespace BB.Caching.Tests.Caching
 {
-    public class ConfigTestsFixture : IDisposable
+    public class ConfigTests : IUseFixture<DefaultTestFixture>, IUseFixture<ConfigTests.ConfigTestsFixture>, IDisposable
     {
-        private const string KEY = "key1";
-
-        private const string KEY2 = "key2";
-
-        public ConfigTestsFixture()
+        public class ConfigTestsFixture : IDisposable
         {
-            Cache.Prepare();
+            public ConfigTestsFixture()
+            {
+                Cache.Prepare();
 
-            Cache.Shared.Keys.Remove(KEY).Wait();
-            Cache.Shared.Keys.Remove(KEY2).Wait();
+                Cache.Shared.Keys.Remove(KEY).Wait();
+                Cache.Shared.Keys.Remove(KEY2).Wait();
+            }
+
+            public void Dispose()
+            {
+                Cache.Shared.Keys.Remove(KEY).Wait();
+                Cache.Shared.Keys.Remove(KEY2).Wait();
+            }
         }
 
-        public void Dispose()
-        {
-            Cache.Shared.Keys.Remove(KEY).Wait();
-            Cache.Shared.Keys.Remove(KEY2).Wait();
-        }
-    }
-
-    public class ConfigTests : IUseFixture<DefaultTestFixture>, IUseFixture<ConfigTestsFixture>
-    {
-        // ReSharper disable MemberCanBePrivate.Global
         public class ConfigDummy
-        // ReSharper restore MemberCanBePrivate.Global
         {
             public int One
             {
@@ -44,7 +38,29 @@ namespace BB.Caching.Tests.Caching
             }
         }
 
-        private const string KEY = "key1";
+        private const string KEY = "ConfigTests.Key";
+
+        private const string KEY2 = "ConfigTests.Key2";
+
+        private const string VALUE = "ConfigTests.Value";
+
+        public ConfigTests()
+        {
+            Cache.Shared.Keys.Remove(KEY);
+            Cache.Shared.Keys.Remove(KEY2);
+
+            Assert.False(Cache.Shared.Keys.Exists(KEY).Result);
+            Assert.False(Cache.Shared.Keys.Exists(KEY2).Result);
+        }
+
+        public void Dispose()
+        {
+            Cache.Shared.Keys.Remove(KEY);
+            Cache.Shared.Keys.Remove(KEY2);
+
+            Assert.False(Cache.Shared.Keys.Exists(KEY).Result);
+            Assert.False(Cache.Shared.Keys.Exists(KEY2).Result);
+        }
 
         private readonly ConfigDummy _value = new ConfigDummy
             {
@@ -52,22 +68,17 @@ namespace BB.Caching.Tests.Caching
                 Two = 2
             };
 
-        private const string KEY2 = "key2";
-
-        private const string VALUE2 = "value2";
-
         [Fact]
         public void Set()
         {
-            Cache.Config.Set("imatest", "hello");
+            Cache.Config.Set(KEY, VALUE);
             Thread.Sleep(200);
 
-            var value = Cache.Config.Get<string>("imatest");
-            Assert.Equal("hello", value);
-// ReSharper disable once RedundantArgumentDefaultValue
-            Cache.Config.Remove("imatest", true);
+            var value = Cache.Config.Get<string>(KEY);
+            Assert.Equal(VALUE, value);
+            Cache.Config.Remove(KEY);
 
-            value = Cache.Config.Get<string>("imatest");
+            value = Cache.Config.Get<string>(KEY);
             Assert.Equal(null, value);
         }
 
@@ -75,14 +86,14 @@ namespace BB.Caching.Tests.Caching
         public void SetAsync()
         {
             Cache.Config.SetAsync(KEY, this._value, false).Wait();
-            Cache.Config.SetAsync(KEY2, VALUE2, false).Wait();
+            Cache.Config.SetAsync(KEY2, VALUE, false).Wait();
 
             ConfigDummy configDummy = Cache.Config.GetAsync<ConfigDummy>(KEY).Result;
             string value2 = Cache.Config.GetAsync<string>(KEY2).Result;
 
             Assert.Equal(this._value.One, configDummy.One);
             Assert.Equal(this._value.Two, configDummy.Two);
-            Assert.Equal(VALUE2, value2);
+            Assert.Equal(VALUE, value2);
 
             Cache.Config.RemoveAsync(KEY2, false).Wait();
             value2 = Cache.Config.GetAsync<string>(KEY2).Result;
@@ -93,14 +104,14 @@ namespace BB.Caching.Tests.Caching
         public void Get()
         {
             Cache.Config.Set(KEY, this._value, false);
-            Cache.Config.Set(KEY2, VALUE2, false);
+            Cache.Config.Set(KEY2, VALUE, false);
 
             ConfigDummy configDummy = Cache.Config.Get<ConfigDummy>(KEY);
             string value2 = Cache.Config.Get<string>(KEY2);
 
             Assert.Equal(this._value.One, configDummy.One);
             Assert.Equal(this._value.Two, configDummy.Two);
-            Assert.Equal(VALUE2, value2);
+            Assert.Equal(VALUE, value2);
 
             Cache.Config.Remove(KEY2, false);
             value2 = Cache.Config.Get<string>(KEY2);
@@ -111,14 +122,14 @@ namespace BB.Caching.Tests.Caching
         public void GetAsync()
         {
             Cache.Config.SetAsync(KEY, this._value, false).Wait();
-            Cache.Config.SetAsync(KEY2, VALUE2, false).Wait();
+            Cache.Config.SetAsync(KEY2, VALUE, false).Wait();
 
             ConfigDummy configDummy = Cache.Config.GetAsync<ConfigDummy>(KEY).Result;
             string value2 = Cache.Config.GetAsync<string>(KEY2).Result;
 
             Assert.Equal(this._value.One, configDummy.One);
             Assert.Equal(this._value.Two, configDummy.Two);
-            Assert.Equal(VALUE2, value2);
+            Assert.Equal(VALUE, value2);
 
             Cache.Config.RemoveAsync(KEY2, false).Wait();
             value2 = Cache.Config.GetAsync<string>(KEY2).Result;
@@ -129,14 +140,14 @@ namespace BB.Caching.Tests.Caching
         public void Remove()
         {
             Cache.Config.Set(KEY, this._value, false);
-            Cache.Config.Set(KEY2, VALUE2, false);
+            Cache.Config.Set(KEY2, VALUE, false);
 
             ConfigDummy configDummy = Cache.Config.Get<ConfigDummy>(KEY);
             string value2 = Cache.Config.Get<string>(KEY2);
 
             Assert.Equal(this._value.One, configDummy.One);
             Assert.Equal(this._value.Two, configDummy.Two);
-            Assert.Equal(VALUE2, value2);
+            Assert.Equal(VALUE, value2);
 
             Cache.Config.Remove(KEY2, false);
             value2 = Cache.Config.Get<string>(KEY2);
@@ -147,14 +158,14 @@ namespace BB.Caching.Tests.Caching
         public void RemoveAsync()
         {
             Cache.Config.SetAsync(KEY, this._value, false).Wait();
-            Cache.Config.SetAsync(KEY2, VALUE2, false).Wait();
+            Cache.Config.SetAsync(KEY2, VALUE, false).Wait();
 
             ConfigDummy configDummy = Cache.Config.GetAsync<ConfigDummy>(KEY).Result;
             string value2 = Cache.Config.GetAsync<string>(KEY2).Result;
 
             Assert.Equal(this._value.One, configDummy.One);
             Assert.Equal(this._value.Two, configDummy.Two);
-            Assert.Equal(VALUE2, value2);
+            Assert.Equal(VALUE, value2);
 
             Cache.Config.RemoveAsync(KEY2, false).Wait();
             value2 = Cache.Config.GetAsync<string>(KEY2).Result;

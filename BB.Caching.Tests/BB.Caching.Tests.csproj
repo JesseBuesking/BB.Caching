@@ -48,6 +48,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\protobuf-net.2.0.0.668\lib\net40\protobuf-net.dll</HintPath>
     </Reference>
+    <Reference Include="SimpleSpeedTester">
+      <HintPath>..\packages\SimpleSpeedTester.1.1.0\lib\net40\SimpleSpeedTester.dll</HintPath>
+    </Reference>
     <Reference Include="StackExchange.Redis">
       <HintPath>..\packages\StackExchange.Redis.1.0.394\lib\net45\StackExchange.Redis.dll</HintPath>
     </Reference>
@@ -69,6 +72,7 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="PerformanceTests.cs" />
     <Compile Include="Redis\BloomFilterTests.cs" />
     <Compile Include="Compression\CompactionTests.cs" />
     <Compile Include="Compression\CompressionTests.cs" />

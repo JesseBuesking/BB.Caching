@@ -37,43 +37,27 @@ namespace BB.Caching.Tests.Redis
         }
 
         [Fact]
-        public void Performance()
+        public void CountCheckTest()
         {
-            const int asyncAmount = 50000;
-            Get(1, KEY, true);
-            var asyncMs = Get(asyncAmount, KEY, false);
-
-            Console.WriteLine("Rate Limiter Ops:");
-            Console.WriteLine("\t{0:#,##0.0#} aops/ms", (float)asyncAmount / asyncMs);
-            Console.WriteLine("\t{0:#,##0.0#} aops/s", (float)asyncAmount * 1000 / asyncMs);
-        }
-
-        private static long Get(int amount, string key, bool assert)
-        {
+            const int amount = 1000;
+            
             var tasks = new Task<RedisResult>[amount];
-            Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < amount; i++)
             {
                 // ReSharper disable RedundantArgumentDefaultValue
                 tasks[i] = RateLimiter.Increment(
-                    key, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1), amount, 1);
+                    KEY, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1), amount, 1);
                 // ReSharper restore RedundantArgumentDefaultValue
             }
 
             Task.WhenAll(tasks);
 
-            long total = sw.ElapsedMilliseconds;
-
-            long count = Cache.Shared.Hashes.GetAll(key).Result
+            long count = Cache.Shared.Hashes.GetAll(KEY).Result
                 .Where(kvp => "L" != kvp.Name)
                 .Select(kvp => long.Parse(Encoding.UTF8.GetString(kvp.Value)))
                 .Sum();
 
-            if (assert)
-            {
-                Assert.True(amount - (amount * .2) < count);
-            }
-            return total;
+            Assert.True(amount - (amount * .2) < count);
         }
 
         [Fact]

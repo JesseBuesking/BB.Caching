@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
 using BB.Caching.Redis;
 using Xunit;
 
@@ -20,7 +18,7 @@ namespace BB.Caching.Tests.Redis
 
     public class StatisticTests : IUseFixture<DefaultTestFixture>, IUseFixture<StatisticTestsFixture>, IDisposable
     {
-        private const string KEY = "key1";
+        private const string KEY = "StatisticTests.Key";
 
         public StatisticTests()
         {
@@ -58,29 +56,6 @@ namespace BB.Caching.Tests.Redis
             Assert.Equal(5, stat.NumberOfValues);
             Assert.Equal(Math.Sqrt(5.0d/2.0d), stat.PopulationStandardDeviation);
             Assert.Equal(5.0d/2.0d, stat.PopulationVariance);
-        }
-
-        [Fact]
-        public void Performance()
-        {
-            const int asyncAmount = 30000;
-            var asyncMs = Get(asyncAmount, KEY);
-
-            Console.WriteLine("Statistics Ops:");
-            Console.WriteLine("\t{0:#,##0.0#} aops/ms", (float) asyncAmount/asyncMs);
-            Console.WriteLine("\t{0:#,##0.0#} aops/s", (float) asyncAmount*1000/asyncMs);
-        }
-
-        private static long Get(int amount, string key)
-        {
-            var tasks = new Task[amount];
-            Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < amount; i++)
-                tasks[i] = Statistics.SetStatistic(key, 1.0);
-
-            Task.WhenAll(tasks);
-
-            return sw.ElapsedMilliseconds;
         }
 
         public void SetFixture(DefaultTestFixture data)
