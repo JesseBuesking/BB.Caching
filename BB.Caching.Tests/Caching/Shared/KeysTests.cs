@@ -201,11 +201,11 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void Invalidate()
         {
-            Cache.Memory.Strings.Set(this.Key, this.Value);
+            Cache.Memory.Strings.Set(this.Key, (string)this.Value);
 
-            RedisValue value;
+            string value;
             Assert.True(Cache.Memory.Strings.TryGet(this.Key, out value));
-            Assert.Equal(this.Value, value);
+            Assert.Equal((string)this.Value, value);
 
             long receivedBy = Cache.Shared.Keys.Invalidate(this.Key).Result;
             Assert.Equal(1, receivedBy);

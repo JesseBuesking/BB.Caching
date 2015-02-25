@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading;
+using BB.Caching.Redis;
+using ProtoBuf;
 using Xunit;
 
 namespace BB.Caching.Tests.Caching
@@ -10,7 +12,12 @@ namespace BB.Caching.Tests.Caching
         {
             public ConfigTestsFixture()
             {
-                Cache.Prepare();
+                try
+                {
+                    Cache.Prepare();
+                }
+                catch (PubSub.ChannelAlreadySubscribedException)
+                { }
 
                 Cache.Shared.Keys.Remove(KEY).Wait();
                 Cache.Shared.Keys.Remove(KEY2).Wait();
@@ -23,14 +30,17 @@ namespace BB.Caching.Tests.Caching
             }
         }
 
+        [ProtoContract]
         public class ConfigDummy
         {
+            [ProtoMember(1)]
             public int One
             {
                 get;
                 set;
             }
 
+            [ProtoMember(2)]
             public int Two
             {
                 get;

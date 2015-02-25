@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using BB.Caching.Compression;
 using BB.Caching.Redis;
 using StackExchange.Redis;
-using InMemoryCache = BB.Caching.Caching.Memory.InMemoryCache;
 
 namespace BB.Caching
 {
@@ -33,32 +32,36 @@ namespace BB.Caching
             public static TType Get<TType>(string key)
             {
                 TType value;
-                if (InMemoryCache.TryGetDecompact(KEY_PREFIX + key, out value))
+                if (Cache.Memory.Strings.TryGet(KEY_PREFIX + key, out value))
                     return value;
 
                 Task<RedisValue> byteArrayWrapper = Cache.Shared.Hashes.GetByteArray(Config.KEY_PREFIX, key);
                 if (byteArrayWrapper.Result.IsNull)
+                {
                     return default(TType);
+                }
 
                 byte[] bytes = byteArrayWrapper.Result;
-                value = Compress.Compaction.Decompact<TType>(bytes);
+                value = Compress.Compression.Decompress<TType>(bytes);
                 return value;
             }
 
             public static Task<TType> GetAsync<TType>(string key)
             {
-                var decompactedWrapper = InMemoryCache.TryGetDecompactAsync<TType>(KEY_PREFIX + key);
-                if (!decompactedWrapper.IsNil)
-                    return decompactedWrapper.ValueAsync;
+                TType value;
+                if (Cache.Memory.Strings.TryGet(KEY_PREFIX + key, out value))
+                    return Task.FromResult(value);
 
                 var result = Task.Run(async () =>
                     {
                         var byteArrayWrapper = Cache.Shared.Hashes.GetByteArray(Config.KEY_PREFIX, key);
                         if (byteArrayWrapper.Result.IsNull)
+                        {
                             return default(TType);
+                        }
 
                         byte[] byteArray = await byteArrayWrapper;
-                        TType value = await Compress.Compaction.DecompactAsync<TType>(byteArray);
+                        value = Compress.Compression.Decompress<TType>(byteArray);
                         return value;
                     });
                 return result;
@@ -66,20 +69,24 @@ namespace BB.Caching
 
             public static void Set<TType>(string key, TType value, bool broadcast = true)
             {
-                byte[] compact = InMemoryCache.SetCompact(KEY_PREFIX + key, value);
+                byte[] compact = Cache.Memory.Strings.Set(KEY_PREFIX + key, value);
                 Cache.Shared.Hashes.Set(KEY_PREFIX, key, compact).Wait();
                 if (broadcast)
+                {
                     PubSub.Publish(Config.CACHE_CONFIG_CHANGE_CHANNEL, key).Wait();
+                }
             }
 
             public static Task SetAsync<TType>(string key, TType value, bool broadcast = true)
             {
                 return Task.Run(async () =>
                     {
-                        var compacted = await InMemoryCache.SetCompactAsync(KEY_PREFIX + key, value);
+                        var compacted = Cache.Memory.Strings.Set(KEY_PREFIX + key, value);
                         await Cache.Shared.Hashes.Set(KEY_PREFIX, key, compacted);
                         if (broadcast)
+                        {
                             await PubSub.Publish(Config.CACHE_CONFIG_CHANGE_CHANNEL, key);
+                        }
                     });
             }
 
@@ -90,7 +97,9 @@ namespace BB.Caching
                         await Cache.Shared.Keys.Invalidate(KEY_PREFIX + key);
                         await Cache.Shared.Hashes.Remove(KEY_PREFIX, key);
                         if (broadcast)
+                        {
                             await Config.PublishRemoval(key);
+                        }
                     }).Wait();
             }
 
@@ -101,7 +110,9 @@ namespace BB.Caching
                         await Cache.Shared.Keys.Invalidate(KEY_PREFIX + key);
                         await Cache.Shared.Hashes.Remove(KEY_PREFIX, key);
                         if (broadcast)
+                        {
                             await Config.PublishRemoval(key);
+                        }
                     });
             }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Caching;
+using BB.Caching.Compression;
 
 namespace BB.Caching
 {
@@ -20,15 +21,15 @@ namespace BB.Caching
                 /// <returns></returns>
                 public static bool TryGet<TObject>(string key, out TObject value)
                 {
-                    object o = Cache.Memory.Store.Instance.CacheStore.Get(key);
-                    if (null == o)
+                    byte[] b = Cache.Memory.Store.Instance.CacheStore.Get(key) as byte[];
+
+                    if (null == b)
                     {
                         value = default(TObject);
                         return false;
                     }
 
-                    value = (TObject) o;
-
+                    value = Compress.Compression.Decompress<TObject>(b);
                     return true;
                 }
 
@@ -37,9 +38,11 @@ namespace BB.Caching
                 /// </summary>
                 /// <param name="key"></param>
                 /// <param name="value"></param>
-                public static void Set(string key, object value)
+                public static byte[] Set(string key, object value)
                 {
-                    Cache.Memory.Store.Instance.CacheStore.Set(key, value, null);
+                    byte[] result = Compress.Compression.Compress(value);
+                    Cache.Memory.Store.Instance.CacheStore.Set(key, result, null);
+                    return result;
                 }
 
                 /// <summary>
@@ -49,12 +52,14 @@ namespace BB.Caching
                 /// <param name="key"></param>
                 /// <param name="value"></param>
                 /// <param name="absoluteExpiration"></param>
-                public static void Set(string key, object value, TimeSpan absoluteExpiration)
+                public static byte[] Set(string key, object value, TimeSpan absoluteExpiration)
                 {
-                    Cache.Memory.Store.Instance.CacheStore.Set(key, value, new CacheItemPolicy
+                    byte[] result = Compress.Compression.Compress(value);
+                    Cache.Memory.Store.Instance.CacheStore.Set(key, result, new CacheItemPolicy
                     {
                         AbsoluteExpiration = DateTime.UtcNow.Add(absoluteExpiration)
                     });
+                    return result;
                 }
 
                 /// <summary>
@@ -68,12 +73,14 @@ namespace BB.Caching
                 /// <param name="key"></param>
                 /// <param name="value"></param>
                 /// <param name="slidingExpiration"></param>
-                public static void SetSliding(string key, object value, TimeSpan slidingExpiration)
+                public static byte[] SetSliding(string key, object value, TimeSpan slidingExpiration)
                 {
-                    Cache.Memory.Store.Instance.CacheStore.Set(key, value, new CacheItemPolicy
+                    byte[] result = Compress.Compression.Compress(value);
+                    Cache.Memory.Store.Instance.CacheStore.Set(key, result, new CacheItemPolicy
                     {
                         SlidingExpiration = slidingExpiration
                     });
+                    return result;
                 }
 
                 /// <summary>
@@ -110,7 +117,9 @@ namespace BB.Caching
                 public static void Clear()
                 {
                     foreach (var kvp in Cache.Memory.Store.Instance.CacheStore)
+                    {
                         Cache.Memory.Store.Instance.CacheStore.Remove(kvp.Key);
+                    }
                 }
 
                 /// <summary>
@@ -123,15 +132,17 @@ namespace BB.Caching
                 /// <returns></returns>
                 public static bool TryGetSet<TObject>(string key, object value, out TObject store)
                 {
-                    object o = Cache.Memory.Store.Instance.CacheStore.Get(key);
-                    Cache.Memory.Store.Instance.CacheStore.Set(key, value, null);
-                    if (null == o)
+                    byte[] b = Cache.Memory.Store.Instance.CacheStore.Get(key) as byte[];
+                    Cache.Memory.Store.Instance.CacheStore.Set(
+                        key, Compress.Compression.Compress(value), null);
+
+                    if (null == b)
                     {
                         store = default(TObject);
                         return false;
                     }
 
-                    store = (TObject) o;
+                    store = Compress.Compression.Decompress<TObject>(b);
                     return true;
                 }
 
@@ -148,18 +159,20 @@ namespace BB.Caching
                 public static bool TryGetSet<TObject>(string key, object value, TimeSpan absoluteExpiration,
                     out TObject store)
                 {
-                    object o = Cache.Memory.Store.Instance.CacheStore.Get(key);
-                    Cache.Memory.Store.Instance.CacheStore.Set(key, value, new CacheItemPolicy
+                    byte[] b = Cache.Memory.Store.Instance.CacheStore.Get(key) as byte[];
+                    Cache.Memory.Store.Instance.CacheStore.Set(
+                        key, Compress.Compression.Compress(value), new CacheItemPolicy
                     {
                         AbsoluteExpiration = DateTime.UtcNow.Add(absoluteExpiration)
                     });
-                    if (null == o)
+
+                    if (null == b)
                     {
                         store = default(TObject);
                         return false;
                     }
 
-                    store = (TObject) o;
+                    store = Compress.Compression.Decompress<TObject>(b);
                     return true;
                 }
 
@@ -180,18 +193,20 @@ namespace BB.Caching
                 public static bool TryGetSetSliding<TObject>(string key, object value, TimeSpan slidingExpiration,
                     out TObject store)
                 {
-                    object o = Cache.Memory.Store.Instance.CacheStore.Get(key);
-                    Cache.Memory.Store.Instance.CacheStore.Set(key, value, new CacheItemPolicy
+                    byte[] b = Cache.Memory.Store.Instance.CacheStore.Get(key) as byte[];
+                    Cache.Memory.Store.Instance.CacheStore.Set(
+                        key, Compress.Compression.Compress(value), new CacheItemPolicy
                     {
                         SlidingExpiration = slidingExpiration
                     });
-                    if (null == o)
+
+                    if (null == b)
                     {
                         store = default(TObject);
                         return false;
                     }
 
-                    store = (TObject) o;
+                    store = Compress.Compression.Decompress<TObject>(b);
                     return true;
                 }
             }

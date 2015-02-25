@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -14,7 +13,12 @@ namespace BB.Caching.Tests.Redis
     {
         public RateLimiterTestsFixture()
         {
-            Cache.Prepare();
+            try
+            {
+                Cache.Prepare();
+            }
+            catch (PubSub.ChannelAlreadySubscribedException)
+            { }
         }
 
         public void Dispose()

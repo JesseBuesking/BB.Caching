@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using BB.Caching.Redis;
+using ProtoBuf;
 using SimpleSpeedTester.Core;
 using SimpleSpeedTester.Core.OutcomeFilters;
 using SimpleSpeedTester.Interfaces;
@@ -108,11 +111,19 @@ namespace BB.Caching.Tests
             return String.Format("{0}{1}", header, results);
         }
 
+        private const int ITERATIONS = 10000;
+
         [Fact]
         public void AllPerformanceTests()
         {
             // warmup
-            Cache.Prepare();
+            try
+            {
+                Cache.Prepare();
+            }
+            catch (PubSub.ChannelAlreadySubscribedException)
+            { }
+
             Cache.Shared.Keys.Exists("warmup");
 
             Console.WriteLine(Shared.Keys.All());
@@ -141,10 +152,10 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("Shared Keys");
 
-                    group.Plan("Exists", Shared.Keys.Exists, 1000);
-                    group.Plan("Expire", Shared.Keys.Expire, 1000);
-                    group.Plan("Persist", Shared.Keys.Persist, 1000);
-                    group.Plan("Remove", Shared.Keys.Remove, 1000);
+                    group.Plan("Exists", Shared.Keys.Exists, ITERATIONS);
+                    group.Plan("Expire", Shared.Keys.Expire, ITERATIONS);
+                    group.Plan("Persist", Shared.Keys.Persist, ITERATIONS);
+                    group.Plan("Remove", Shared.Keys.Remove, ITERATIONS);
 
                     return TestToString(group);
                 }
@@ -176,8 +187,8 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("Shared Strings");
 
-                    group.Plan("Set", Shared.Strings.Set, 1000);
-                    group.Plan("Get", Shared.Strings.Get, 1000);
+                    group.Plan("Set", Shared.Strings.Set, ITERATIONS);
+                    group.Plan("Get", Shared.Strings.Get, ITERATIONS);
 
                     return TestToString(group);
                 }
@@ -199,8 +210,8 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("Shared Hashes");
 
-                    group.Plan("Set", Shared.Hashes.Set, 1000);
-                    group.Plan("Get", Shared.Hashes.Get, 1000);
+                    group.Plan("Set", Shared.Hashes.Set, ITERATIONS);
+                    group.Plan("Get", Shared.Hashes.Get, ITERATIONS);
 
                     return TestToString(group);
                 }
@@ -231,8 +242,8 @@ namespace BB.Caching.Tests
 
                     var bloomFilter = new BB.Caching.Redis.BloomFilter(1000, 0.01f);
 
-                    group.Plan("Set", Redis.BloomFilter.Set, bloomFilter, 1000);
-                    group.Plan("Get", Redis.BloomFilter.Get, bloomFilter, 1000);
+                    group.Plan("Set", Redis.BloomFilter.Set, bloomFilter, ITERATIONS);
+                    group.Plan("Get", Redis.BloomFilter.Get, bloomFilter, ITERATIONS);
 
                     return TestToString(group);
                 }
@@ -256,7 +267,7 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("RateLimiter");
 
-                    group.Plan("Increment", Redis.RateLimiter.Increment, 1000);
+                    group.Plan("Increment", Redis.RateLimiter.Increment, ITERATIONS);
 
                     return TestToString(group);
                 }
@@ -276,8 +287,8 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("Statistics");
 
-                    group.Plan("Set", Redis.Statistics.Set, 1000);
-                    group.Plan("Get", Redis.Statistics.Get, 1000);
+                    group.Plan("Set", Redis.Statistics.Set, ITERATIONS);
+                    group.Plan("Get", Redis.Statistics.Get, ITERATIONS);
 
                     return TestToString(group);
                 }
@@ -323,7 +334,7 @@ namespace BB.Caching.Tests
                     var ring = new BB.Caching.Hashing.ConsistentHashRing<string>();
                     ring.Init(nodes, replications);
 
-                    group.Plan("GetNode", Hashing.ConsistentHashRing.GetNode, ring, 1000);
+                    group.Plan("GetNode", Hashing.ConsistentHashRing.GetNode, ring, ITERATIONS);
 
                     return TestToString(group);
                 }
@@ -344,7 +355,7 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("Murmur3");
 
-                    group.Plan("HashSpeed", Hashing.Murmur3.HashSpeed, 1000);
+                    group.Plan("HashSpeed", Hashing.Murmur3.HashSpeed, ITERATIONS);
 
                     return TestToString(group);
                 }

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+using BB.Caching.Redis;
 using BB.Caching.Serialization;
 using ProtoBuf;
 using Xunit;
@@ -12,7 +10,12 @@ namespace BB.Caching.Tests.Serialization
     {
         public ProtoBufSerializerTestsFixture()
         {
-            Cache.Prepare();
+            try
+            {
+                Cache.Prepare();
+            }
+            catch (PubSub.ChannelAlreadySubscribedException)
+            { }
         }
 
         public void Dispose()
@@ -190,7 +193,7 @@ namespace BB.Caching.Tests.Serialization
         public void SerializingAString()
         {
             const string s = "I'm a string";
-            ProtoBufSerializer.Instance.Serialize(s);
+            ProtoBufSerializer.Serialize(s);
         }
 
         [Fact]
@@ -200,158 +203,23 @@ namespace BB.Caching.Tests.Serialization
             byte[] v;
 // ReSharper restore JoinDeclarationAndInitializer
 
-            v = ProtoBufSerializer.Instance.Serialize(1);
-            Assert.Equal(1, ProtoBufSerializer.Instance.Deserialize<short>(v));
+            v = ProtoBufSerializer.Serialize(1);
+            Assert.Equal(1, ProtoBufSerializer.Deserialize<short>(v));
 
-            v = ProtoBufSerializer.Instance.Serialize(12);
-            Assert.Equal(12, ProtoBufSerializer.Instance.Deserialize<int>(v));
+            v = ProtoBufSerializer.Serialize(12);
+            Assert.Equal(12, ProtoBufSerializer.Deserialize<int>(v));
 
-            v = ProtoBufSerializer.Instance.Serialize(1123L);
-            Assert.Equal(1123L, ProtoBufSerializer.Instance.Deserialize<long>(v));
+            v = ProtoBufSerializer.Serialize(1123L);
+            Assert.Equal(1123L, ProtoBufSerializer.Deserialize<long>(v));
 
-            v = ProtoBufSerializer.Instance.Serialize(1.234f);
-            Assert.Equal(1.234f, ProtoBufSerializer.Instance.Deserialize<float>(v));
+            v = ProtoBufSerializer.Serialize(1.234f);
+            Assert.Equal(1.234f, ProtoBufSerializer.Deserialize<float>(v));
 
-            v = ProtoBufSerializer.Instance.Serialize("hello there");
-            Assert.Equal("hello there", ProtoBufSerializer.Instance.Deserialize<string>(v));
+            v = ProtoBufSerializer.Serialize("hello there");
+            Assert.Equal("hello there", ProtoBufSerializer.Deserialize<string>(v));
 
-            v = ProtoBufSerializer.Instance.Serialize(TestEnum.Two);
-            Assert.Equal(TestEnum.Two, ProtoBufSerializer.Instance.Deserialize<TestEnum>(v));
-        }
-
-        [Fact]
-        public void TestAutoSerialization()
-        {
-            var test = new TestClass(12)
-                {
-                    FirstName = "Jesse",
-                    LastName = "TestCase"
-                };
-
-            byte[] serialized = ProtoBufSerializer.Instance.Serialize(test);
-
-            TestClass actual = ProtoBufSerializer.Instance.Deserialize<TestClass>(serialized);
-
-            Assert.Equal(test.FirstName, actual.FirstName);
-            Assert.Equal(test.LastName, actual.LastName);
-            Assert.Equal(test.MyInt, actual.MyInt);
-        }
-
-        [Fact]
-        public void TestAutoSerializationWithDateTime()
-        {
-            var test = new TestHasDateTime
-                {
-                    DateTime = new DateTime(2013, 01, 01)
-                };
-            byte[] serialized = ProtoBufSerializer.Instance.Serialize(test);
-
-            TestHasDateTime actual = ProtoBufSerializer.Instance.Deserialize<TestHasDateTime>(serialized);
-
-            Assert.Equal(test.DateTime, actual.DateTime);
-        }
-
-        [Fact]
-        public void TestAutoSerializationWithSubClass()
-        {
-            var test = new TestSuper
-                {
-                    Sub = new TestSub
-                        {
-                            Sub = 12
-                        },
-                    Super = "Helloski!"
-                };
-
-            byte[] serialized = ProtoBufSerializer.Instance.Serialize(test);
-
-            TestSuper actual = ProtoBufSerializer.Instance.Deserialize<TestSuper>(serialized);
-
-            Assert.Equal(test.Sub.Sub, actual.Sub.Sub);
-            Assert.Equal(test.Super, actual.Super);
-        }
-
-        [Fact]
-        public void TestAutoSerializationWithSubInterface()
-        {
-            var test = new TestSuperInt
-                {
-                    SubInt = new TestSubInt
-                        {
-                            SubInt = "Test!"
-                        },
-                    Super = 12
-                };
-
-            byte[] serialized = ProtoBufSerializer.Instance.Serialize(test);
-
-            TestSuperInt actual = ProtoBufSerializer.Instance.Deserialize<TestSuperInt>(serialized);
-
-            Assert.Equal(((TestSubInt) test.SubInt).SubInt, ((TestSubInt) actual.SubInt).SubInt);
-            Assert.Equal(test.Super, actual.Super);
-        }
-
-        [Fact]
-        public void PerformanceComparison()
-        {
-            const int iterations = 300000;
-            var auto = new TestClass(12)
-                {
-                    FirstName = "Jesse",
-                    LastName = "TestCase"
-                };
-
-            var proto = new ProtoClass
-                {
-                    FirstName = "Jesse",
-                    LastName = "TestCase",
-                    MyInt = 12
-                };
-
-            // Cache the serializer.
-            ProtoBufSerializer.Instance.Serialize(auto);
-
-            byte[] serializeAuto = new byte[0];
-            Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++)
-            {
-                serializeAuto = ProtoBufSerializer.Instance.Serialize(auto);
-            }
-            long autoTime = sw.ElapsedTicks;
-
-            byte[] serializeProto = new byte[0];
-            sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++)
-            {
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    ProtoBuf.Serializer.Serialize(ms, proto);
-                    serializeProto = ms.ToArray();
-                }
-            }
-            long protoTime = sw.ElapsedTicks;
-
-            byte[] serializeBinary = new byte[0];
-            sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++)
-            {
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    BinaryFormatter bf = new BinaryFormatter();
-                    bf.Serialize(ms, auto);
-                    serializeBinary = ms.ToArray();
-                }
-            }
-            long binaryTime = sw.ElapsedTicks;
-
-            Console.WriteLine("auto vs proto size: {0:0.00}%", ((float) serializeAuto.Length/serializeProto.Length)*100);
-            Console.WriteLine("auto vs binary size: {0:0.00}%", ((float) serializeAuto.Length/serializeBinary.Length)*100);
-            Console.WriteLine("");
-            Console.WriteLine("auto vs proto speed: {0:0.00}%", ((float) autoTime/protoTime)*100);
-            Console.WriteLine("auto vs binary speed: {0:0.00}%", ((float) autoTime/binaryTime)*100);
-
-            Assert.Equal(serializeAuto.Length, serializeProto.Length);
-            Assert.True(serializeAuto.Length < serializeBinary.Length);
+            v = ProtoBufSerializer.Serialize(TestEnum.Two);
+            Assert.Equal(TestEnum.Two, ProtoBufSerializer.Deserialize<TestEnum>(v));
         }
 
         public void SetFixture(DefaultTestFixture data)

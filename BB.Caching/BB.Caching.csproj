@@ -54,14 +54,13 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CacheAggregate.cs" />
     <Compile Include="Caching\Cache.cs" />
     <Compile Include="Caching\CompressOption.cs" />
     <Compile Include="Caching\Config.cs" />
-    <Compile Include="Caching\Memory\InMemoryCompactCache.cs" />
-    <Compile Include="Caching\Memory\InMemoryCompressCache.cs" />
     <Compile Include="Caching\Memory\Store.cs" />
     <Compile Include="Caching\Memory\Strings.cs" />
     <Compile Include="Caching\Shared\ILists.cs" />
@@ -71,7 +70,6 @@
     <Compile Include="Caching\Shared\Hashes.cs" />
     <Compile Include="Caching\Shared\Keys.cs" />
     <Compile Include="Caching\Shared\Strings.cs" />
-    <Compile Include="Compression\Compaction.cs" />
     <Compile Include="Compression\Compression.cs" />
     <Compile Include="Compression\GZipCompressor.cs" />
     <Compile Include="Compression\SmartCompressor.cs" />
@@ -86,7 +84,6 @@
     <Compile Include="Redis\ConnectionGroup.cs" />
     <Compile Include="Redis\Statistics.cs" />
     <Compile Include="Serialization\ProtoBufSerializer.cs" />
-    <Compile Include="Wrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

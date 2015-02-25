@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using BB.Caching.Compression;
 using StackExchange.Redis;
 using Xunit;
@@ -405,7 +403,7 @@ namespace BB.Caching.Tests.Caching.Shared
             Cache.Shared.Strings.Set(this.Key, compressSet).Wait();
 
             byte[] compressGet = Cache.Shared.Strings.GetByteArray(this.Key).Result;
-            Assert.Equal(expected, Compress.Compression.DecompressString(compressGet));
+            Assert.Equal(expected, Compress.Compression.Decompress<string>(compressGet));
         }
 
         public void SetFixture(DefaultTestFixture data)

@@ -10,7 +10,12 @@ namespace BB.Caching.Tests.Redis
     {
         public PubSubTestsFixture()
         {
-            Cache.Prepare();
+            try
+            {
+                Cache.Prepare();
+            }
+            catch (PubSub.ChannelAlreadySubscribedException)
+            { }
         }
 
         public void Dispose()

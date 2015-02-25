@@ -74,8 +74,6 @@
   <ItemGroup>
     <Compile Include="PerformanceTests.cs" />
     <Compile Include="Redis\BloomFilterTests.cs" />
-    <Compile Include="Compression\CompactionTests.cs" />
-    <Compile Include="Compression\CompressionTests.cs" />
     <Compile Include="Caching\ConfigTests.cs" />
     <Compile Include="Caching\Memory\StringsTests.cs" />
     <Compile Include="Redis\PubSubTests.cs" />
@@ -85,7 +83,6 @@
     <Compile Include="Caching\Shared\StringsTests.cs" />
     <Compile Include="Redis\StatisticTests.cs" />
     <Compile Include="TestBase.cs" />
-    <Compile Include="Compression\ComparisonTests.cs" />
     <Compile Include="Compression\GZipTests.cs" />
     <Compile Include="Compression\SmartTests.cs" />
     <Compile Include="Experimenting\ExperimentTests.cs" />
