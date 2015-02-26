@@ -59,8 +59,9 @@
   <ItemGroup>
     <Compile Include="CacheAggregate.cs" />
     <Compile Include="Caching\Cache.cs" />
-    <Compile Include="Caching\CompressOption.cs" />
     <Compile Include="Caching\Config.cs" />
+    <Compile Include="Caching\Core.cs" />
+    <Compile Include="Caching\MemoryValue.cs" />
     <Compile Include="Caching\Memory\Store.cs" />
     <Compile Include="Caching\Memory\Strings.cs" />
     <Compile Include="Caching\Shared\ILists.cs" />

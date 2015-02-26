@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Threading;
+using BB.Caching.Caching;
 using Xunit;
 
 namespace BB.Caching.Tests.Caching.Memory
@@ -29,20 +30,18 @@ namespace BB.Caching.Tests.Caching.Memory
         public void String()
         {
             Cache.Memory.Strings.Set(KEY, SVALUE);
-            string actual;
-            Cache.Memory.Strings.TryGet(KEY, out actual);
+            MemoryValue<string> actual = Cache.Memory.Strings.Get<string>(KEY);
 
-            Assert.Equal(SVALUE, actual);
+            Assert.Equal(SVALUE, actual.Value);
         }
 
         [Fact]
         public void Long()
         {
             Cache.Memory.Strings.Set(KEY, LVALUE);
-            long actual;
-            Cache.Memory.Strings.TryGet(KEY, out actual);
+            MemoryValue<long> actual = Cache.Memory.Strings.Get<long>(KEY);
 
-            Assert.Equal(LVALUE, actual);
+            Assert.Equal(LVALUE, actual.Value);
         }
 
         [Fact]
@@ -88,35 +87,39 @@ namespace BB.Caching.Tests.Caching.Memory
         public void AbsoluteExpiration()
         {
             Cache.Memory.Strings.Set(KEY, SVALUE, TimeSpan.FromMilliseconds(100));
-            string actual;
-            Cache.Memory.Strings.TryGet(KEY, out actual);
+            MemoryValue<string> actual = Cache.Memory.Strings.Get<string>(KEY);
 
-            Assert.Equal(SVALUE, actual);
+            Assert.Equal(SVALUE, actual.Value);
             Thread.Sleep(110);
 
-            Assert.False(Cache.Memory.Strings.TryGet(KEY, out actual));
-            Assert.Equal(null, actual);
+            actual = Cache.Memory.Strings.Get<string>(KEY);
+            Assert.False(actual.Exists);
+            Assert.Equal(null, actual.Value);
         }
 
         [Fact]
         public void SlidingExpiration()
         {
             Cache.Memory.Strings.SetSliding(KEY, SVALUE, TimeSpan.FromSeconds(2));
-            string actual;
 
-            Assert.True(Cache.Memory.Strings.TryGet(KEY, out actual));
-            Assert.Equal(SVALUE, actual);
+            MemoryValue<string> actual = Cache.Memory.Strings.Get<string>(KEY);
+
+            Assert.True(actual.Exists);
+            Assert.Equal(SVALUE, actual.Value);
 
             Thread.Sleep(1900);
-            Assert.True(Cache.Memory.Strings.TryGet(KEY, out actual));
+            actual = Cache.Memory.Strings.Get<string>(KEY);
+            Assert.True(actual.Exists);
 
             Thread.Sleep(200);
-            Assert.True(Cache.Memory.Strings.TryGet(KEY, out actual));
+            actual = Cache.Memory.Strings.Get<string>(KEY);
+            Assert.True(actual.Exists);
 
             Thread.Sleep(2001);
 
-            Assert.False(Cache.Memory.Strings.TryGet(KEY, out actual));
-            Assert.Equal(null, actual);
+            actual = Cache.Memory.Strings.Get<string>(KEY);
+            Assert.False(actual.Exists);
+            Assert.Equal(null, actual.Value);
         }
     }
 }

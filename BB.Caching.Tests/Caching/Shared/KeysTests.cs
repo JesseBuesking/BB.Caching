@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using BB.Caching.Caching;
 using StackExchange.Redis;
 using Xunit;
 
@@ -203,14 +204,15 @@ namespace BB.Caching.Tests.Caching.Shared
         {
             Cache.Memory.Strings.Set(this.Key, (string)this.Value);
 
-            string value;
-            Assert.True(Cache.Memory.Strings.TryGet(this.Key, out value));
-            Assert.Equal((string)this.Value, value);
+            MemoryValue<string> value = Cache.Memory.Strings.Get<string>(this.Key);
+            Assert.True(value.Exists);
+            Assert.Equal((string)this.Value, value.Value);
 
             long receivedBy = Cache.Shared.Keys.Invalidate(this.Key).Result;
             Assert.Equal(1, receivedBy);
 
-            Assert.False(Cache.Memory.Strings.TryGet(this.Key, out value));
+            value = Cache.Memory.Strings.Get<string>(this.Key);
+            Assert.False(value.Exists);
         }
 
         [Fact]
@@ -221,11 +223,12 @@ namespace BB.Caching.Tests.Caching.Shared
                 Cache.Memory.Strings.Set(kvp.Key, kvp.Value);
             }
 
-            string value;
+            MemoryValue<string> value;
             foreach (var kvp in this._kvPs)
             {
-                Assert.True(Cache.Memory.Strings.TryGet(kvp.Key, out value));
-                Assert.Equal(kvp.Value, value);
+                value = Cache.Memory.Strings.Get<string>(kvp.Key);
+                Assert.True(value.Exists);
+                Assert.Equal(kvp.Value, value.Value);
             }
 
             long receivedBy = Cache.Shared.Keys.Invalidate(this._kvPs.Keys.ToArray()).Result;
@@ -233,7 +236,8 @@ namespace BB.Caching.Tests.Caching.Shared
 
             foreach (var kvp in this._kvPs)
             {
-                Assert.False(Cache.Memory.Strings.TryGet(kvp.Key, out value));
+                value = Cache.Memory.Strings.Get<string>(kvp.Key);
+                Assert.False(value.Exists);
             }
         }
 

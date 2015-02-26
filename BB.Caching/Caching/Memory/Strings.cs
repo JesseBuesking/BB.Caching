@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Caching;
+using BB.Caching.Caching;
 using BB.Caching.Compression;
 
 // ReSharper disable once CheckNamespace
@@ -20,18 +21,17 @@ namespace BB.Caching
                 /// <param name="key"></param>
                 /// <param name="value"></param>
                 /// <returns></returns>
-                public static bool TryGet<TObject>(string key, out TObject value)
+                public static MemoryValue<TObject> Get<TObject>(string key)
                 {
                     byte[] b = Cache.Memory.Store.Instance.CacheStore.Get(key) as byte[];
 
                     if (null == b)
                     {
-                        value = default(TObject);
-                        return false;
+                        return new MemoryValue<TObject>(default(TObject), false);
                     }
 
-                    value = Compress.Compression.Decompress<TObject>(b);
-                    return true;
+                    TObject value = Compress.Compression.Decompress<TObject>(b);
+                    return new MemoryValue<TObject>(value, true);
                 }
 
                 /// <summary>

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using BB.Caching.Caching;
 using BB.Caching.Compression;
 using BB.Caching.Redis;
 using StackExchange.Redis;
@@ -32,9 +33,9 @@ namespace BB.Caching
 
             public static TType Get<TType>(string key)
             {
-                TType value;
-                if (Cache.Memory.Strings.TryGet(KEY_PREFIX + key, out value))
-                    return value;
+                MemoryValue<TType> value = Cache.Memory.Strings.Get<TType>(KEY_PREFIX + key);
+                if (value.Exists)
+                    return value.Value;
 
                 Task<RedisValue> byteArrayWrapper = Cache.Shared.Hashes.GetByteArray(Config.KEY_PREFIX, key);
                 if (byteArrayWrapper.Result.IsNull)
@@ -43,15 +44,15 @@ namespace BB.Caching
                 }
 
                 byte[] bytes = byteArrayWrapper.Result;
-                value = Compress.Compression.Decompress<TType>(bytes);
-                return value;
+                TType result = Compress.Compression.Decompress<TType>(bytes);
+                return result;
             }
 
             public static Task<TType> GetAsync<TType>(string key)
             {
-                TType value;
-                if (Cache.Memory.Strings.TryGet(KEY_PREFIX + key, out value))
-                    return Task.FromResult(value);
+                MemoryValue<TType> value = Cache.Memory.Strings.Get<TType>(KEY_PREFIX + key);
+                if (value.Exists)
+                    return Task.FromResult(value.Value);
 
                 var result = Task.Run(async () =>
                     {
@@ -62,8 +63,8 @@ namespace BB.Caching
                         }
 
                         byte[] byteArray = await byteArrayWrapper;
-                        value = Compress.Compression.Decompress<TType>(byteArray);
-                        return value;
+                        TType res = Compress.Compression.Decompress<TType>(byteArray);
+                        return res;
                     });
                 return result;
             }
