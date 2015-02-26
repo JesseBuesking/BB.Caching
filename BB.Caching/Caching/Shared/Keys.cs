@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using BB.Caching.Redis;
 using StackExchange.Redis;
 
+// ReSharper disable once CheckNamespace
 namespace BB.Caching
 {
     public static partial class Cache

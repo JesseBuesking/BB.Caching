@@ -2,6 +2,7 @@
 using System.Threading;
 using Murmur;
 
+// ReSharper disable once CheckNamespace
 namespace BB.Caching
 {
     public static partial class Hashing

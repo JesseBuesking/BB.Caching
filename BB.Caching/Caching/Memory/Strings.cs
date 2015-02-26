@@ -2,6 +2,7 @@
 using System.Runtime.Caching;
 using BB.Caching.Compression;
 
+// ReSharper disable once CheckNamespace
 namespace BB.Caching
 {
     public static partial class Cache

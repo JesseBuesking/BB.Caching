@@ -85,7 +85,7 @@
     <Compile Include="TestBase.cs" />
     <Compile Include="Compression\GZipTests.cs" />
     <Compile Include="Compression\SmartTests.cs" />
-    <Compile Include="Experimenting\ExperimentTests.cs" />
+    <Compile Include="SerializationAndCompression\SerializationAndCompressionTests.cs" />
     <Compile Include="Hashing\ConsistentHashRingTests.cs" />
     <Compile Include="Hashing\Murmur3Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

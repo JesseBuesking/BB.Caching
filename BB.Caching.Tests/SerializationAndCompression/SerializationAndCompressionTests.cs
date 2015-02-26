@@ -8,9 +8,9 @@ using BB.Caching.Serialization;
 using ProtoBuf;
 using Xunit;
 
-namespace BB.Caching.Tests.Experimenting
+namespace BB.Caching.Tests.SerializationAndCompression
 {
-    public class ExperimentTests
+    public class SerializationAndCompressionTests
     {
         private static readonly Random _random = new Random(1);
 

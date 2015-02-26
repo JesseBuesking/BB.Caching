@@ -1,5 +1,6 @@
 ﻿using BB.Caching.Redis;
 
+// ReSharper disable once CheckNamespace
 namespace BB.Caching
 {
     /// <summary>
