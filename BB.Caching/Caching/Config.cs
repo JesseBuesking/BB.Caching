@@ -75,7 +75,7 @@ namespace BB.Caching
                 Cache.Shared.Hashes.SetAsync(KEY_PREFIX, key, compact).Wait();
                 if (broadcast)
                 {
-                    PubSub.Publish(Config.CACHE_CONFIG_CHANGE_CHANNEL, key).Wait();
+                    PubSub.PublishAsync(Config.CACHE_CONFIG_CHANGE_CHANNEL, key).Wait();
                 }
             }
 
@@ -87,7 +87,7 @@ namespace BB.Caching
                         await Cache.Shared.Hashes.SetAsync(KEY_PREFIX, key, compacted);
                         if (broadcast)
                         {
-                            await PubSub.Publish(Config.CACHE_CONFIG_CHANGE_CHANNEL, key);
+                            await PubSub.PublishAsync(Config.CACHE_CONFIG_CHANGE_CHANNEL, key);
                         }
                     });
             }
@@ -120,7 +120,7 @@ namespace BB.Caching
 
             private static void SetupSubscribeRemoval()
             {
-                PubSub.Subscribe(Config.CACHE_CONFIG_REMOVED_CHANNEL, data =>
+                PubSub.SubscribeAsync(Config.CACHE_CONFIG_REMOVED_CHANNEL, data =>
                     {
                         if (Config._alreadyRemoved.Contains(data))
                         {
@@ -136,7 +136,7 @@ namespace BB.Caching
             private static Task PublishRemoval(string configKey)
             {
                 Config._alreadyRemoved.Add(configKey);
-                return PubSub.Publish(Config.CACHE_CONFIG_REMOVED_CHANNEL, configKey);
+                return PubSub.PublishAsync(Config.CACHE_CONFIG_REMOVED_CHANNEL, configKey);
             }
         }
     }

@@ -22,6 +22,24 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>True if the key was removed.</returns>
                 /// <remarks>http://redis.io/commands/del</remarks>
+                public static bool Delete(RedisKey key)
+                {
+                    var connections = SharedCache.Instance.GetWriteConnections(key);
+                    bool result = false;
+                    foreach (var connection in connections)
+                    {
+                        result = result || connection
+                            .GetDatabase(SharedCache.Instance.Db)
+                            .KeyDelete(key);
+                    }
+                    return result;
+                }
+
+                /// <summary>
+                /// Removes the specified key. A key is ignored if it does not exist.
+                /// </summary>
+                /// <returns>True if the key was removed.</returns>
+                /// <remarks>http://redis.io/commands/del</remarks>
                 public static Task<bool> DeleteAsync(RedisKey key)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
@@ -36,6 +54,27 @@ namespace BB.Caching
                             result = task;
                     }
                     return result;
+                }
+
+                /// <summary>
+                /// Removes the specified keys. A key is ignored if it does not exist.
+                /// </summary>
+                /// <returns>The number of keys that were removed.</returns>
+                /// <remarks>http://redis.io/commands/del</remarks>
+                public static long Delete(RedisKey[] keys)
+                {
+                    var dictionary = SharedCache.Instance.GetWriteConnections(keys);
+                    long removed = 0;
+                    for (int i = 0; i < dictionary.Count; i++)
+                    {
+                        foreach (var connection in dictionary.ElementAt(i).Key)
+                        {
+                            removed += connection
+                                .GetDatabase(SharedCache.Instance.Db)
+                                .KeyDelete(dictionary.ElementAt(i).Value);
+                        }
+                    }
+                    return removed;
                 }
 
                 /// <summary>
@@ -68,6 +107,18 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>1 if the key exists. 0 if the key does not exist.</returns>
                 /// <remarks>http://redis.io/commands/exists</remarks>
+                public static bool Exists(string key)
+                {
+                    return SharedCache.Instance.GetReadConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyExists(key);
+                }
+
+                /// <summary>
+                /// Returns if key exists.
+                /// </summary>
+                /// <returns>1 if the key exists. 0 if the key does not exist.</returns>
+                /// <remarks>http://redis.io/commands/exists</remarks>
                 public static Task<bool> ExistsAsync(string key)
                 {
                     return SharedCache.Instance.GetReadConnection(key)
@@ -75,6 +126,31 @@ namespace BB.Caching
                         .KeyExistsAsync(key);
                 }
 
+                /// <summary>
+                /// Set a timeout on key. After the timeout has expired, the key will automatically be deleted. A key with an
+                /// associated timeout is said to be volatile in Redis terminology.
+                /// </summary>
+                /// <remarks>
+                /// If key is updated before the timeout has expired, then the timeout is removed as if the PERSIST
+                /// command was invoked on key.
+                /// For Redis versions &lt; 2.1.3, existing timeouts cannot be overwritten. So, if key already has an associated
+                /// timeout, it will do nothing and return 0. Since Redis 2.1.3, you can update the timeout of a key. It is also
+                /// possible to remove the timeout using the PERSIST command. See the page on key expiry for more information.
+                /// </remarks>
+                /// <returns>1 if the timeout was set. 0 if key does not exist or the timeout could not be set.</returns>
+                /// <remarks>http://redis.io/commands/expire</remarks>
+                public static bool Expire(string key, TimeSpan expiry)
+                {
+                    var connections = SharedCache.Instance.GetWriteConnections(key);
+                    bool result = false;
+                    foreach (var connection in connections)
+                    {
+                        result = result || connection
+                            .GetDatabase(SharedCache.Instance.Db)
+                            .KeyExpire(key, expiry);
+                    }
+                    return result;
+                }
                 /// <summary>
                 /// Set a timeout on key. After the timeout has expired, the key will automatically be deleted. A key with an
                 /// associated timeout is said to be volatile in Redis terminology.
@@ -112,6 +188,27 @@ namespace BB.Caching
                 /// </returns>
                 /// <remarks>Available with 2.1.2 and above only</remarks>
                 /// <remarks>http://redis.io/commands/persist</remarks>
+                public static bool Persist(string key)
+                {
+                    var connections = SharedCache.Instance.GetWriteConnections(key);
+                    bool result = false;
+                    foreach (var connection in connections)
+                    {
+                        result = result || connection
+                            .GetDatabase(SharedCache.Instance.Db)
+                            .KeyPersist(key);
+                    }
+                    return result;
+                }
+
+                /// <summary>
+                /// Remove the existing timeout on key.
+                /// </summary>
+                /// <returns>
+                /// 1 if the timeout was removed. 0 if key does not exist or does not have an associated timeout.
+                /// </returns>
+                /// <remarks>Available with 2.1.2 and above only</remarks>
+                /// <remarks>http://redis.io/commands/persist</remarks>
                 public static Task<bool> PersistAsync(string key)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
@@ -128,6 +225,7 @@ namespace BB.Caching
                     return result;
                 }
 
+                // TODO bring this back
                 ///// <summary>
                 ///// Returns all keys matching pattern.
                 ///// </summary>
@@ -160,6 +258,18 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>the random key, or nil when the database is empty.</returns>
                 /// <remarks>http://redis.io/commands/randomkey</remarks>
+                public static RedisKey Random()
+                {
+                    return SharedCache.Instance.GetRandomReadConnection()
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyRandom();
+                }
+
+                /// <summary>
+                /// Return a random key from the currently selected database.
+                /// </summary>
+                /// <returns>the random key, or nil when the database is empty.</returns>
+                /// <remarks>http://redis.io/commands/randomkey</remarks>
                 public static Task<RedisKey> RandomAsync()
                 {
                     return SharedCache.Instance.GetRandomReadConnection()
@@ -167,7 +277,17 @@ namespace BB.Caching
                         .KeyRandomAsync();
                 }
 
+                public static void Rename(string fromKey, string toKey)
+                {
+                    throw new NotImplementedException();
+                }
+
                 public static Task RenameAsync(string fromKey, string toKey)
+                {
+                    throw new NotImplementedException();
+                }
+
+                public static bool RenameIfNotExists(string fromKey, string toKey)
                 {
                     throw new NotImplementedException();
                 }
@@ -175,6 +295,19 @@ namespace BB.Caching
                 public static Task<bool> RenameIfNotExistsAsync(string fromKey, string toKey)
                 {
                     throw new NotImplementedException();
+                }
+
+                /// <summary>
+                /// Returns the remaining time to live of a key that has a timeout. This introspection capability allows a
+                /// Redis client to check how many seconds a given key will continue to be part of the dataset.
+                /// </summary>
+                /// <returns>TTL in seconds or -1 when key does not exist or does not have a timeout.</returns>
+                /// <remarks>http://redis.io/commands/ttl</remarks>
+                public static TimeSpan? TimeToLive(string key)
+                {
+                    return SharedCache.Instance.GetReadConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyTimeToLive(key);
                 }
 
                 /// <summary>
@@ -196,11 +329,24 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns> type of key, or none when key does not exist.</returns>
                 /// <remarks>http://redis.io/commands/type</remarks>
-                public static RedisType TypeAsync(string key)
+                public static RedisType Type(string key)
                 {
                     return SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
                         .KeyType(key);
+                }
+
+                /// <summary>
+                /// Returns the string representation of the type of the value stored at key. The different types that can be
+                /// returned are: string, list, set, zset and hash.
+                /// </summary>
+                /// <returns> type of key, or none when key does not exist.</returns>
+                /// <remarks>http://redis.io/commands/type</remarks>
+                public static Task<RedisType> TypeAsync(string key)
+                {
+                    return SharedCache.Instance.GetReadConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyTypeAsync(key);
                 }
 
                 /// <summary>
@@ -220,10 +366,8 @@ namespace BB.Caching
                     return results.Select(long.Parse).Sum();
                 }
 
-#pragma warning disable 1066
-                public static Task<string[]> SortStringAsync(string key, string byPattern = null, string[] getPattern = null,
+                public static string[] SortString(string key, string byPattern = null, string[] getPattern = null,
                     long offset = 0, long count = -1, bool alpha = false, bool @ascending = true)
-#pragma warning restore 1066
                 {
                     //            return SharedCache.Instance.GetConnection(key).Keys
                     //                .SortStringAsync(SharedCache.Instance.Db, key, byPattern, getPattern, offset, count, alpha, @ascending,
@@ -231,11 +375,25 @@ namespace BB.Caching
                     throw new NotImplementedException();
                 }
 
-#pragma warning disable 1066
+                public static Task<string[]> SortStringAsync(string key, string byPattern = null, string[] getPattern = null,
+                    long offset = 0, long count = -1, bool alpha = false, bool @ascending = true)
+                {
+                    //            return SharedCache.Instance.GetConnection(key).Keys
+                    //                .SortStringAsync(SharedCache.Instance.Db, key, byPattern, getPattern, offset, count, alpha, @ascending,
+                    //                    SharedCache.Instance.QueueJump);
+                    throw new NotImplementedException();
+                }
+
+                public static long SortAndStore(string destination, string key, string byPattern = null,
+                    string[] getPattern = null, long offset = 0, long count = -1, bool alpha = false,
+                    bool @ascending = true)
+                {
+                    throw new NotImplementedException();
+                }
+
                 public static Task<long> SortAndStoreAsync(string destination, string key, string byPattern = null,
                     string[] getPattern = null, long offset = 0, long count = -1, bool alpha = false,
                     bool @ascending = true)
-#pragma warning restore 1066
                 {
                     throw new NotImplementedException();
                 }
@@ -253,6 +411,30 @@ namespace BB.Caching
                 }
 
                 /// <summary>
+                /// Returns the raw DEBUG OBJECT output for a key; this command is not fully documented and should be avoided
+                /// unless you have good reason, and then avoided anyway.
+                /// </summary>
+                /// <remarks>http://redis.io/commands/debug-object</remarks>
+                public static Task<RedisValue> DebugObjectAsync(string key)
+                {
+                    return SharedCache.Instance.GetReadConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .DebugObjectAsync(key);
+                }
+
+                /// <summary>
+                /// Invalidates the object stored at the key's location in Cache.Memory.Strings.
+                /// </summary>
+                /// <param name="key"></param>
+                /// <returns></returns>
+                public static long Invalidate(string key)
+                {
+                    Cache.Memory.Strings.Delete(key);
+                    SharedCache.Instance.AlreadyInvalidated.Add(key);
+                    return PubSub.Publish(SharedCache.CACHE_INVALIDATION_CHANNEL, key);
+                }
+
+                /// <summary>
                 /// Invalidates the object stored at the key's location in Cache.Memory.Strings.
                 /// </summary>
                 /// <param name="key"></param>
@@ -261,7 +443,24 @@ namespace BB.Caching
                 {
                     Cache.Memory.Strings.Delete(key);
                     SharedCache.Instance.AlreadyInvalidated.Add(key);
-                    return PubSub.Publish(SharedCache.CACHE_INVALIDATION_CHANNEL, key);
+                    return PubSub.PublishAsync(SharedCache.CACHE_INVALIDATION_CHANNEL, key);
+                }
+
+                /// <summary>
+                /// Invalidates the objects stored at the keys located in Cache.Memory.Strings.
+                /// </summary>
+                /// <param name="keys"></param>
+                /// <returns>The number of clients that received the message.</returns>
+                public static long Invalidate(string[] keys)
+                {
+                    foreach (string key in keys)
+                    {
+                        Cache.Memory.Strings.Delete(key);
+                        SharedCache.Instance.AlreadyInvalidated.Add(key);
+                    }
+
+                    string multipleKeys = String.Join(PubSub.MULTIPLE_MESSAGE_SEPARATOR, keys);
+                    return PubSub.Publish(SharedCache.CACHE_MULTIPLE_INVALIDATION_CHANNEL, multipleKeys);
                 }
 
                 /// <summary>
@@ -278,7 +477,7 @@ namespace BB.Caching
                     }
 
                     string multipleKeys = String.Join(PubSub.MULTIPLE_MESSAGE_SEPARATOR, keys);
-                    return PubSub.Publish(SharedCache.CACHE_MULTIPLE_INVALIDATION_CHANNEL, multipleKeys);
+                    return PubSub.PublishAsync(SharedCache.CACHE_MULTIPLE_INVALIDATION_CHANNEL, multipleKeys);
                 }
             }
         }

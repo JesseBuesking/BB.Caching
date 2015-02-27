@@ -74,7 +74,7 @@ namespace BB.Caching
 
         private void SetupCacheInvalidationSubscription()
         {
-            PubSub.Subscribe(SharedCache.CACHE_INVALIDATION_CHANNEL, data =>
+            PubSub.SubscribeAsync(SharedCache.CACHE_INVALIDATION_CHANNEL, data =>
                 {
                     if (this.AlreadyInvalidated.Contains(data))
                     {
@@ -90,7 +90,7 @@ namespace BB.Caching
 
         private void SetupMultipleCacheInvalidationsSubscription()
         {
-            PubSub.Subscribe(SharedCache.CACHE_MULTIPLE_INVALIDATION_CHANNEL, data =>
+            PubSub.SubscribeAsync(SharedCache.CACHE_MULTIPLE_INVALIDATION_CHANNEL, data =>
                 {
                     string[] keys = data.Split(new[] {PubSub.MULTIPLE_MESSAGE_SEPARATOR}, StringSplitOptions.None);
 

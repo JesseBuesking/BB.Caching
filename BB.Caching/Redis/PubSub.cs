@@ -48,8 +48,10 @@ namespace BB.Caching.Redis
                 {
                     // ReSharper disable ConvertIfStatementToNullCoalescingExpression
                     if (null == this._subscriptions)
+                    {
                         // ReSharper restore ConvertIfStatementToNullCoalescingExpression
                         this._subscriptions = this.GetConnection().GetSubscriber();
+                    }
                     return this._subscriptions;
                 }
             }
@@ -125,6 +127,32 @@ namespace BB.Caching.Redis
             /// <param name="channel">The channel of the subscription.</param>
             /// <param name="subscriptionCallback">The callback method.</param>
             /// <returns></returns>
+            public void Subscribe(string channel, Action<string> subscriptionCallback)
+            {
+                // Check to make sure we're not re-creating an existing subscription first.
+                if (this.ActiveKeylessSubscriptions.ContainsKey(channel))
+                {
+                    throw new ChannelAlreadySubscribedException(
+                        string.Format("subscription to channel {0} already exists", channel)
+                    );
+                }
+
+                // Let's add this subscription to our cache. We'll need to remember it so that we can re-subscribe
+                // if we lose our connection at any point.
+                this.ActiveKeylessSubscriptions[channel] = subscriptionCallback;
+                this.Subscriptions.Subscribe(channel, (sameAsChannel, data) =>
+                    {
+                        string value = Encoding.UTF8.GetString(data);
+                        subscriptionCallback(value);
+                    });
+            }
+
+            /// <summary>
+            /// Creates a subscription to a channel.
+            /// </summary>
+            /// <param name="channel">The channel of the subscription.</param>
+            /// <param name="subscriptionCallback">The callback method.</param>
+            /// <returns></returns>
             public Task SubscribeAsync(string channel, Action<string> subscriptionCallback)
             {
                 // Check to make sure we're not re-creating an existing subscription first.
@@ -142,6 +170,50 @@ namespace BB.Caching.Redis
                     {
                         string value = Encoding.UTF8.GetString(data);
                         subscriptionCallback(value);
+                    });
+            }
+
+            /// <summary>
+            /// Creates a subscription to a channel for a specific key.
+            /// </summary>
+            /// <param name="channel">The channel of the subscription.</param>
+            /// <param name="key">The key to target.</param>
+            /// <param name="subscriptionCallback">The callback method.</param>
+            /// <returns></returns>
+            public void Subscribe(string channel, string key, Action<string> subscriptionCallback)
+            {
+                // Check to make sure we're not re-creating an existing subscription first.
+                Dictionary<string, Action<string>> result;
+                if (this.ActiveKeyedSubscriptions.TryGetValue(channel, out result))
+                {
+                    if (result.ContainsKey(key))
+                        throw new Exception(
+                            string.Format("subscription to channel {0} for key {1} already exists", channel, key));
+                }
+
+                // Let's add this subscription to our cache. We'll need to remember it so that we can re-subscribe
+                // if we lose our connection at any point.
+                if (!this.ActiveKeyedSubscriptions.ContainsKey(channel))
+                    this.ActiveKeyedSubscriptions[channel] = new Dictionary<string, Action<string>>();
+
+                this.ActiveKeyedSubscriptions[channel][key] = subscriptionCallback;
+
+                this.Subscriptions.Subscribe(channel, (sameAsChannel, data) =>
+                    {
+                        string value = Encoding.UTF8.GetString(data);
+                        int idx = value.IndexOf(':');
+                        if (0 > idx)
+                        {
+                            string message = string.Format("channel {0} expects data in key:value format", channel);
+                            throw new Exception(message);
+                        }
+
+                        string pubKey = value.Substring(0, idx);
+                        if (key != pubKey)
+                            return;
+
+                        string pubData = value.Substring(idx + 1, value.Length - (idx + 1));
+                        subscriptionCallback(pubData);
                     });
             }
 
@@ -195,10 +267,36 @@ namespace BB.Caching.Redis
             /// <param name="channel">The channel to publish to.</param>
             /// <param name="value">The value of the message.</param>
             /// <returns></returns>
+            public long Publish(string channel, string value)
+            {
+                return this.Subscriptions
+                    .Publish(channel, value);
+            }
+
+            /// <summary>
+            /// Publishes a message to a channel.
+            /// </summary>
+            /// <param name="channel">The channel to publish to.</param>
+            /// <param name="value">The value of the message.</param>
+            /// <returns></returns>
             public Task<long> PublishAsync(string channel, string value)
             {
                 return this.Subscriptions
                     .PublishAsync(channel, value);
+            }
+
+            /// <summary>
+            /// Publishes a message to a channel for a specific key.
+            /// </summary>
+            /// <param name="channel">The channel to publish to.</param>
+            /// <param name="key">The key to target.</param>
+            /// <param name="value">The value of the message.</param>
+            /// <returns></returns>
+            public long Publish(string channel, string key, string value)
+            {
+                string concat = key + ":" + value;
+                return this.Subscriptions
+                    .Publish(channel, concat);
             }
 
             /// <summary>
@@ -232,7 +330,18 @@ namespace BB.Caching.Redis
         /// <param name="channel">The channel of the subscription.</param>
         /// <param name="subscriptionCallback">The callback method.</param>
         /// <returns></returns>
-        public static Task Subscribe(string channel, Action<string> subscriptionCallback)
+        public static void Subscribe(string channel, Action<string> subscriptionCallback)
+        {
+            PubSubSingleton.Instance.Subscribe(channel, subscriptionCallback);
+        }
+
+        /// <summary>
+        /// Creates a subscription to a channel.
+        /// </summary>
+        /// <param name="channel">The channel of the subscription.</param>
+        /// <param name="subscriptionCallback">The callback method.</param>
+        /// <returns></returns>
+        public static Task SubscribeAsync(string channel, Action<string> subscriptionCallback)
         {
             return PubSubSingleton.Instance.SubscribeAsync(channel, subscriptionCallback);
         }
@@ -244,7 +353,19 @@ namespace BB.Caching.Redis
         /// <param name="key">The key to target.</param>
         /// <param name="subscriptionCallback">The callback method.</param>
         /// <returns></returns>
-        public static Task Subscribe(string channel, string key, Action<string> subscriptionCallback)
+        public static void Subscribe(string channel, string key, Action<string> subscriptionCallback)
+        {
+            PubSubSingleton.Instance.Subscribe(channel, key, subscriptionCallback);
+        }
+
+        /// <summary>
+        /// Creates a subscription to a channel for a specific key.
+        /// </summary>
+        /// <param name="channel">The channel of the subscription.</param>
+        /// <param name="key">The key to target.</param>
+        /// <param name="subscriptionCallback">The callback method.</param>
+        /// <returns></returns>
+        public static Task SubscribeAsync(string channel, string key, Action<string> subscriptionCallback)
         {
             return PubSubSingleton.Instance.SubscribeAsync(channel, key, subscriptionCallback);
         }
@@ -255,7 +376,18 @@ namespace BB.Caching.Redis
         /// <param name="channel">The channel to publish to.</param>
         /// <param name="value">The value of the message.</param>
         /// <returns></returns>
-        public static Task<long> Publish(string channel, string value)
+        public static long Publish(string channel, string value)
+        {
+            return PubSubSingleton.Instance.Publish(channel, value);
+        }
+
+        /// <summary>
+        /// Publishes a message to a channel.
+        /// </summary>
+        /// <param name="channel">The channel to publish to.</param>
+        /// <param name="value">The value of the message.</param>
+        /// <returns></returns>
+        public static Task<long> PublishAsync(string channel, string value)
         {
             return PubSubSingleton.Instance.PublishAsync(channel, value);
         }
@@ -267,7 +399,19 @@ namespace BB.Caching.Redis
         /// <param name="key">The key to target.</param>
         /// <param name="value">The value of the message.</param>
         /// <returns></returns>
-        public static Task<long> Publish(string channel, string key, string value)
+        public static long Publish(string channel, string key, string value)
+        {
+            return PubSubSingleton.Instance.Publish(channel, key, value);
+        }
+
+        /// <summary>
+        /// Publishes a message to a channel for a specific key.
+        /// </summary>
+        /// <param name="channel">The channel to publish to.</param>
+        /// <param name="key">The key to target.</param>
+        /// <param name="value">The value of the message.</param>
+        /// <returns></returns>
+        public static Task<long> PublishAsync(string channel, string key, string value)
         {
             return PubSubSingleton.Instance.PublishAsync(channel, key, value);
         }

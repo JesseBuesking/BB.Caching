@@ -27,7 +27,7 @@ namespace BB.Caching.Tests.Caching.Memory
         }
 
         [Fact]
-        public void String()
+        public void SetGet()
         {
             Cache.Memory.Strings.Set(KEY, SVALUE);
             MemoryValue<string> actual = Cache.Memory.Strings.Get<string>(KEY);
@@ -35,9 +35,9 @@ namespace BB.Caching.Tests.Caching.Memory
         }
 
         [Fact]
-        public void StringAsync()
+        public void SetGetAsync()
         {
-            Cache.Memory.Strings.Set(KEY, SVALUE);
+            Cache.Memory.Strings.SetAsync(KEY, SVALUE).Wait();
             MemoryValue<string> actual = Cache.Memory.Strings.GetAsync<string>(KEY).Result;
             Assert.Equal(SVALUE, actual.Value);
         }

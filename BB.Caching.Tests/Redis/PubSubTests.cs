@@ -29,12 +29,12 @@ namespace BB.Caching.Tests.Redis
         public void SubscriptionIsCalled()
         {
             bool isSet = false;
-            PubSub.Subscribe("mychannel", "a", async _ =>
+            PubSub.SubscribeAsync("mychannel", "a", async _ =>
                 {
                     isSet = true;
                     await Cache.Config.GetAsync<ConfigTests.ConfigDummy>("a");
                 });
-            PubSub.Publish("mychannel", "a", "test");
+            PubSub.PublishAsync("mychannel", "a", "test");
 
             for (int i = 0; i < 100 && !isSet; i++)
                 Thread.Sleep(20);
