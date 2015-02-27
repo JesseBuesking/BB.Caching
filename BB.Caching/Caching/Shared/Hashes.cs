@@ -21,7 +21,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <remarks>http://redis.io/commands/hdel</remarks>
                 /// <returns>The number of fields that were removed.</returns>
-                public static Task<bool> Remove(RedisKey key, RedisValue field)
+                public static Task<bool> DeleteAsync(RedisKey key, RedisValue field)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<bool> result = null;
@@ -41,7 +41,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <remarks>http://redis.io/commands/hdel</remarks>
                 /// <returns>The number of fields that were removed.</returns>
-                public static Task<long> Remove(RedisKey key, RedisValue[] fields)
+                public static Task<long> DeleteAsync(RedisKey key, RedisValue[] fields)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<long> result = null;
@@ -62,7 +62,7 @@ namespace BB.Caching
                 /// 1 if the hash contains field. 0 if the hash does not contain field, or key does not exist.
                 /// </returns>
                 /// <remarks>http://redis.io/commands/hexists</remarks>
-                public static Task<bool> Exists(RedisKey key, RedisValue field)
+                public static Task<bool> ExistsAsync(RedisKey key, RedisValue field)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<bool> result = null;
@@ -83,7 +83,7 @@ namespace BB.Caching
                 /// the value associated with field, or nil when field is not present in the hash or key does not exist.
                 /// </returns>
                 /// <remarks>http://redis.io/commands/hget</remarks>
-                public static Task<RedisValue> GetString(RedisKey key, RedisValue field)
+                public static Task<RedisValue> GetAsync(RedisKey key, RedisValue field)
                 {
                     Task<RedisValue> result = SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -92,53 +92,6 @@ namespace BB.Caching
                     return result;
                 }
 
-                /// <summary>
-                /// Returns the value associated with field in the hash stored at key.
-                /// </summary>
-                /// <returns>
-                /// the value associated with field, or nil when field is not present in the hash or key does not exist.
-                /// </returns>
-                /// <remarks>http://redis.io/commands/hget</remarks>
-                public static Task<RedisValue> GetInt64(RedisKey key, RedisValue field)
-                {
-                    Task<RedisValue> result = SharedCache.Instance.GetReadConnection(key)
-                        .GetDatabase(SharedCache.Instance.Db)
-                        .HashGetAsync(key, field);
-
-                    return result;
-                }
-
-                /// <summary>
-                /// Returns the value associated with field in the hash stored at key.
-                /// </summary>
-                /// <returns>
-                /// the value associated with field, or nil when field is not present in the hash or key does not exist.
-                /// </returns>
-                /// <remarks>http://redis.io/commands/hget</remarks>
-                public static Task<RedisValue> GetDouble(RedisKey key, RedisValue field)
-                {
-                    Task<RedisValue> result = SharedCache.Instance.GetReadConnection(key)
-                        .GetDatabase(SharedCache.Instance.Db)
-                        .HashGetAsync(key, field);
-
-                    return result;
-                }
-
-                /// <summary>
-                /// Returns the value associated with field in the hash stored at key.
-                /// </summary>
-                /// <returns>
-                /// the value associated with field, or nil when field is not present in the hash or key does not exist.
-                /// </returns>
-                /// <remarks>http://redis.io/commands/hget</remarks>
-                public static Task<RedisValue> GetByteArray(RedisKey key, RedisValue field)
-                {
-                    Task<RedisValue> result = SharedCache.Instance.GetReadConnection(key)
-                        .GetDatabase(SharedCache.Instance.Db)
-                        .HashGetAsync(key, field);
-
-                    return result;
-                }
 
                 /// <summary>
                 /// Returns the values associated with the specified fields in the hash stored at key. For every field that does
@@ -146,22 +99,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>list of values associated with the given fields, in the same order as they are requested.</returns>
                 /// <remarks>http://redis.io/commands/hmget</remarks>
-                public static Task<RedisValue[]> GetString(RedisKey key, RedisValue[] fields)
-                {
-                    Task<RedisValue[]> result = SharedCache.Instance.GetReadConnection(key)
-                        .GetDatabase(SharedCache.Instance.Db)
-                        .HashGetAsync(key, fields);
-
-                    return result;
-                }
-
-                /// <summary>
-                /// Returns the values associated with the specified fields in the hash stored at key. For every field that does
-                /// not exist in the hash, a nil value is returned.
-                /// </summary>
-                /// <returns>list of values associated with the given fields, in the same order as they are requested.</returns>
-                /// <remarks>http://redis.io/commands/hmget</remarks>
-                public static Task<RedisValue[]> GetByteArray(RedisKey key, RedisValue[] fields)
+                public static Task<RedisValue[]> GetAsync(RedisKey key, RedisValue[] fields)
                 {
                     Task<RedisValue[]> result = SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -177,7 +115,7 @@ namespace BB.Caching
                 /// list of fields and their values stored in the hash, or an empty list when key does not exist.
                 /// </returns>
                 /// <remarks>http://redis.io/commands/hgetall</remarks>
-                public static Task<HashEntry[]> GetAll(RedisKey key)
+                public static Task<HashEntry[]> GetAllAsync(RedisKey key)
                 {
                     Task<HashEntry[]> result = SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -194,7 +132,7 @@ namespace BB.Caching
                 /// <remarks>The range of values supported by HINCRBY is limited to 64 bit signed integers.</remarks>
                 /// <returns>the value at field after the increment operation.</returns>
                 /// <remarks>http://redis.io/commands/hincrby</remarks>
-                public static Task<long> Increment(RedisKey key, RedisValue field, int value = 1)
+                public static Task<long> IncrementAsync(RedisKey key, RedisValue field, int value = 1)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<long> result = null;
@@ -220,7 +158,7 @@ namespace BB.Caching
                 /// <remarks>The range of values supported by HINCRBY is limited to 64 bit signed integers.</remarks>
                 /// <returns>the value at field after the increment operation.</returns>
                 /// <remarks>http://redis.io/commands/hincrby</remarks>
-                public static Task<double> Increment(RedisKey key, RedisValue field, double value)
+                public static Task<double> IncrementAsync(RedisKey key, RedisValue field, double value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<double> result = null;
@@ -244,7 +182,7 @@ namespace BB.Caching
                 /// <remarks>The range of values supported by HINCRBY is limited to 64 bit signed integers.</remarks>
                 /// <returns>the value at field after the decrement operation.</returns>
                 /// <remarks>http://redis.io/commands/hincrby</remarks>
-                public static Task<long> Decrement(RedisKey key, RedisValue field, int value = 1)
+                public static Task<long> DecrementAsync(RedisKey key, RedisValue field, int value = 1)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<long> result = null;
@@ -268,7 +206,7 @@ namespace BB.Caching
                 /// <remarks>The range of values supported by HINCRBY is limited to 64 bit signed integers.</remarks>
                 /// <returns>the value at field after the decrement operation.</returns>
                 /// <remarks>http://redis.io/commands/hincrby</remarks>
-                public static Task<double> Decrement(RedisKey key, RedisValue field, double value)
+                public static Task<double> DecrementAsync(RedisKey key, RedisValue field, double value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<double> result = null;
@@ -289,7 +227,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>list of fields in the hash, or an empty list when key does not exist.</returns>
                 /// <remarks>http://redis.io/commands/hkeys</remarks>
-                public static Task<RedisValue[]> GetKeys(RedisKey key)
+                public static Task<RedisValue[]> GetKeysAsync(RedisKey key)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<RedisValue[]> result = null;
@@ -310,7 +248,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>list of values in the hash, or an empty list when key does not exist.</returns>
                 /// <remarks>http://redis.io/commands/hvals</remarks>
-                public static Task<RedisValue[]> GetValues(RedisKey key)
+                public static Task<RedisValue[]> GetValuesAsync(RedisKey key)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<RedisValue[]> result = null;
@@ -331,7 +269,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>number of fields in the hash, or 0 when key does not exist.</returns>
                 /// <remarks>http://redis.io/commands/hlen</remarks>
-                public static Task<long> GetLength(RedisKey key)
+                public static Task<long> GetLengthAsync(RedisKey key)
                 {
                     return SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -347,7 +285,7 @@ namespace BB.Caching
                 /// was updated.
                 /// </returns>
                 /// <remarks>http://redis.io/commands/hset</remarks>
-                public static Task<bool> Set(RedisKey key, RedisValue field, RedisValue value)
+                public static Task<bool> SetAsync(RedisKey key, RedisValue field, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<bool> result = null;
@@ -372,7 +310,7 @@ namespace BB.Caching
                 /// was updated.
                 /// </returns>
                 /// <remarks>http://redis.io/commands/hmset</remarks>
-                public static Task Set(RedisKey key, HashEntry[] values)
+                public static Task SetAsync(RedisKey key, HashEntry[] values)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task result = null;
@@ -394,7 +332,7 @@ namespace BB.Caching
                 /// operation was performed.
                 /// </returns>
                 /// <remarks>http://redis.io/commands/hsetnx</remarks>
-                public static Task<bool> SetIfNotExists(RedisKey key, RedisValue field, RedisValue value)
+                public static Task<bool> SetIfNotExistsAsync(RedisKey key, RedisValue field, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<bool> result = null;

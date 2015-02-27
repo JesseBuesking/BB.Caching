@@ -31,7 +31,7 @@ namespace BB.Caching.Redis
 
         private static byte[] _rateLimitIncrementHash;
 
-        public static Task<RedisResult> Increment(string key, TimeSpan spanSize, TimeSpan bucketSize, long throttle,
+        public static async Task<RedisResult> IncrementAsync(string key, TimeSpan spanSize, TimeSpan bucketSize, long throttle,
             int increment = 1)
         {
             RedisKey[] keyArgs = { key };
@@ -45,12 +45,11 @@ namespace BB.Caching.Redis
             };
 
             var connections = SharedCache.Instance.GetWriteConnections(key);
-            Task<RedisResult> result = null;
+            RedisResult result = null;
             foreach (var connection in connections)
             {
-                var task = connection.GetDatabase(SharedCache.Instance.Db)
+                var task = await connection.GetDatabase(SharedCache.Instance.Db)
                     .ScriptEvaluateAsync(RateLimiter.RateLimitIncrementHash, keyArgs, valueArgs);
-
 
                 if (null == result)
                     result = task;

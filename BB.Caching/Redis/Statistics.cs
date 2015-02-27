@@ -130,7 +130,7 @@ namespace BB.Caching.Redis
             }
         }
 
-        public static Task SetStatistic(string key, double value)
+        public static async Task SetStatisticAsync(string key, double value)
         {
             RedisKey[] keyArgs = { key };
             RedisValue[] valueArgs = { value };
@@ -138,42 +138,38 @@ namespace BB.Caching.Redis
             var connections = SharedCache.Instance.GetWriteConnections(key);
             foreach (var connection in connections)
             {
-                connection.GetDatabase(SharedCache.Instance.Db)
+                await connection.GetDatabase(SharedCache.Instance.Db)
                     .ScriptEvaluateAsync(Statistics.SetStatisticHash, keyArgs, valueArgs);
             }
-
-            return Task.FromResult(false);
         }
 
-        public static Task<Stats> GetStatistics(string key)
+        public static async Task<Stats> GetStatisticsAsync(string key)
         {
             RedisKey[] keyArgs = { key };
             RedisValue[] valueArgs = new RedisValue[0];
 
             var connections = SharedCache.Instance.GetWriteConnections(key);
-            Task<RedisResult> result = null;
+            RedisResult result = null;
             foreach (var connection in connections)
             {
-                var task = connection.GetDatabase(SharedCache.Instance.Db)
+                var task = await connection.GetDatabase(SharedCache.Instance.Db)
                     .ScriptEvaluateAsync(Statistics.GetStatisticHash, keyArgs, valueArgs);
+
                 if (null == result)
                     result = task;
             }
 
-            return Task.Run(async () =>
-                {
-                    if (null == result)
-                        return null;
+            if (null == result)
+                return null;
 
-                    RedisResult[] res = (RedisResult[])await result;
-                    long numberOfValues = (long)res[0];
-                    double sumOfValues = (double)res[1];
-                    double sumOfValuesSquared = (double)res[2];
-                    double minimum = (double)res[3];
-                    double maximum = (double)res[4];
+            RedisResult[] res = (RedisResult[]) result;
+            long numberOfValues = (long)res[0];
+            double sumOfValues = (double)res[1];
+            double sumOfValuesSquared = (double)res[2];
+            double minimum = (double)res[3];
+            double maximum = (double)res[4];
 
-                    return new Stats(numberOfValues, sumOfValues, sumOfValuesSquared, minimum, maximum);
-                });
+            return new Stats(numberOfValues, sumOfValues, sumOfValuesSquared, minimum, maximum);
         }
     }
 }

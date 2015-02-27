@@ -12,14 +12,14 @@ namespace BB.Caching
         /// </summary>
         public static partial class Memory
         {
-            public class Store
+            public class Core
             {
-                private static readonly Lazy<Store> _lazy = new Lazy<Store>(
-                    () => new Store(), LazyThreadSafetyMode.ExecutionAndPublication);
+                private static readonly Lazy<Core> _lazy = new Lazy<Core>(
+                    () => new Core(), LazyThreadSafetyMode.ExecutionAndPublication);
 
-                public static Store Instance
+                public static Core Instance
                 {
-                    get { return Store._lazy.Value; }
+                    get { return Core._lazy.Value; }
                 }
 
                 /// <summary>
@@ -31,7 +31,7 @@ namespace BB.Caching
                     set;
                 }
 
-                private Store()
+                private Core()
                 {
                     this.CacheStore = new MemoryCache("l1-cache");
                 }

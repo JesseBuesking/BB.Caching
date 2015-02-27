@@ -37,7 +37,7 @@ namespace BB.Caching
                 if (value.Exists)
                     return value.Value;
 
-                Task<RedisValue> byteArrayWrapper = Cache.Shared.Hashes.GetByteArray(Config.KEY_PREFIX, key);
+                Task<RedisValue> byteArrayWrapper = Cache.Shared.Hashes.GetAsync(Config.KEY_PREFIX, key);
                 if (byteArrayWrapper.Result.IsNull)
                 {
                     return default(TType);
@@ -56,7 +56,7 @@ namespace BB.Caching
 
                 var result = Task.Run(async () =>
                     {
-                        var byteArrayWrapper = Cache.Shared.Hashes.GetByteArray(Config.KEY_PREFIX, key);
+                        var byteArrayWrapper = Cache.Shared.Hashes.GetAsync(Config.KEY_PREFIX, key);
                         if (byteArrayWrapper.Result.IsNull)
                         {
                             return default(TType);
@@ -72,7 +72,7 @@ namespace BB.Caching
             public static void Set<TType>(string key, TType value, bool broadcast = true)
             {
                 byte[] compact = Cache.Memory.Strings.Set(KEY_PREFIX + key, value);
-                Cache.Shared.Hashes.Set(KEY_PREFIX, key, compact).Wait();
+                Cache.Shared.Hashes.SetAsync(KEY_PREFIX, key, compact).Wait();
                 if (broadcast)
                 {
                     PubSub.Publish(Config.CACHE_CONFIG_CHANGE_CHANNEL, key).Wait();
@@ -84,7 +84,7 @@ namespace BB.Caching
                 return Task.Run(async () =>
                     {
                         var compacted = Cache.Memory.Strings.Set(KEY_PREFIX + key, value);
-                        await Cache.Shared.Hashes.Set(KEY_PREFIX, key, compacted);
+                        await Cache.Shared.Hashes.SetAsync(KEY_PREFIX, key, compacted);
                         if (broadcast)
                         {
                             await PubSub.Publish(Config.CACHE_CONFIG_CHANGE_CHANNEL, key);
@@ -96,8 +96,8 @@ namespace BB.Caching
             {
                 Task.Run(async () =>
                     {
-                        await Cache.Shared.Keys.Invalidate(KEY_PREFIX + key);
-                        await Cache.Shared.Hashes.Remove(KEY_PREFIX, key);
+                        await Cache.Shared.Keys.InvalidateAsync(KEY_PREFIX + key);
+                        await Cache.Shared.Hashes.DeleteAsync(KEY_PREFIX, key);
                         if (broadcast)
                         {
                             await Config.PublishRemoval(key);
@@ -109,8 +109,8 @@ namespace BB.Caching
             {
                 return Task.Run(async () =>
                     {
-                        await Cache.Shared.Keys.Invalidate(KEY_PREFIX + key);
-                        await Cache.Shared.Hashes.Remove(KEY_PREFIX, key);
+                        await Cache.Shared.Keys.InvalidateAsync(KEY_PREFIX + key);
+                        await Cache.Shared.Hashes.DeleteAsync(KEY_PREFIX, key);
                         if (broadcast)
                         {
                             await Config.PublishRemoval(key);

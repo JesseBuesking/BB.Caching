@@ -19,14 +19,14 @@ namespace BB.Caching.Tests.Caching
                 catch (PubSub.ChannelAlreadySubscribedException)
                 { }
 
-                Cache.Shared.Keys.Remove(KEY).Wait();
-                Cache.Shared.Keys.Remove(KEY2).Wait();
+                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
+                Cache.Shared.Keys.DeleteAsync(KEY2).Wait();
             }
 
             public void Dispose()
             {
-                Cache.Shared.Keys.Remove(KEY).Wait();
-                Cache.Shared.Keys.Remove(KEY2).Wait();
+                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
+                Cache.Shared.Keys.DeleteAsync(KEY2).Wait();
             }
         }
 
@@ -56,20 +56,20 @@ namespace BB.Caching.Tests.Caching
 
         public ConfigTests()
         {
-            Cache.Shared.Keys.Remove(KEY);
-            Cache.Shared.Keys.Remove(KEY2);
+            Cache.Shared.Keys.DeleteAsync(KEY).Wait();
+            Cache.Shared.Keys.DeleteAsync(KEY2).Wait();
 
-            Assert.False(Cache.Shared.Keys.Exists(KEY).Result);
-            Assert.False(Cache.Shared.Keys.Exists(KEY2).Result);
+            Assert.False(Cache.Shared.Keys.ExistsAsync(KEY).Result);
+            Assert.False(Cache.Shared.Keys.ExistsAsync(KEY2).Result);
         }
 
         public void Dispose()
         {
-            Cache.Shared.Keys.Remove(KEY);
-            Cache.Shared.Keys.Remove(KEY2);
+            Cache.Shared.Keys.DeleteAsync(KEY).Wait();
+            Cache.Shared.Keys.DeleteAsync(KEY2).Wait();
 
-            Assert.False(Cache.Shared.Keys.Exists(KEY).Result);
-            Assert.False(Cache.Shared.Keys.Exists(KEY2).Result);
+            Assert.False(Cache.Shared.Keys.ExistsAsync(KEY).Result);
+            Assert.False(Cache.Shared.Keys.ExistsAsync(KEY2).Result);
         }
 
         private readonly ConfigDummy _value = new ConfigDummy

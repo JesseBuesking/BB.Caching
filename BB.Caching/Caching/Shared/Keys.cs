@@ -22,7 +22,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>True if the key was removed.</returns>
                 /// <remarks>http://redis.io/commands/del</remarks>
-                public static Task<bool> Remove(RedisKey key)
+                public static Task<bool> DeleteAsync(RedisKey key)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<bool> result = null;
@@ -43,7 +43,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>The number of keys that were removed.</returns>
                 /// <remarks>http://redis.io/commands/del</remarks>
-                public static async Task<long> Remove(RedisKey[] keys)
+                public static async Task<long> DeleteAsync(RedisKey[] keys)
                 {
                     var dictionary = SharedCache.Instance.GetWriteConnections(keys);
                     var tasks = new Task<long>[dictionary.Count];
@@ -68,7 +68,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>1 if the key exists. 0 if the key does not exist.</returns>
                 /// <remarks>http://redis.io/commands/exists</remarks>
-                public static Task<bool> Exists(string key)
+                public static Task<bool> ExistsAsync(string key)
                 {
                     return SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -88,7 +88,7 @@ namespace BB.Caching
                 /// </remarks>
                 /// <returns>1 if the timeout was set. 0 if key does not exist or the timeout could not be set.</returns>
                 /// <remarks>http://redis.io/commands/expire</remarks>
-                public static Task<bool> Expire(string key, TimeSpan expiry)
+                public static Task<bool> ExpireAsync(string key, TimeSpan expiry)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<bool> result = null;
@@ -112,7 +112,7 @@ namespace BB.Caching
                 /// </returns>
                 /// <remarks>Available with 2.1.2 and above only</remarks>
                 /// <remarks>http://redis.io/commands/persist</remarks>
-                public static Task<bool> Persist(string key)
+                public static Task<bool> PersistAsync(string key)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<bool> result = null;
@@ -160,19 +160,19 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>the random key, or nil when the database is empty.</returns>
                 /// <remarks>http://redis.io/commands/randomkey</remarks>
-                public static Task<RedisKey> Random()
+                public static Task<RedisKey> RandomAsync()
                 {
                     return SharedCache.Instance.GetRandomReadConnection()
                         .GetDatabase(SharedCache.Instance.Db)
                         .KeyRandomAsync();
                 }
 
-                public static Task Rename(string fromKey, string toKey)
+                public static Task RenameAsync(string fromKey, string toKey)
                 {
                     throw new NotImplementedException();
                 }
 
-                public static Task<bool> RenameIfNotExists(string fromKey, string toKey)
+                public static Task<bool> RenameIfNotExistsAsync(string fromKey, string toKey)
                 {
                     throw new NotImplementedException();
                 }
@@ -183,7 +183,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns>TTL in seconds or -1 when key does not exist or does not have a timeout.</returns>
                 /// <remarks>http://redis.io/commands/ttl</remarks>
-                public static Task<TimeSpan?> TimeToLive(string key)
+                public static Task<TimeSpan?> TimeToLiveAsync(string key)
                 {
                     return SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -196,7 +196,7 @@ namespace BB.Caching
                 /// </summary>
                 /// <returns> type of key, or none when key does not exist.</returns>
                 /// <remarks>http://redis.io/commands/type</remarks>
-                public static RedisType Type(string key)
+                public static RedisType TypeAsync(string key)
                 {
                     return SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -221,18 +221,18 @@ namespace BB.Caching
                 }
 
 #pragma warning disable 1066
-                public static Task<string[]> SortString(string key, string byPattern = null, string[] getPattern = null,
+                public static Task<string[]> SortStringAsync(string key, string byPattern = null, string[] getPattern = null,
                     long offset = 0, long count = -1, bool alpha = false, bool @ascending = true)
 #pragma warning restore 1066
                 {
                     //            return SharedCache.Instance.GetConnection(key).Keys
-                    //                .SortString(SharedCache.Instance.Db, key, byPattern, getPattern, offset, count, alpha, @ascending,
+                    //                .SortStringAsync(SharedCache.Instance.Db, key, byPattern, getPattern, offset, count, alpha, @ascending,
                     //                    SharedCache.Instance.QueueJump);
                     throw new NotImplementedException();
                 }
 
 #pragma warning disable 1066
-                public static Task<long> SortAndStore(string destination, string key, string byPattern = null,
+                public static Task<long> SortAndStoreAsync(string destination, string key, string byPattern = null,
                     string[] getPattern = null, long offset = 0, long count = -1, bool alpha = false,
                     bool @ascending = true)
 #pragma warning restore 1066
@@ -257,9 +257,9 @@ namespace BB.Caching
                 /// </summary>
                 /// <param name="key"></param>
                 /// <returns></returns>
-                public static Task<long> Invalidate(string key)
+                public static Task<long> InvalidateAsync(string key)
                 {
-                    Cache.Memory.Strings.Remove(key);
+                    Cache.Memory.Strings.Delete(key);
                     SharedCache.Instance.AlreadyInvalidated.Add(key);
                     return PubSub.Publish(SharedCache.CACHE_INVALIDATION_CHANNEL, key);
                 }
@@ -269,11 +269,11 @@ namespace BB.Caching
                 /// </summary>
                 /// <param name="keys"></param>
                 /// <returns>The number of clients that received the message.</returns>
-                public static Task<long> Invalidate(string[] keys)
+                public static Task<long> InvalidateAsync(string[] keys)
                 {
                     foreach (string key in keys)
                     {
-                        Cache.Memory.Strings.Remove(key);
+                        Cache.Memory.Strings.Delete(key);
                         SharedCache.Instance.AlreadyInvalidated.Add(key);
                     }
 

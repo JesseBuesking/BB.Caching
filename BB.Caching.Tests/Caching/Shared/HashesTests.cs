@@ -49,25 +49,25 @@ namespace BB.Caching.Tests.Caching.Shared
 
         public HashesTests()
         {
-            Cache.Shared.Keys.Remove(this.Keys).Wait();
+            Cache.Shared.Keys.DeleteAsync(this.Keys).Wait();
             foreach (var key in this._kvPs.Keys)
-                Assert.False(Cache.Shared.Keys.Exists(key).Result);
+                Assert.False(Cache.Shared.Keys.ExistsAsync(key).Result);
         }
 
         public void Dispose()
         {
-            Cache.Shared.Keys.Remove(this.Keys).Wait();
-            Cache.Shared.Keys.Remove(this.Keys).Wait();
+            Cache.Shared.Keys.DeleteAsync(this.Keys).Wait();
+            Cache.Shared.Keys.DeleteAsync(this.Keys).Wait();
             foreach (var key in this._kvPs.Keys)
-                Assert.False(Cache.Shared.Keys.Exists(key).Result);
+                Assert.False(Cache.Shared.Keys.ExistsAsync(key).Result);
         }
 
         [Fact]
         public void Remove()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value.ElementAt(0).Name, this.Value.ElementAt(0).Value).Wait();
-            Assert.True(Cache.Shared.Hashes.Remove(this.Key, this.Value.ElementAt(0).Name).Result);
-            Assert.False(Cache.Shared.Hashes.Remove(this.Key, this.Value.ElementAt(0).Name).Result);
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value.ElementAt(0).Name, this.Value.ElementAt(0).Value).Wait();
+            Assert.True(Cache.Shared.Hashes.DeleteAsync(this.Key, this.Value.ElementAt(0).Name).Result);
+            Assert.False(Cache.Shared.Hashes.DeleteAsync(this.Key, this.Value.ElementAt(0).Name).Result);
         }
 
         [Fact]
@@ -75,27 +75,27 @@ namespace BB.Caching.Tests.Caching.Shared
         {
             var first = this.KVPsByteArrays.First();
 
-            Cache.Shared.Hashes.Set(first.Key, first.Value).Wait();
-            Assert.Equal(2, Cache.Shared.Hashes.Remove(first.Key, first.Value.Select(x => x.Name).ToArray()).Result);
-            Assert.Equal(0, Cache.Shared.Hashes.Remove(first.Key, first.Value.Select(x => x.Name).ToArray()).Result);
+            Cache.Shared.Hashes.SetAsync(first.Key, first.Value).Wait();
+            Assert.Equal(2, Cache.Shared.Hashes.DeleteAsync(first.Key, first.Value.Select(x => x.Name).ToArray()).Result);
+            Assert.Equal(0, Cache.Shared.Hashes.DeleteAsync(first.Key, first.Value.Select(x => x.Name).ToArray()).Result);
         }
 
         [Fact]
         public void Exists()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value.ElementAt(0).Name, this.Value.ElementAt(0).Value).Wait();
-            Assert.True(Cache.Shared.Hashes.Exists(this.Key, this.Value.ElementAt(0).Name).Result);
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value.ElementAt(0).Name, this.Value.ElementAt(0).Value).Wait();
+            Assert.True(Cache.Shared.Hashes.ExistsAsync(this.Key, this.Value.ElementAt(0).Name).Result);
 
-            Assert.True(Cache.Shared.Hashes.Remove(this.Key, this.Value.ElementAt(0).Name).Result);
+            Assert.True(Cache.Shared.Hashes.DeleteAsync(this.Key, this.Value.ElementAt(0).Name).Result);
 
-            Assert.False(Cache.Shared.Hashes.Exists(this.Key, this.Value.ElementAt(0).Name).Result);
+            Assert.False(Cache.Shared.Hashes.ExistsAsync(this.Key, this.Value.ElementAt(0).Name).Result);
         }
 
         [Fact]
         public void GetString()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value.ElementAt(0).Name, this.Value.ElementAt(0).Value).Wait();
-            RedisValue value = Cache.Shared.Hashes.GetString(this.Key, this.Value.ElementAt(0).Name).Result;
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value.ElementAt(0).Name, this.Value.ElementAt(0).Value).Wait();
+            RedisValue value = Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result;
 
             Assert.Equal(this.Value.ElementAt(0).Value, value);
         }
@@ -103,8 +103,8 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void GetLong()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value.ElementAt(0).Value, "2").Wait();
-            RedisValue value = Cache.Shared.Hashes.GetInt64(this.Key, this.Value.ElementAt(0).Value).Result;
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value.ElementAt(0).Value, "2").Wait();
+            RedisValue value = Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Value).Result;
 
             Assert.Equal(2L, value);
         }
@@ -113,8 +113,8 @@ namespace BB.Caching.Tests.Caching.Shared
         public void GetByteArray()
         {
             byte[] expected = Encoding.UTF8.GetBytes(this.Value.ElementAt(0).Value);
-            Cache.Shared.Hashes.Set(this.Key, this.Value.ElementAt(0).Name, expected).Wait();
-            byte[] value = Cache.Shared.Hashes.GetByteArray(this.Key, this.Value.ElementAt(0).Name).Result;
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value.ElementAt(0).Name, expected).Wait();
+            byte[] value = Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result;
 
             Assert.Equal(expected, value);
         }
@@ -122,9 +122,9 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void GetMultipleStrings()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value).Wait();
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value).Wait();
 
-            RedisValue[] actuals = Cache.Shared.Hashes.GetString(this.Key, this.Value.Select(x => x.Name).ToArray()).Result;
+            RedisValue[] actuals = Cache.Shared.Hashes.GetAsync(this.Key, this.Value.Select(x => x.Name).ToArray()).Result;
 
             int i = 0;
             foreach (object value in this.Value.Select(x => x.Value))
@@ -136,9 +136,9 @@ namespace BB.Caching.Tests.Caching.Shared
         {
             var value = this.KVPsByteArrays.First().Value;
 
-            Cache.Shared.Hashes.Set(this.Key, value).Wait();
+            Cache.Shared.Hashes.SetAsync(this.Key, value).Wait();
 
-            RedisValue[] actuals = Cache.Shared.Hashes.GetByteArray(this.Key, value.Select(x => x.Name).ToArray()).Result;
+            RedisValue[] actuals = Cache.Shared.Hashes.GetAsync(this.Key, value.Select(x => x.Name).ToArray()).Result;
 
             int i = 0;
             foreach (HashEntry key in value)
@@ -150,9 +150,9 @@ namespace BB.Caching.Tests.Caching.Shared
         {
             var value = this.KVPsByteArrays.First().Value;
 
-            Cache.Shared.Hashes.Set(this.Key, value).Wait();
+            Cache.Shared.Hashes.SetAsync(this.Key, value).Wait();
 
-            var actuals = Cache.Shared.Hashes.GetAll(this.Key).Result;
+            var actuals = Cache.Shared.Hashes.GetAllAsync(this.Key).Result;
 
             int i = 0;
             foreach (var kvp in value)
@@ -166,52 +166,52 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void IncrementLong()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value).Wait();
-            Assert.Equal(0, Cache.Shared.Hashes.GetInt64(this.Key, this.Value.ElementAt(0).Name).Result);
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value).Wait();
+            Assert.Equal(0, Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result);
 
-            Cache.Shared.Hashes.Increment(this.Key, this.Value.ElementAt(0).Name, 2).Wait();
-            Assert.Equal(2, Cache.Shared.Hashes.GetInt64(this.Key, this.Value.ElementAt(0).Name).Result);
+            Cache.Shared.Hashes.IncrementAsync(this.Key, this.Value.ElementAt(0).Name, 2).Wait();
+            Assert.Equal(2, Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result);
         }
 
         [Fact]
         public void IncrementDouble()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value).Wait();
-            double value = (double) Cache.Shared.Hashes.GetDouble(this.Key, this.Value.ElementAt(0).Name).Result;
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value).Wait();
+            double value = (double) Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result;
             Assert.Equal(0.0, value);
 
-            Cache.Shared.Hashes.Increment(this.Key, this.Value.ElementAt(0).Name, 2.84d).Wait();
-            value = (double) Cache.Shared.Hashes.GetDouble(this.Key, this.Value.ElementAt(0).Name).Result;
+            Cache.Shared.Hashes.IncrementAsync(this.Key, this.Value.ElementAt(0).Name, 2.84d).Wait();
+            value = (double) Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result;
             Assert.Equal(2.84, value);
         }
 
         [Fact]
         public void DecrementLong()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value).Wait();
-            Assert.Equal(0, Cache.Shared.Hashes.GetInt64(this.Key, this.Value.ElementAt(0).Name).Result);
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value).Wait();
+            Assert.Equal(0, Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result);
 
-            Cache.Shared.Hashes.Decrement(this.Key, this.Value.ElementAt(0).Name, 2).Wait();
-            Assert.Equal(-2, Cache.Shared.Hashes.GetInt64(this.Key, this.Value.ElementAt(0).Name).Result);
+            Cache.Shared.Hashes.DecrementAsync(this.Key, this.Value.ElementAt(0).Name, 2).Wait();
+            Assert.Equal(-2, Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result);
         }
 
         [Fact]
         public void DecrementDouble()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value).Wait();
-            double value = (double) Cache.Shared.Hashes.GetDouble(this.Key, this.Value.ElementAt(0).Name).Result;
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value).Wait();
+            double value = (double) Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result;
             Assert.Equal(0.0, value);
 
-            Cache.Shared.Hashes.Decrement(this.Key, this.Value.ElementAt(0).Name, 2.84d).Wait();
-            value = (double) Cache.Shared.Hashes.GetDouble(this.Key, this.Value.ElementAt(0).Name).Result;
+            Cache.Shared.Hashes.DecrementAsync(this.Key, this.Value.ElementAt(0).Name, 2.84d).Wait();
+            value = (double) Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result;
             Assert.Equal(-2.84, value);
         }
 
         [Fact]
         public void GetKeys()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value).Wait();
-            RedisValue[] actual = Cache.Shared.Hashes.GetKeys(this.Key).Result;
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value).Wait();
+            RedisValue[] actual = Cache.Shared.Hashes.GetKeysAsync(this.Key).Result;
 
             Assert.Equal(this.Value.Select(x => x.Name), actual);
         }
@@ -219,8 +219,8 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void GetValues()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.KVPsByteArrays.First().Value).Wait();
-            RedisValue[] actual = Cache.Shared.Hashes.GetValues(this.Key).Result;
+            Cache.Shared.Hashes.SetAsync(this.Key, this.KVPsByteArrays.First().Value).Wait();
+            RedisValue[] actual = Cache.Shared.Hashes.GetValuesAsync(this.Key).Result;
 
             Assert.Equal(this.KVPsByteArrays.First().Value.Select(x => x.Value), actual);
         }
@@ -228,15 +228,15 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void GetLength()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value).Wait();
-            Assert.Equal(this.Value.Length, Cache.Shared.Hashes.GetLength(this.Key).Result);
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value).Wait();
+            Assert.Equal(this.Value.Length, Cache.Shared.Hashes.GetLengthAsync(this.Key).Result);
         }
 
         [Fact]
         public void SetString()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value.ElementAt(0).Name, this.Value.ElementAt(0).Value).Wait();
-            RedisValue value = Cache.Shared.Hashes.GetString(this.Key, this.Value.ElementAt(0).Name).Result;
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value.ElementAt(0).Name, this.Value.ElementAt(0).Value).Wait();
+            RedisValue value = Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result;
 
             Assert.Equal(this.Value.ElementAt(0).Value, value);
         }
@@ -245,8 +245,8 @@ namespace BB.Caching.Tests.Caching.Shared
         public void SetByteArray()
         {
             byte[] expected = Encoding.UTF8.GetBytes(this.Value.ElementAt(0).Value);
-            Cache.Shared.Hashes.Set(this.Key, this.Value.ElementAt(0).Name, expected).Wait();
-            byte[] value = Cache.Shared.Hashes.GetByteArray(this.Key, this.Value.ElementAt(0).Name).Result;
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value.ElementAt(0).Name, expected).Wait();
+            byte[] value = Cache.Shared.Hashes.GetAsync(this.Key, this.Value.ElementAt(0).Name).Result;
 
             Assert.Equal(expected, value);
         }
@@ -254,9 +254,9 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void SetMultipleStrings()
         {
-            Cache.Shared.Hashes.Set(this.Key, this.Value).Wait();
+            Cache.Shared.Hashes.SetAsync(this.Key, this.Value).Wait();
 
-            RedisValue[] actuals = Cache.Shared.Hashes.GetString(this.Key, this.Value.Select(x => x.Name).ToArray()).Result;
+            RedisValue[] actuals = Cache.Shared.Hashes.GetAsync(this.Key, this.Value.Select(x => x.Name).ToArray()).Result;
 
             int i = 0;
             foreach (HashEntry entry in this.Value)
@@ -268,9 +268,9 @@ namespace BB.Caching.Tests.Caching.Shared
         {
             var value = this.KVPsByteArrays.First().Value;
 
-            Cache.Shared.Hashes.Set(this.Key, value).Wait();
+            Cache.Shared.Hashes.SetAsync(this.Key, value).Wait();
 
-            RedisValue[] actuals = Cache.Shared.Hashes.GetByteArray(this.Key, value.Select(x => x.Name).ToArray()).Result;
+            RedisValue[] actuals = Cache.Shared.Hashes.GetAsync(this.Key, value.Select(x => x.Name).ToArray()).Result;
 
             int i = 0;
             foreach (HashEntry entry in value)
@@ -283,11 +283,11 @@ namespace BB.Caching.Tests.Caching.Shared
             var kvp = this.Value.ElementAt(0);
             const string bg = "bubblegum";
 
-            Assert.True(Cache.Shared.Hashes.SetIfNotExists(this.Key, kvp.Name, kvp.Value).Result);
+            Assert.True(Cache.Shared.Hashes.SetIfNotExistsAsync(this.Key, kvp.Name, kvp.Value).Result);
 
-            Assert.Equal(kvp.Value, Cache.Shared.Hashes.GetString(this.Key, kvp.Name).Result);
+            Assert.Equal(kvp.Value, Cache.Shared.Hashes.GetAsync(this.Key, kvp.Name).Result);
 
-            Assert.False(Cache.Shared.Hashes.SetIfNotExists(this.Key, kvp.Name, bg).Result);
+            Assert.False(Cache.Shared.Hashes.SetIfNotExistsAsync(this.Key, kvp.Name, bg).Result);
         }
 
         [Fact]
@@ -297,11 +297,11 @@ namespace BB.Caching.Tests.Caching.Shared
             byte[] bytes = Encoding.UTF8.GetBytes(kvp.Value);
             byte[] bg = Encoding.UTF8.GetBytes("bubblegum");
 
-            Assert.True(Cache.Shared.Hashes.SetIfNotExists(this.Key, kvp.Name, bytes).Result);
+            Assert.True(Cache.Shared.Hashes.SetIfNotExistsAsync(this.Key, kvp.Name, bytes).Result);
 
-            Assert.Equal(kvp.Value, Cache.Shared.Hashes.GetString(this.Key, kvp.Name).Result);
+            Assert.Equal(kvp.Value, Cache.Shared.Hashes.GetAsync(this.Key, kvp.Name).Result);
 
-            Assert.False(Cache.Shared.Hashes.SetIfNotExists(this.Key, kvp.Name, bg).Result);
+            Assert.False(Cache.Shared.Hashes.SetIfNotExistsAsync(this.Key, kvp.Name, bg).Result);
         }
 
         public void SetFixture(DefaultTestFixture data)

@@ -52,7 +52,6 @@ namespace BB.Caching.Redis
                         this._subscriptions = this.GetConnection().GetSubscriber();
                     return this._subscriptions;
                 }
-                set { this._subscriptions = value; }
             }
 
             private ISubscriber _subscriptions;

@@ -29,7 +29,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/append
                 /// </remarks>
-                public static Task<long> Append(RedisKey key, RedisValue value)
+                public static Task<long> AppendAsync(RedisKey key, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<long> result = null;
@@ -57,7 +57,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/append
                 /// </remarks>
-                public static Task<long> Append(RedisKey key, byte[] value)
+                public static Task<long> AppendAsync(RedisKey key, byte[] value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<long> result = null;
@@ -91,7 +91,7 @@ namespace BB.Caching
                 /// http://redis.io/commands/decr
                 /// </remarks>
 #pragma warning disable 1066
-                public static Task<long> Decrement(RedisKey key, long value = 1)
+                public static Task<long> DecrementAsync(RedisKey key, long value = 1)
 #pragma warning restore 1066
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
@@ -126,7 +126,7 @@ namespace BB.Caching
                 /// http://redis.io/commands/incr
                 /// </remarks>
 #pragma warning disable 1066
-                public static Task<long> Increment(RedisKey key, long value = 1)
+                public static Task<long> IncrementAsync(RedisKey key, long value = 1)
 #pragma warning restore 1066
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
@@ -155,49 +155,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/get
                 /// </remarks>
-                public static Task<RedisValue> GetByteArray(RedisKey key)
-                {
-                    var result = SharedCache.Instance.GetReadConnection(key)
-                        .GetDatabase(SharedCache.Instance.Db)
-                        .StringGetAsync(key);
-
-                    return result;
-                }
-
-                /// <summary>
-                /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
-                /// the value stored at key is not a string, because GET only handles string values.
-                /// </summary>
-                /// 
-                /// <returns>
-                /// the value of key, or nil when key does not exist.
-                /// </returns>
-                /// 
-                /// <remarks>
-                /// http://redis.io/commands/get
-                /// </remarks>
-                public static Task<RedisValue> GetString(RedisKey key)
-                {
-                    var result = SharedCache.Instance.GetReadConnection(key)
-                        .GetDatabase(SharedCache.Instance.Db)
-                        .StringGetAsync(key);
-
-                    return result;
-                }
-
-                /// <summary>
-                /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
-                /// the value stored at key is not a string, because GET only handles string values.
-                /// </summary>
-                /// 
-                /// <returns>
-                /// the value of key, or nil when key does not exist.
-                /// </returns>
-                /// 
-                /// <remarks>
-                /// http://redis.io/commands/get
-                /// </remarks>
-                public static Task<RedisValue> GetInt64(RedisKey key)
+                public static Task<RedisValue> GetAsync(RedisKey key)
                 {
                     var result = SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -224,7 +182,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/getrange
                 /// </remarks>
-                public static Task<RedisValue> GetByteArray(RedisKey key, int start, int end)
+                public static Task<RedisValue> GetAsync(RedisKey key, int start, int end)
                 {
                     var result = SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -234,35 +192,8 @@ namespace BB.Caching
                 }
 
                 /// <summary>
-                /// Returns the substring of the string value stored at key, determined by the offsets start and end (both are
-                /// inclusive).
-                /// </summary>
-                /// 
-                /// <remarks>
-                /// Negative offsets can be used in order to provide an offset starting from the end of the string. So -1 means
-                /// the last character, -2 the penultimate and so forth. The function handles out of range requests by limiting
-                /// the resulting range to the actual length of the string.
-                /// </remarks>
-                /// 
-                /// <returns>
-                /// the value of key, or nil when key does not exist.
-                /// </returns>
-                /// 
-                /// <remarks>
-                /// http://redis.io/commands/getrange
-                /// </remarks>
-                public static Task<RedisValue> GetString(RedisKey key, int start, int end)
-                {
-                    var result = SharedCache.Instance.GetReadConnection(key)
-                        .GetDatabase(SharedCache.Instance.Db)
-                        .StringGetRangeAsync(key, start, end);
-
-                    return result;
-                }
-
-                /// <summary>
-                /// Returns the values of all specified keys. For every key that does not hold a string value or does not exist,
-                /// the special value nil is returned. Because of this, the operation never fails.
+                /// Returns the values of all specified keys. For every key that does not hold a string value or does
+                /// not exist, the special value nil is returned. Because of this, the operation never fails.
                 /// </summary>
                 /// 
                 /// <returns>
@@ -272,7 +203,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/mget
                 /// </remarks>
-                public static Task<RedisValue[]> GetByteArray(RedisKey[] keys)
+                public static Task<RedisValue[]> GetAsync(RedisKey[] keys)
                 {
                     var dictionary = SharedCache.Instance.GetWriteConnections(keys);
                     var tasks = new Task<RedisValue[]>[dictionary.Count];
@@ -324,68 +255,6 @@ namespace BB.Caching
                 }
 
                 /// <summary>
-                /// Returns the values of all specified keys. For every key that does not hold a string value or does not exist,
-                /// the special value nil is returned. Because of this, the operation never fails.
-                /// </summary>
-                /// 
-                /// <returns>
-                /// list of values at the specified keys.
-                /// </returns>
-                /// 
-                /// <remarks>
-                /// http://redis.io/commands/mget
-                /// </remarks>
-                public static Task<RedisValue[]> GetString(RedisKey[] keys)
-                {
-                    var dictionary = SharedCache.Instance.GetWriteConnections(keys);
-                    var tasks = new Task<RedisValue[]>[dictionary.Count];
-                    for (int i = 0; i < dictionary.Count; i++)
-                    {
-                        foreach (var connection in dictionary.ElementAt(i).Key)
-                        {
-                            var task = connection
-                                .GetDatabase(SharedCache.Instance.Db)
-                                .StringGetAsync(dictionary.ElementAt(i).Value);
-
-                            if (null == tasks[i])
-                                tasks[i] = task;
-                        }
-                    }
-
-                    Task<RedisValue[]> result = Task.Run(async () =>
-                    {
-                        var ret = new RedisValue[keys.Length];
-                        int counter = 0;
-                        int[] indexes = new int[tasks.Length];
-
-                        // Caching results after we've awaited them.
-                        RedisValue[][] results = new RedisValue[tasks.Length][];
-
-                        foreach (RedisKey key in keys)
-                        {
-                            // Which task index contains the data for the next key?
-                            int i = 0;
-                            for (; i < dictionary.Count; i++)
-                            {
-                                if (dictionary.ElementAt(i).Value.Contains(key))
-                                    break;
-                            }
-
-                            // Cache the results.
-                            if (null == results[i])
-                                results[i] = await tasks[i];
-
-                            // Store a local copy of the data (so our inner tasks return the correct value).
-                            ret[counter] = results[i][indexes[i]];
-                            ++indexes[i];
-                            ++counter;
-                        }
-                        return ret;
-                    });
-                    return result;
-                }
-
-                /// <summary>
                 /// Atomically sets key to value and returns the old value stored at key. Returns an error when key exists but
                 /// does not hold a string value.
                 /// </summary>
@@ -397,7 +266,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/getset
                 /// </remarks>
-                public static Task<RedisValue> GetSet(RedisKey key, RedisValue value)
+                public static Task<RedisValue> GetSetAsync(RedisKey key, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<RedisValue> result = null;
@@ -425,7 +294,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/getset
                 /// </remarks>
-                public static Task<RedisValue> GetSet(RedisKey key, byte[] value)
+                public static Task<RedisValue> GetSetAsync(RedisKey key, byte[] value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<RedisValue> result = null;
@@ -448,53 +317,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/set
                 /// </remarks>
-                public static Task Set(RedisKey key, RedisValue value)
-                {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task result = null;
-                    foreach (var connection in connections)
-                    {
-                        var task = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .StringSetAsync(key, value);
-
-                        if (null == result)
-                            result = task;
-                    }
-                    return result;
-                }
-
-                /// <summary>
-                /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
-                /// </summary>
-                /// 
-                /// <remarks>
-                /// http://redis.io/commands/set
-                /// </remarks>
-                public static Task Set(RedisKey key, long value)
-                {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task result = null;
-                    foreach (var connection in connections)
-                    {
-                        var task = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .StringSetAsync(key, value);
-
-                        if (null == result)
-                            result = task;
-                    }
-                    return result;
-                }
-
-                /// <summary>
-                /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
-                /// </summary>
-                /// 
-                /// <remarks>
-                /// http://redis.io/commands/set
-                /// </remarks>
-                public static Task Set(RedisKey key, byte[] value)
+                public static Task SetAsync(RedisKey key, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task result = null;
@@ -517,30 +340,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/setex
                 /// </remarks>
-                public static Task Set(RedisKey key, RedisValue value, TimeSpan expiry)
-                {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task result = null;
-                    foreach (var connection in connections)
-                    {
-                        var task = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .StringSetAsync(key, value, expiry);
-
-                        if (null == result)
-                            result = task;
-                    }
-                    return result;
-                }
-
-                /// <summary>
-                /// Set key to hold the string value and set key to timeout after a given number of seconds.
-                /// </summary>
-                /// 
-                /// <remarks>
-                /// http://redis.io/commands/setex
-                /// </remarks>
-                public static Task Set(RedisKey key, byte[] value, TimeSpan expiry)
+                public static Task SetAsync(RedisKey key, RedisValue value, TimeSpan expiry)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task result = null;
@@ -583,50 +383,7 @@ namespace BB.Caching
                 /// <returns>
                 /// the length of the string after it was modified by the command.
                 /// </returns>
-                public static Task<RedisValue> Set(RedisKey key, long offset, RedisValue value)
-                {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<RedisValue> result = null;
-                    foreach (var connection in connections)
-                    {
-                        var task = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .StringSetRangeAsync(key, offset, value);
-
-                        if (null == result)
-                            result = task;
-                    }
-                    return result;
-                }
-
-                /// <summary>
-                /// Overwrites part of the string stored at key, starting at the specified offset, for the entire length of
-                /// value. If the offset is larger than the current length of the string at key, the string is padded with
-                /// zero-bytes to make offset fit. Non-existing keys are considered as empty strings, so this command will make
-                /// sure it holds a string large enough to be able to set value at offset.
-                /// </summary>
-                /// 
-                /// <remarks>
-                /// Note that the maximum offset that you can set is 229 -1 (536870911), as Redis Strings are limited to 512
-                /// megabytes. If you need to grow beyond this size, you can use multiple keys.
-                /// <para>
-                /// Warning: When setting the last possible byte and the string value stored at key does not yet hold a string
-                /// value, or holds a small string value, Redis needs to allocate all intermediate memory which can block the
-                /// server for some time. On a 2010 MacBook Pro, setting byte number 536870911 (512MB allocation) takes ~300ms,
-                /// setting byte number 134217728 (128MB allocation) takes ~80ms, setting bit number 33554432 (32MB allocation)
-                /// takes ~30ms and setting bit number 8388608 (8MB allocation) takes ~8ms. Note that once this first allocation
-                /// is done, subsequent calls to SETRANGE for the same key will not have the allocation overhead.
-                /// </para>
-                /// </remarks>
-                /// 
-                /// <remarks>
-                /// http://redis.io/commands/setrange
-                /// </remarks>
-                /// 
-                /// <returns>
-                /// the length of the string after it was modified by the command.
-                /// </returns>
-                public static Task<RedisValue> Set(RedisKey key, long offset, byte[] value)
+                public static Task<RedisValue> SetAsync(RedisKey key, long offset, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<RedisValue> result = null;
@@ -655,7 +412,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/mset
                 /// </remarks>
-                public static Task Set(Dictionary<RedisKey, RedisValue> values)
+                public static Task SetAsync(Dictionary<RedisKey, RedisValue> values)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(values.Keys.ToArray());
                     var results = new Task[connections.Count];
@@ -701,7 +458,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/msetnx
                 /// </remarks>
-                public static Task<bool> SetIfNotExists(Dictionary<RedisKey, RedisValue> values)
+                public static Task<bool> SetIfNotExistsAsync(Dictionary<RedisKey, RedisValue> values)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(values.Keys.ToArray());
                     var results = new Task<bool>[connections.Count];
@@ -751,7 +508,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/setnx
                 /// </remarks>
-                public static Task<bool> SetIfNotExists(RedisKey key, RedisValue value)
+                public static Task<bool> SetIfNotExistsAsync(RedisKey key, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<bool> result = null;
@@ -784,7 +541,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/getbit
                 /// </remarks>
-                public static Task<bool> GetBit(RedisKey key, long offset)
+                public static Task<bool> GetBitAsync(RedisKey key, long offset)
                 {
                     return SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -803,7 +560,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/strlen
                 /// </remarks>
-                public static Task<long> GetLength(RedisKey key)
+                public static Task<long> GetLengthAsync(RedisKey key)
                 {
                     return SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
@@ -837,7 +594,7 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/setbit
                 /// </remarks>
-                public static Task<bool> SetBit(RedisKey key, long offset, bool value)
+                public static Task<bool> SetBitAsync(RedisKey key, long offset, bool value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<bool> result = null;
@@ -869,7 +626,7 @@ namespace BB.Caching
                 /// http://redis.io/commands/bitcount
                 /// </remarks>
 #pragma warning disable 1066
-                public static Task<long> CountSetBits(RedisKey key, long start = 0, long count = -1)
+                public static Task<long> CountSetBitsAsync(RedisKey key, long start = 0, long count = -1)
 #pragma warning restore 1066
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
@@ -1072,7 +829,7 @@ namespace BB.Caching
                 /// the client should delay and retry.
                 /// <para>
                 /// It is expected that a well-behaved client will also release the lock in a timely fashion via
-                /// <see cref="ReleaseLock">ReleaseLock</see>.
+                /// <see cref="ReleaseLockAsync">ReleaseLockAsync</see>.
                 /// </para>
                 /// </summary>
                 /// 
@@ -1085,7 +842,7 @@ namespace BB.Caching
                 /// in one way or another (most commonly: thread-race, or extending the lock duration when failing to take the
                 /// lock).
                 /// </remarks>
-                public static Task<bool> TakeLock(RedisKey key, RedisValue value, TimeSpan expiry)
+                public static Task<bool> TakeLockAsync(RedisKey key, RedisValue value, TimeSpan expiry)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<bool> result = null;
@@ -1105,7 +862,7 @@ namespace BB.Caching
                 /// Releases a lock that was taken successfully via TakeLock. You should not release a lock that you did not
                 /// take, as this will cause problems.
                 /// </summary>
-                public static Task ReleaseLock(RedisKey key, RedisValue value)
+                public static Task ReleaseLockAsync(RedisKey key, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     foreach (var connection in connections)

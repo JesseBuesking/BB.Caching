@@ -27,24 +27,24 @@ namespace BB.Caching.Tests.Redis
 
         public StatisticTests()
         {
-            Cache.Shared.Keys.Remove(KEY).Wait();
+            Cache.Shared.Keys.DeleteAsync(KEY).Wait();
         }
 
         public void Dispose()
         {
-            Cache.Shared.Keys.Remove(KEY).Wait();
+            Cache.Shared.Keys.DeleteAsync(KEY).Wait();
         }
 
         [Fact]
         public void SetAndGet()
         {
-            Statistics.SetStatistic(KEY, 1.0).Wait();
-            Statistics.SetStatistic(KEY, 2.0).Wait();
-            Statistics.SetStatistic(KEY, 3.0).Wait();
-            Statistics.SetStatistic(KEY, 4.0).Wait();
-            Statistics.SetStatistic(KEY, 5.0).Wait();
+            Statistics.SetStatisticAsync(KEY, 1.0).Wait();
+            Statistics.SetStatisticAsync(KEY, 2.0).Wait();
+            Statistics.SetStatisticAsync(KEY, 3.0).Wait();
+            Statistics.SetStatisticAsync(KEY, 4.0).Wait();
+            Statistics.SetStatisticAsync(KEY, 5.0).Wait();
 
-            var stat = Statistics.GetStatistics(KEY).Result;
+            var stat = Statistics.GetStatisticsAsync(KEY).Result;
 
             Assert.Equal(5.0, stat.MaximumValue);
             Assert.Equal(3.0, stat.Mean);
@@ -53,7 +53,7 @@ namespace BB.Caching.Tests.Redis
             Assert.Equal(Math.Sqrt(5.0d/2.0d), stat.PopulationStandardDeviation);
             Assert.Equal(5.0d/2.0d, stat.PopulationVariance);
 
-            stat = Statistics.GetStatistics(KEY).Result;
+            stat = Statistics.GetStatisticsAsync(KEY).Result;
 
             Assert.Equal(5.0, stat.MaximumValue);
             Assert.Equal(3.0, stat.Mean);

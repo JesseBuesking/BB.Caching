@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using BB.Caching.Redis;
-using ProtoBuf;
 using SimpleSpeedTester.Core;
 using SimpleSpeedTester.Core.OutcomeFilters;
 using SimpleSpeedTester.Interfaces;
@@ -56,12 +54,12 @@ namespace BB.Caching.Tests
             /// <summary>
             /// The number of executions that can be performed per second
             /// </summary>
-            public double ExecutionsPerSecond { get; private set; }
+            private double ExecutionsPerSecond { get; set; }
 
             /// <summary>
             /// Standard deviation for each.
             /// </summary>
-            public double StandardDeviation { get; private set; }
+            private double StandardDeviation { get; set; }
 
             /// <summary>
             /// The test result this summary corresponds to
@@ -124,7 +122,7 @@ namespace BB.Caching.Tests
             catch (PubSub.ChannelAlreadySubscribedException)
             { }
 
-            Cache.Shared.Keys.Exists("warmup");
+            Cache.Shared.Keys.ExistsAsync("warmup");
 
             Console.WriteLine(Shared.Keys.All());
             Console.WriteLine(Shared.Strings.All());
@@ -152,32 +150,32 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("Shared Keys");
 
-                    group.Plan("Exists", Shared.Keys.Exists, ITERATIONS);
-                    group.Plan("Expire", Shared.Keys.Expire, ITERATIONS);
-                    group.Plan("Persist", Shared.Keys.Persist, ITERATIONS);
-                    group.Plan("Remove", Shared.Keys.Remove, ITERATIONS);
+                    group.Plan("ExistsAsync", Shared.Keys.ExistsAsync, ITERATIONS);
+                    group.Plan("ExpireAsync", Shared.Keys.ExpireAsync, ITERATIONS);
+                    group.Plan("PersistAsync", Shared.Keys.PersistAsync, ITERATIONS);
+                    group.Plan("DeleteAsync", Shared.Keys.DeleteAsync, ITERATIONS);
 
                     return TestToString(group);
                 }
 
-                private static void Exists()
+                private static void ExistsAsync()
                 {
-                    Cache.Shared.Keys.Exists(_key);
+                    Cache.Shared.Keys.ExistsAsync(_key);
                 }
 
-                private static void Expire()
+                private static void ExpireAsync()
                 {
-                    Cache.Shared.Keys.Expire(_key, TimeSpan.FromSeconds(.5));
+                    Cache.Shared.Keys.ExpireAsync(_key, TimeSpan.FromSeconds(.5));
                 }
 
-                private static void Persist()
+                private static void PersistAsync()
                 {
-                    Cache.Shared.Keys.Persist(_key);
+                    Cache.Shared.Keys.PersistAsync(_key);
                 }
 
-                private static void Remove()
+                private static void DeleteAsync()
                 {
-                    Cache.Shared.Keys.Remove(_key);
+                    Cache.Shared.Keys.DeleteAsync(_key);
                 }
             }
 
@@ -187,20 +185,22 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("Shared Strings");
 
-                    group.Plan("Set", Shared.Strings.Set, ITERATIONS);
-                    group.Plan("Get", Shared.Strings.Get, ITERATIONS);
+                    group.Plan("SetAsync", Shared.Strings.SetAsync, ITERATIONS);
+                    group.Plan("GetAsync", Shared.Strings.GetAsync, ITERATIONS);
 
                     return TestToString(group);
                 }
 
-                private static void Set()
+                private static void SetAsync()
                 {
-                    Task task = Cache.Shared.Strings.Set(_key, _value);
+// ReSharper disable once UnusedVariable
+                    Task task = Cache.Shared.Strings.SetAsync(_key, _value);
                 }
 
-                private static void Get()
+                private static void GetAsync()
                 {
-                    Task<RedisValue> task = Cache.Shared.Strings.GetString(_key);
+// ReSharper disable once UnusedVariable
+                    Task<RedisValue> task = Cache.Shared.Strings.GetAsync(_key);
                 }
             }
 
@@ -210,20 +210,22 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("Shared Hashes");
 
-                    group.Plan("Set", Shared.Hashes.Set, ITERATIONS);
-                    group.Plan("Get", Shared.Hashes.Get, ITERATIONS);
+                    group.Plan("SetAsync", Shared.Hashes.SetAsync, ITERATIONS);
+                    group.Plan("GetAsync", Shared.Hashes.GetAsync, ITERATIONS);
 
                     return TestToString(group);
                 }
 
-                private static void Set()
+                private static void SetAsync()
                 {
-                    Task<bool> task = Cache.Shared.Hashes.Set(_key, _field, _value);
+// ReSharper disable once UnusedVariable
+                    Task<bool> task = Cache.Shared.Hashes.SetAsync(_key, _field, _value);
                 }
 
-                private static void Get()
+                private static void GetAsync()
                 {
-                    Task<RedisValue> value = Cache.Shared.Hashes.GetString(_key, _field);
+// ReSharper disable once UnusedVariable
+                    Task<RedisValue> value = Cache.Shared.Hashes.GetAsync(_key, _field);
                 }
             }
         }
@@ -242,20 +244,22 @@ namespace BB.Caching.Tests
 
                     var bloomFilter = new BB.Caching.Redis.BloomFilter(1000, 0.01f);
 
-                    group.Plan("Set", Redis.BloomFilter.Set, bloomFilter, ITERATIONS);
-                    group.Plan("Get", Redis.BloomFilter.Get, bloomFilter, ITERATIONS);
+                    group.Plan("SetAsync", Redis.BloomFilter.SetAsync, bloomFilter, ITERATIONS);
+                    group.Plan("GetAsync", Redis.BloomFilter.GetAsync, bloomFilter, ITERATIONS);
 
                     return TestToString(group);
                 }
 
-                private static void Set(BB.Caching.Redis.BloomFilter bloomFilter)
+                private static void SetAsync(BB.Caching.Redis.BloomFilter bloomFilter)
                 {
-                    Task task = bloomFilter.Add(_key, _value);
+// ReSharper disable once UnusedVariable
+                    Task t = bloomFilter.AddAsync(_key, _value);
                 }
 
-                private static void Get(BB.Caching.Redis.BloomFilter bloomFilter)
+                private static void GetAsync(BB.Caching.Redis.BloomFilter bloomFilter)
                 {
-                    Task<bool> task = bloomFilter.IsSet(_key, _value);
+// ReSharper disable once UnusedVariable
+                    Task<bool> task = bloomFilter.IsSetAsync(_key, _value);
                 }
             }
 
@@ -267,14 +271,15 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("RateLimiter");
 
-                    group.Plan("Increment", Redis.RateLimiter.Increment, ITERATIONS);
+                    group.Plan("IncrementAsync", Redis.RateLimiter.IncrementAsync, ITERATIONS);
 
                     return TestToString(group);
                 }
 
-                private static void Increment()
+                private static void IncrementAsync()
                 {
-                    BB.Caching.Redis.RateLimiter.Increment(
+// ReSharper disable once UnusedVariable
+                    Task<RedisResult> result = BB.Caching.Redis.RateLimiter.IncrementAsync(
                         _key, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1), 1);
                 }
             }
@@ -287,20 +292,22 @@ namespace BB.Caching.Tests
                 {
                     var group = new TestGroup("Statistics");
 
-                    group.Plan("Set", Redis.Statistics.Set, ITERATIONS);
-                    group.Plan("Get", Redis.Statistics.Get, ITERATIONS);
+                    group.Plan("SetAsync", Redis.Statistics.SetAsync, ITERATIONS);
+                    group.Plan("GetAsync", Redis.Statistics.GetAsync, ITERATIONS);
 
                     return TestToString(group);
                 }
 
-                private static void Set()
+                private static void SetAsync()
                 {
-                    BB.Caching.Redis.Statistics.SetStatistic(_key, 1.0);
+// ReSharper disable once UnusedVariable
+                    Task t = BB.Caching.Redis.Statistics.SetStatisticAsync(_key, 1.0);
                 }
 
-                private static void Get()
+                private static void GetAsync()
                 {
-                    BB.Caching.Redis.Statistics.GetStatistics(_key);
+// ReSharper disable once UnusedVariable
+                    Task<BB.Caching.Redis.Statistics.Stats> result = BB.Caching.Redis.Statistics.GetStatisticsAsync(_key);
                 }
             }
         }
@@ -362,6 +369,7 @@ namespace BB.Caching.Tests
 
                 private static void HashSpeed()
                 {
+// ReSharper disable once UnusedVariable
                     ulong value = BB.Caching.Hashing.Murmur3.ComputeInt("Hash me please!");
                 }
             }

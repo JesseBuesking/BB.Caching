@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using ProtoBuf;
 
 namespace BB.Caching.Serialization
@@ -26,6 +27,28 @@ namespace BB.Caching.Serialization
         }
 
         /// <summary>
+        /// Serializes the object into a byte array.
+        /// <para>
+        /// Uses protobuf to serialize the object supplied.
+        /// </para>
+        /// </summary>
+        /// <typeparam name="TType"></typeparam>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static async Task<byte[]> SerializeAsync<TType>(TType value)
+        {
+            return await Task.Run(() =>
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    Serializer.Serialize(ms, value);
+                    return ms.ToArray();
+                }
+            });
+        }
+
+        /// <summary>
         /// Deserializes the object from the byte array.
         /// <para>
         /// Uses protobuf to deserialize the byte array supplied.
@@ -42,6 +65,28 @@ namespace BB.Caching.Serialization
                 TType res = Serializer.Deserialize<TType>(ms);
                 return res;
             }
+        }
+
+        /// <summary>
+        /// Deserializes the object from the byte array asynchronously.
+        /// <para>
+        /// Uses protobuf to deserialize the byte array supplied.
+        /// </para>
+        /// </summary>
+        /// <typeparam name="TType"></typeparam>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static async Task<TType> DeserializeAsync<TType>(byte[] value)
+        {
+            return await Task.Run(() =>
+            {
+                using (MemoryStream ms = new MemoryStream(value))
+                {
+                    TType res = Serializer.Deserialize<TType>(ms);
+                    return res;
+                }
+            });
         }
     }
 }

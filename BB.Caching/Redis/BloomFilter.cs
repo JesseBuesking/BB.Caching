@@ -98,19 +98,18 @@ namespace BB.Caching.Redis
 
         private static byte[] _setMultipleBitsHash;
 
-        public Task Add(string key, string value)
+        public async Task AddAsync(string key, string value)
         {
             var bits = new RedisValue[this.Options.NumberOfHashes];
             for (int i = 0; i < this.Options.NumberOfHashes; i++)
-                bits[i] = Hashing.Murmur3.ComputeInt(value + i) % this.Options.NumberOfBits;
+            {
+                bits[i] = Hashing.Murmur3.ComputeInt(value + i)%this.Options.NumberOfBits;
+            }
 
-            this.SetBits(key, bits, true);
-            return Task.FromResult(false);
+            await SetBitsAsync(key, bits, true);
         }
 
-        // ReSharper disable UnusedMethodReturnValue.Local
-        private Task SetBits(string key, RedisValue[] bits, bool value)
-        // ReSharper restore UnusedMethodReturnValue.Local
+        private static async Task SetBitsAsync(string key, RedisValue[] bits, bool value)
         {
             RedisKey[] keyArgs = { key };
             RedisValue[] valueArgs = new RedisValue[bits.Length + 1];
@@ -120,22 +119,23 @@ namespace BB.Caching.Redis
             var connections = SharedCache.Instance.GetWriteConnections(key);
             foreach (var connection in connections)
             {
-                connection.GetDatabase(SharedCache.Instance.Db)
+                await connection.GetDatabase(SharedCache.Instance.Db)
                     .ScriptEvaluateAsync(BloomFilter.SetMultipleBitsHash, keyArgs, valueArgs);
             }
-            return Task.FromResult(false);
         }
 
-        public Task<bool> IsSet(string key, string value)
+        public async Task<bool> IsSetAsync(string key, string value)
         {
             var bits = new RedisValue[this.Options.NumberOfHashes];
             for (int i = 0; i < this.Options.NumberOfHashes; i++)
+            {
                 bits[i] = Hashing.Murmur3.ComputeInt(value + i) % this.Options.NumberOfBits;
+            }
 
-            return this.AllBitsSet(key, bits);
+            return await AllBitsSet(key, bits);
         }
 
-        private Task<bool> AllBitsSet(string key, RedisValue[] bits)
+        private static async Task<bool> AllBitsSet(string key, RedisValue[] bits)
         {
             RedisKey[] keyArgs = { key };
             RedisValue[] valueArgs = new RedisValue[bits.Length];
@@ -153,14 +153,11 @@ namespace BB.Caching.Redis
                     result = task;
             }
 
-            return Task.Run(async () =>
-                {
-                    if (null == result)
-                        return false;
+            if (null == result)
+                return false;
 
-                    RedisResult value = await result;
-                    return !value.IsNull && 1L == (long)value;
-                });
+            RedisResult value = await result;
+            return !value.IsNull && 1L == (long)value;
         }
 
         public override string ToString()

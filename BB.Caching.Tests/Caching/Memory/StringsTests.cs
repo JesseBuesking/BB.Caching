@@ -16,13 +16,13 @@ namespace BB.Caching.Tests.Caching.Memory
 
         public StringsTests()
         {
-            Cache.Memory.Strings.Remove(KEY);
+            Cache.Memory.Strings.Delete(KEY);
             Assert.False(Cache.Memory.Strings.Exists(KEY));
         }
 
         public void Dispose()
         {
-            Cache.Memory.Strings.Remove(KEY);
+            Cache.Memory.Strings.Delete(KEY);
             Assert.False(Cache.Memory.Strings.Exists(KEY));
         }
 
@@ -31,7 +31,14 @@ namespace BB.Caching.Tests.Caching.Memory
         {
             Cache.Memory.Strings.Set(KEY, SVALUE);
             MemoryValue<string> actual = Cache.Memory.Strings.Get<string>(KEY);
+            Assert.Equal(SVALUE, actual.Value);
+        }
 
+        [Fact]
+        public void StringAsync()
+        {
+            Cache.Memory.Strings.Set(KEY, SVALUE);
+            MemoryValue<string> actual = Cache.Memory.Strings.GetAsync<string>(KEY).Result;
             Assert.Equal(SVALUE, actual.Value);
         }
 
@@ -40,18 +47,25 @@ namespace BB.Caching.Tests.Caching.Memory
         {
             Cache.Memory.Strings.Set(KEY, LVALUE);
             MemoryValue<long> actual = Cache.Memory.Strings.Get<long>(KEY);
-
             Assert.Equal(LVALUE, actual.Value);
         }
 
         [Fact]
-        public void Remove()
+        public void LongAsync()
+        {
+            Cache.Memory.Strings.Set(KEY, LVALUE);
+            MemoryValue<long> actual = Cache.Memory.Strings.GetAsync<long>(KEY).Result;
+            Assert.Equal(LVALUE, actual.Value);
+        }
+
+        [Fact]
+        public void Delete()
         {
             Cache.Memory.Strings.Set(KEY, SVALUE);
 
             Assert.True(Cache.Memory.Strings.Exists(KEY));
 
-            Cache.Memory.Strings.Remove(KEY);
+            Cache.Memory.Strings.Delete(KEY);
 
             Assert.False(Cache.Memory.Strings.Exists(KEY));
         }
@@ -78,7 +92,7 @@ namespace BB.Caching.Tests.Caching.Memory
 
             for (int i = 9; i >= 0; i--)
             {
-                Cache.Memory.Strings.Remove(KEY + i.ToString(CultureInfo.InvariantCulture));
+                Cache.Memory.Strings.Delete(KEY + i.ToString(CultureInfo.InvariantCulture));
                 Assert.Equal(i, Cache.Memory.Strings.GetCount());
             }
         }
@@ -93,6 +107,20 @@ namespace BB.Caching.Tests.Caching.Memory
             Thread.Sleep(110);
 
             actual = Cache.Memory.Strings.Get<string>(KEY);
+            Assert.False(actual.Exists);
+            Assert.Equal(null, actual.Value);
+        }
+
+        [Fact]
+        public void AbsoluteExpirationAsync()
+        {
+            Cache.Memory.Strings.SetAsync(KEY, SVALUE, TimeSpan.FromMilliseconds(100)).Wait();
+            MemoryValue<string> actual = Cache.Memory.Strings.GetAsync<string>(KEY).Result;
+
+            Assert.Equal(SVALUE, actual.Value);
+            Thread.Sleep(110);
+
+            actual = Cache.Memory.Strings.GetAsync<string>(KEY).Result;
             Assert.False(actual.Exists);
             Assert.Equal(null, actual.Value);
         }
@@ -118,6 +146,31 @@ namespace BB.Caching.Tests.Caching.Memory
             Thread.Sleep(2001);
 
             actual = Cache.Memory.Strings.Get<string>(KEY);
+            Assert.False(actual.Exists);
+            Assert.Equal(null, actual.Value);
+        }
+
+        [Fact]
+        public void SlidingExpirationAsync()
+        {
+            Cache.Memory.Strings.SetSlidingAsync(KEY, SVALUE, TimeSpan.FromSeconds(2)).Wait();
+
+            MemoryValue<string> actual = Cache.Memory.Strings.GetAsync<string>(KEY).Result;
+
+            Assert.True(actual.Exists);
+            Assert.Equal(SVALUE, actual.Value);
+
+            Thread.Sleep(1900);
+            actual = Cache.Memory.Strings.GetAsync<string>(KEY).Result;
+            Assert.True(actual.Exists);
+
+            Thread.Sleep(200);
+            actual = Cache.Memory.Strings.GetAsync<string>(KEY).Result;
+            Assert.True(actual.Exists);
+
+            Thread.Sleep(2001);
+
+            actual = Cache.Memory.Strings.GetAsync<string>(KEY).Result;
             Assert.False(actual.Exists);
             Assert.Equal(null, actual.Value);
         }

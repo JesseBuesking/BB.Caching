@@ -16,12 +16,12 @@ namespace BB.Caching.Tests.Redis
         {
             public BloomFilterFixture()
             {
-                Cache.Shared.Keys.Remove(KEY).Wait();
+                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
             }
 
             public void Dispose()
             {
-                Cache.Shared.Keys.Remove(KEY).Wait();
+                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
             }
         }
 
@@ -29,12 +29,12 @@ namespace BB.Caching.Tests.Redis
         public void Add()
         {
             var bloomFilter = new BloomFilter();
-            bloomFilter.Add(KEY, "test");
+            bloomFilter.AddAsync(KEY, "test").Wait();
 
-            var b = bloomFilter.IsSet(KEY, "test").Result;
+            var b = bloomFilter.IsSetAsync(KEY, "test").Result;
             Assert.True(b);
 
-            b = bloomFilter.IsSet(KEY, "again").Result;
+            b = bloomFilter.IsSetAsync(KEY, "again").Result;
             Assert.False(b);
         }
 
@@ -66,7 +66,8 @@ namespace BB.Caching.Tests.Redis
                     s = (char)(z % 26 + 65) + s;
                     z = z / 26;
                 }
-                bloomFilter.Add(key, s);
+// ReSharper disable once UnusedVariable
+                bloomFilter.AddAsync(key, s).Wait();
 
                 ++i;
                 z = i;
@@ -80,7 +81,7 @@ namespace BB.Caching.Tests.Redis
                 values.Add(s);
             }
 
-            int fpCount = values.Sum(value => bloomFilter.IsSet(key, value).Result ? 1 : 0);
+            int fpCount = values.Sum(value => bloomFilter.IsSetAsync(key, value).Result ? 1 : 0);
 
             return ((float)fpCount) / bloomFilter.Options.NumberOfItems;
         }

@@ -25,6 +25,8 @@
 
         private readonly bool _exists;
 
+        public static MemoryValue<TObject> Null = new MemoryValue<TObject>(default(TObject), false); 
+
         /// <summary>
         /// 
         /// </summary>

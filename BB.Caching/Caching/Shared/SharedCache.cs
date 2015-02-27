@@ -83,7 +83,7 @@ namespace BB.Caching
                     else
                     {
 //                        Debug.WriteLine(String.Format("Removed key {0}.", key));
-                        Cache.Memory.Strings.Remove(data);
+                        Cache.Memory.Strings.Delete(data);
                     }
                 });
         }
@@ -103,7 +103,7 @@ namespace BB.Caching
                         else
                         {
 //                            Debug.WriteLine(String.Format("Removed key {0}.", key));
-                            Cache.Memory.Strings.Remove(key);
+                            Cache.Memory.Strings.Delete(key);
                         }
                     }
                 });

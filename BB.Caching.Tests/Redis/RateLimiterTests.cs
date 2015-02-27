@@ -32,12 +32,12 @@ namespace BB.Caching.Tests.Redis
 
         public RateLimiterTests()
         {
-            Cache.Shared.Keys.Remove(KEY).Wait();
+            Cache.Shared.Keys.DeleteAsync(KEY).Wait();
         }
 
         public void Dispose()
         {
-            Cache.Shared.Keys.Remove(KEY).Wait();
+            Cache.Shared.Keys.DeleteAsync(KEY).Wait();
         }
 
         [Fact]
@@ -49,14 +49,14 @@ namespace BB.Caching.Tests.Redis
             for (int i = 0; i < amount; i++)
             {
                 // ReSharper disable RedundantArgumentDefaultValue
-                tasks[i] = RateLimiter.Increment(
+                tasks[i] = RateLimiter.IncrementAsync(
                     KEY, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1), amount, 1);
                 // ReSharper restore RedundantArgumentDefaultValue
             }
 
             Task.WhenAll(tasks);
 
-            long count = Cache.Shared.Hashes.GetAll(KEY).Result
+            long count = Cache.Shared.Hashes.GetAllAsync(KEY).Result
                 .Where(kvp => "L" != kvp.Name)
                 .Select(kvp => long.Parse(Encoding.UTF8.GetString(kvp.Value)))
                 .Sum();
@@ -70,36 +70,36 @@ namespace BB.Caching.Tests.Redis
             TimeSpan span = TimeSpan.FromSeconds(.4);
             TimeSpan bucketSize = TimeSpan.FromSeconds(.1);
 
-            RedisResult result = RateLimiter.Increment(KEY, span, bucketSize, 10, 2).Result;
+            RedisResult result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
             Assert.Equal(2, (long)result);
 
             Thread.Sleep(100);
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 2).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
             Assert.Equal(4, (long)result);
 
             Thread.Sleep(100);
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 2).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
             Assert.Equal(6, (long)result);
 
             Thread.Sleep(100);
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 2).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
             Assert.Equal(8, (long)result);
 
             Thread.Sleep(100);
 // ReSharper disable RedundantArgumentDefaultValue
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 1).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
             Assert.Equal(7, (long)result);
 
             Thread.Sleep(100);
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 1).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
             Assert.Equal(6, (long)result);
 
             Thread.Sleep(100);
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 1).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
             Assert.Equal(5, (long)result);
 
             Thread.Sleep(200);
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 1).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
 // ReSharper restore RedundantArgumentDefaultValue
             Assert.Equal(3, (long)result);
         }
@@ -110,25 +110,25 @@ namespace BB.Caching.Tests.Redis
             TimeSpan span = TimeSpan.FromSeconds(.2);
             TimeSpan bucketSize = TimeSpan.FromSeconds(.05);
 
-            RedisResult result = RateLimiter.Increment(KEY, span, bucketSize, 10, 2).Result;
+            RedisResult result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
             Assert.Equal(2, (long)result);
             Thread.Sleep(100);
 
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 2).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
             Assert.Equal(4, (long)result);
             Thread.Sleep(100);
 
 // ReSharper disable RedundantArgumentDefaultValue
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 1).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
             Assert.Equal(3, (long)result);
             Thread.Sleep(100);
 
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 1).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
 // ReSharper restore RedundantArgumentDefaultValue
             Assert.Equal(2, (long)result);
             Thread.Sleep(100);
 
-            result = RateLimiter.Increment(KEY, span, bucketSize, 10, 2).Result;
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
             Assert.Equal(3, (long)result);
             Thread.Sleep(100);
         }
