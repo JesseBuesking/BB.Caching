@@ -27,6 +27,32 @@ namespace BB.Caching.Tests.Caching.Memory
         }
 
         [Fact]
+        public void GetExpire()
+        {
+            Cache.Memory.Strings.Set(KEY, SVALUE);
+            MemoryValue<string> actual = Cache.Memory.Strings.Get<string>(KEY, TimeSpan.FromSeconds(1));
+            Assert.Equal(SVALUE, actual.Value);
+
+            Thread.Sleep(1200);
+
+            MemoryValue<string> purged = Cache.Memory.Strings.Get<string>(KEY, TimeSpan.FromSeconds(1));
+            Assert.False(purged.Exists);
+        }
+
+        [Fact]
+        public void GetExpireAsync()
+        {
+            Cache.Memory.Strings.SetAsync(KEY, SVALUE).Wait();
+            MemoryValue<string> actual = Cache.Memory.Strings.GetAsync<string>(KEY, TimeSpan.FromSeconds(1)).Result;
+            Assert.Equal(SVALUE, actual.Value);
+
+            Thread.Sleep(1200);
+
+            MemoryValue<string> purged = Cache.Memory.Strings.GetAsync<string>(KEY, TimeSpan.FromSeconds(1)).Result;
+            Assert.False(purged.Exists);
+        }
+
+        [Fact]
         public void SetGet()
         {
             Cache.Memory.Strings.Set(KEY, SVALUE);
@@ -76,6 +102,27 @@ namespace BB.Caching.Tests.Caching.Memory
             Cache.Memory.Strings.Set(KEY, SVALUE);
 
             Assert.True(Cache.Memory.Strings.Exists(KEY));
+        }
+
+        [Fact]
+        public void Expire()
+        {
+            Cache.Memory.Strings.Set(KEY, SVALUE);
+
+            Assert.True(Cache.Memory.Strings.Exists(KEY));
+
+            Cache.Memory.Strings.Expire(KEY, TimeSpan.FromSeconds(1));
+
+            MemoryValue<string> result = Cache.Memory.Strings.Get<string>(KEY);
+
+            Assert.Equal(SVALUE, result.Value);
+
+            Thread.Sleep(1200);
+
+            MemoryValue<string> result2 = Cache.Memory.Strings.Get<string>(KEY);
+
+            Assert.False(result2.Exists);
+            Assert.Equal(null, result2.Value);
         }
 
         [Fact]

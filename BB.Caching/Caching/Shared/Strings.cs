@@ -292,6 +292,58 @@ namespace BB.Caching
                 }
 
                 /// <summary>
+                /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
+                /// the value stored at key is not a string, because GET only handles string values.
+                /// </summary>
+                /// 
+                /// <returns>
+                /// the value of key, or nil when key does not exist.
+                /// </returns>
+                /// 
+                /// <remarks>
+                /// http://redis.io/commands/get
+                /// </remarks>
+                public static RedisValue Get(RedisKey key, TimeSpan expire)
+                {
+                    var tran = SharedCache.Instance.GetReadConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .CreateTransaction();
+
+                    Task<RedisValue> result = tran.StringGetAsync(key);
+                    tran.KeyExpireAsync(key, expire);
+
+                    tran.Execute();
+                    return result.Result;
+                }
+
+                // TODO why is this slower than calling each separately?
+                /// <summary>
+                /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
+                /// the value stored at key is not a string, because GET only handles string values.
+                /// </summary>
+                /// 
+                /// <returns>
+                /// the value of key, or nil when key does not exist.
+                /// </returns>
+                /// 
+                /// <remarks>
+                /// http://redis.io/commands/get
+                /// </remarks>
+                public static async Task<RedisValue> GetAsync(RedisKey key, TimeSpan expire)
+                {
+                    var tran = SharedCache.Instance.GetReadConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .CreateTransaction();
+
+                    Task<RedisValue> result = tran.StringGetAsync(key);
+#pragma warning disable 4014
+                    tran.KeyExpireAsync(key, expire);
+                    tran.ExecuteAsync();
+#pragma warning restore 4014
+                    return await result;
+                }
+
+                /// <summary>
                 /// Returns the substring of the string value stored at key, determined by the offsets start and end (both are
                 /// inclusive).
                 /// </summary>
@@ -532,17 +584,27 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/getset
                 /// </remarks>
-                public static RedisValue GetSet(RedisKey key, byte[] value)
+                public static RedisValue GetSet(RedisKey key, RedisValue value, TimeSpan expire)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
-                    RedisValue result = RedisValue.Null;
+                    Task<RedisValue> result = null;
                     foreach (var connection in connections)
                     {
-                        result = connection
+                        var tran = connection
                             .GetDatabase(SharedCache.Instance.Db)
-                            .StringGetSet(key, value);
+                            .CreateTransaction();
+
+                        result = tran.StringGetSetAsync(key, value);
+                        tran.KeyExpireAsync(key, expire);
+
+                        tran.Execute();
                     }
-                    return result;
+
+                    if (null == result)
+                    {
+                        return RedisValue.Null;
+                    }
+                    return result.Result;
                 }
 
                 /// <summary>
@@ -557,20 +619,29 @@ namespace BB.Caching
                 /// <remarks>
                 /// http://redis.io/commands/getset
                 /// </remarks>
-                public static Task<RedisValue> GetSetAsync(RedisKey key, byte[] value)
+                public static async Task<RedisValue> GetSetAsync(RedisKey key, RedisValue value, TimeSpan expire)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<RedisValue> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        var tran = connection
                             .GetDatabase(SharedCache.Instance.Db)
-                            .StringGetSetAsync(key, value);
+                            .CreateTransaction();
 
-                        if (null == result)
-                            result = task;
+                        result = tran.StringGetSetAsync(key, value);
+
+#pragma warning disable 4014
+                        tran.KeyExpireAsync(key, expire);
+                        tran.ExecuteAsync();
+#pragma warning restore 4014
                     }
-                    return result;
+
+                    if (null == result)
+                    {
+                        return RedisValue.Null;
+                    }
+                    return await result;
                 }
 
                 /// <summary>

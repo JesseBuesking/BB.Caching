@@ -200,6 +200,44 @@ namespace BB.Caching.Tests.Caching.Shared
         }
 
         [Fact]
+        public void GetExpire()
+        {
+            long value = long.Parse(this.Value);
+            Cache.Shared.Strings.Set(this.Key, value);
+
+            var result = Cache.Shared.Strings.Get(this.Key, TimeSpan.FromSeconds(.2));
+            Assert.Equal(value, result);
+
+            TimeSpan? ttl = Cache.Shared.Keys.TimeToLive(this.Key);
+            Assert.NotNull(ttl);
+            Assert.True(ttl > TimeSpan.FromSeconds(.1));
+
+            Thread.Sleep(210);
+
+            bool exists = Cache.Shared.Keys.Exists(this.Key);
+            Assert.False(exists);
+        }
+
+        [Fact]
+        public void GetExpireAsync()
+        {
+            long value = long.Parse(this.Value);
+            Cache.Shared.Strings.SetAsync(this.Key, value).Wait();
+
+            var result = Cache.Shared.Strings.GetAsync(this.Key, TimeSpan.FromSeconds(.2)).Result;
+            Assert.Equal(value, result);
+
+            TimeSpan? ttl = Cache.Shared.Keys.TimeToLiveAsync(this.Key).Result;
+            Assert.NotNull(ttl);
+            Assert.True(ttl > TimeSpan.FromSeconds(.1));
+
+            Thread.Sleep(210);
+
+            bool exists = Cache.Shared.Keys.ExistsAsync(this.Key).Result;
+            Assert.False(exists);
+        }
+
+        [Fact]
         public void GetByteArraySubset()
         {
             const string value = "hello";
@@ -359,6 +397,52 @@ namespace BB.Caching.Tests.Caching.Shared
             string result = Cache.Shared.Strings.GetSetAsync(this.Key, second).Result;
             Assert.Equal(first, result);
             Assert.Equal(second, (string)Cache.Shared.Strings.GetAsync(this.Key).Result);
+        }
+
+        [Fact]
+        public void GetSetExpire()
+        {
+            long value = long.Parse(this.Value);
+            const long value2 = 234;
+            Cache.Shared.Strings.Set(this.Key, value);
+
+            var result = Cache.Shared.Strings.GetSet(this.Key, value2, TimeSpan.FromSeconds(.2));
+            Assert.Equal(value, result);
+
+            TimeSpan? ttl = Cache.Shared.Keys.TimeToLive(this.Key);
+            Assert.NotNull(ttl);
+            Assert.True(ttl > TimeSpan.FromSeconds(.1));
+
+            var result2 = Cache.Shared.Strings.Get(this.Key);
+            Assert.Equal(value2, result2);
+
+            Thread.Sleep(210);
+
+            bool exists = Cache.Shared.Keys.Exists(this.Key);
+            Assert.False(exists);
+        }
+
+        [Fact]
+        public void GetSetExpireAsync()
+        {
+            long value = long.Parse(this.Value);
+            const long value2 = 234;
+            Cache.Shared.Strings.SetAsync(this.Key, value).Wait();
+
+            var result = Cache.Shared.Strings.GetSetAsync(this.Key, value2, TimeSpan.FromSeconds(.2)).Result;
+            Assert.Equal(value, result);
+
+            TimeSpan? ttl = Cache.Shared.Keys.TimeToLiveAsync(this.Key).Result;
+            Assert.NotNull(ttl);
+            Assert.True(ttl > TimeSpan.FromSeconds(.1));
+
+            var result2 = Cache.Shared.Strings.GetAsync(this.Key).Result;
+            Assert.Equal(value2, result2);
+
+            Thread.Sleep(210);
+
+            bool exists = Cache.Shared.Keys.ExistsAsync(this.Key).Result;
+            Assert.False(exists);
         }
 
         [Fact]

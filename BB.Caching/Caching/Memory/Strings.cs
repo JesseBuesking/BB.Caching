@@ -153,6 +153,55 @@ namespace BB.Caching
                 }
 
                 /// <summary>
+                /// Get the <see cref="TObject"/> stored at <paramref name="key"/>.
+                /// </summary>
+                /// <typeparam name="TObject"></typeparam>
+                /// <param name="key"></param>
+                /// <param name="expire"></param>
+                /// <returns></returns>
+                public static MemoryValue<TObject> Get<TObject>(string key, TimeSpan expire)
+                {
+                    byte[] b = Cache.Memory.Core.Instance.CacheStore.Get(key) as byte[];
+
+                    if (null == b)
+                    {
+                        return MemoryValue<TObject>.Null;
+                    }
+
+                    Cache.Memory.Core.Instance.CacheStore.Set(key, b, new CacheItemPolicy
+                    {
+                        AbsoluteExpiration = DateTime.UtcNow.Add(expire)
+                    });
+
+                    TObject value = Compress.Compression.Decompress<TObject>(b);
+                    return new MemoryValue<TObject>(value, true);
+                }
+
+                /// <summary>
+                /// Get the <see cref="TObject"/> stored at <paramref name="key"/> asynchronously.
+                /// </summary>
+                /// <typeparam name="TObject"></typeparam>
+                /// <param name="key"></param>
+                /// <param name="expire"></param>
+                /// <returns></returns>
+                public static async Task<MemoryValue<TObject>> GetAsync<TObject>(string key, TimeSpan expire)
+                {
+                    byte[] b = Cache.Memory.Core.Instance.CacheStore.Get(key) as byte[];
+                    if (null == b)
+                    {
+                        return MemoryValue<TObject>.Null;
+                    }
+
+                    Cache.Memory.Core.Instance.CacheStore.Set(key, b, new CacheItemPolicy
+                    {
+                        AbsoluteExpiration = DateTime.UtcNow.Add(expire)
+                    });
+
+                    TObject value = await Compress.Compression.DecompressAsync<TObject>(b);
+                    return new MemoryValue<TObject>(value, true);
+                }
+
+                /// <summary>
                 /// Deletes any data stored at <paramref name="key"/>, if the key exists.
                 /// </summary>
                 /// <param name="key"></param>
@@ -169,6 +218,18 @@ namespace BB.Caching
                 public static bool Exists(string key)
                 {
                     return Cache.Memory.Core.Instance.CacheStore.Contains(key);
+                }
+
+                public static void Expire(string key, TimeSpan expire)
+                {
+                    byte[] b = Cache.Memory.Core.Instance.CacheStore.Get(key) as byte[];
+                    if (b != null)
+                    {
+                        Cache.Memory.Core.Instance.CacheStore.Set(key, b, new CacheItemPolicy
+                        {
+                            AbsoluteExpiration = DateTime.UtcNow.Add(expire)
+                        });
+                    }
                 }
 
                 /// <summary>

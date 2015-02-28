@@ -187,6 +187,8 @@ namespace BB.Caching.Tests
 
                     group.Plan("SetAsync", Shared.Strings.SetAsync, ITERATIONS);
                     group.Plan("GetAsync", Shared.Strings.GetAsync, ITERATIONS);
+                    group.Plan("GetExpireAsync", Shared.Strings.GetExpireAsync, ITERATIONS);
+                    group.Plan("GetExpireSlowAsync", Shared.Strings.GetExpireSlowAsync, ITERATIONS);
 
                     return TestToString(group);
                 }
@@ -201,6 +203,19 @@ namespace BB.Caching.Tests
                 {
 // ReSharper disable once UnusedVariable
                     Task<RedisValue> task = Cache.Shared.Strings.GetAsync(_key);
+                }
+
+                private static void GetExpireAsync()
+                {
+// ReSharper disable once UnusedVariable
+                    Task<RedisValue> task = Cache.Shared.Strings.GetAsync(_key, TimeSpan.FromSeconds(2));
+                }
+
+                private static void GetExpireSlowAsync()
+                {
+// ReSharper disable once UnusedVariable
+                    Task<RedisValue> task1 = Cache.Shared.Strings.GetAsync(_key);
+                    Task<bool> task2 = Cache.Shared.Keys.ExpireAsync(_key, TimeSpan.FromSeconds(2));
                 }
             }
 
