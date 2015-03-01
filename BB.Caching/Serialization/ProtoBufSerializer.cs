@@ -1,10 +1,14 @@
-﻿using System.IO;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using ProtoBuf;
-
-namespace BB.Caching.Serialization
+﻿namespace BB.Caching.Serialization
 {
+    using System.IO;
+    using System.Runtime.CompilerServices;
+    using System.Threading.Tasks;
+
+    using ProtoBuf;
+
+    /// <summary>
+    /// Helper methods when using the protobuf serializer.
+    /// </summary>
     public static class ProtoBufSerializer
     {
         /// <summary>
@@ -13,9 +17,15 @@ namespace BB.Caching.Serialization
         /// Uses protobuf to serialize the object supplied.
         /// </para>
         /// </summary>
-        /// <typeparam name="TType"></typeparam>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        /// <typeparam name="TType">
+        /// The type of the value being serialized.
+        /// </typeparam>
+        /// <param name="value">
+        /// The value.
+        /// </param>
+        /// <returns>
+        /// A byte array containing the serialized results.
+        /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte[] Serialize<TType>(TType value)
         {
@@ -32,9 +42,15 @@ namespace BB.Caching.Serialization
         /// Uses protobuf to serialize the object supplied.
         /// </para>
         /// </summary>
-        /// <typeparam name="TType"></typeparam>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        /// <typeparam name="TType">
+        /// The type of the value being serialized.
+        /// </typeparam>
+        /// <param name="value">
+        /// The value.
+        /// </param>
+        /// <returns>
+        /// A byte array containing the serialized results.
+        /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async Task<byte[]> SerializeAsync<TType>(TType value)
         {
@@ -54,9 +70,17 @@ namespace BB.Caching.Serialization
         /// Uses protobuf to deserialize the byte array supplied.
         /// </para>
         /// </summary>
-        /// <typeparam name="TType"></typeparam>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        /// <typeparam name="TType">
+        /// The type of the object to deserialize into.
+        /// </typeparam>
+        /// <param name="value">
+        /// A byte array of serialized results to be deserialized.
+        /// </param>
+        /// <returns>
+        /// An instance of type <paramref>
+        ///         <name>TType</name>
+        ///     </paramref>.
+        /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TType Deserialize<TType>(byte[] value)
         {
@@ -68,14 +92,22 @@ namespace BB.Caching.Serialization
         }
 
         /// <summary>
-        /// Deserializes the object from the byte array asynchronously.
+        /// Deserializes the object from the byte array.
         /// <para>
         /// Uses protobuf to deserialize the byte array supplied.
         /// </para>
         /// </summary>
-        /// <typeparam name="TType"></typeparam>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        /// <typeparam name="TType">
+        /// The type of the object to deserialize into.
+        /// </typeparam>
+        /// <param name="value">
+        /// A byte array of serialized results to be deserialized.
+        /// </param>
+        /// <returns>
+        /// An instance of type <paramref>
+        ///         <name>TType</name>
+        ///     </paramref>.
+        /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async Task<TType> DeserializeAsync<TType>(byte[] value)
         {
