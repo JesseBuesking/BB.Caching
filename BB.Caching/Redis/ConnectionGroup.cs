@@ -1,8 +1,9 @@
-using System.Collections.Generic;
-using StackExchange.Redis;
-
 namespace BB.Caching.Redis
 {
+    using System.Collections.Generic;
+
+    using StackExchange.Redis;
+
     /// <summary>
     /// A group of connections for Redis.
     /// <remarks>
@@ -55,10 +56,14 @@ namespace BB.Caching.Redis
         private int _readPoolIndex = -1;
 
         /// <summary>
-        /// Constructor.
+        /// Initializes a new instance of the <see cref="ConnectionGroup"/> class. 
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="defaultWriteConnection"></param>
+        /// <param name="name">
+        /// The name.
+        /// </param>
+        /// <param name="defaultWriteConnection">
+        /// The default write connection.
+        /// </param>
         public ConnectionGroup(string name, ConnectionMultiplexer defaultWriteConnection)
         {
             this.Name = name;
@@ -68,15 +73,19 @@ namespace BB.Caching.Redis
         /// <summary>
         /// Adds a write connection.
         /// </summary>
-        /// <param name="connection"></param>
-// ReSharper disable MemberCanBePrivate.Global
+        /// <param name="connection">
+        /// The connection.
+        /// </param>
         public void AddWriteConnection(ConnectionMultiplexer connection)
-// ReSharper restore MemberCanBePrivate.Global
         {
             if (null == this._writeConnections)
-                this._writeConnections = new List<ConnectionMultiplexer> {connection};
+            {
+                this._writeConnections = new List<ConnectionMultiplexer> { connection };
+            }
             else
+            {
                 this._writeConnections.Add(connection);
+            }
 
             this.UpdateReadPool();
         }
@@ -84,65 +93,44 @@ namespace BB.Caching.Redis
         /// <summary>
         /// Adds a read connection.
         /// </summary>
-        /// <param name="connection"></param>
-// ReSharper disable UnusedMember.Global
+        /// <param name="connection">
+        /// The connection.
+        /// </param>
         public void AddReadConnection(ConnectionMultiplexer connection)
-// ReSharper restore UnusedMember.Global
         {
             if (null == this._readConnections)
-                this._readConnections = new List<ConnectionMultiplexer> {connection};
+            {
+                this._readConnections = new List<ConnectionMultiplexer> { connection };
+            }
             else
+            {
                 this._readConnections.Add(connection);
+            }
 
             this.UpdateReadPool();
         }
 
         /// <summary>
-        /// Updates the read pool with connections.
-        /// </summary>
-        private void UpdateReadPool()
-        {
-            int writeCount = null == this._writeConnections ? 0 : this._writeConnections.Count;
-            int readCount = null == this._readConnections ? 0 : this._readConnections.Count;
-
-            this._readPool = new List<ConnectionMultiplexer>(writeCount*WRITE_WEIGHT + readCount*READ_WEIGHT);
-
-            int readIndex = 0;
-            int writeIndex = 0;
-
-            while (readIndex < readCount || writeIndex < writeCount)
-            {
-                if (null != this._readConnections)
-                {
-                    for (int i = 0; i < READ_WEIGHT; i++)
-                        this._readPool.Add(this._readConnections[readIndex]);
-                }
-
-                if (null != this._writeConnections)
-                {
-                    for (int i = 0; i < WRITE_WEIGHT; i++)
-                        this._readPool.Add(this._writeConnections[writeIndex]);
-                }
-
-                ++readIndex;
-                ++writeIndex;
-            }
-        }
-
-        /// <summary>
         /// Retrieves a connection from the read pool on a round-robin basis.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// The read <see cref="ConnectionMultiplexer"/>.
+        /// </returns>
         public ConnectionMultiplexer GetReadConnection()
         {
-            this._readPoolIndex = (this._readPoolIndex + 1)%this._readPool.Count;
+            this._readPoolIndex = (this._readPoolIndex + 1) % this._readPool.Count;
             return this._readPool[this._readPoolIndex];
         }
 
         /// <summary>
         /// Retrieves the available write connections.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// The array of write <see>
+        ///         <cref>ConnectionMultiplexer[]</cref>
+        ///     </see>
+        ///     .
+        /// </returns>
         public ConnectionMultiplexer[] GetWriteConnections()
         {
             return this._writeConnections.ToArray();
@@ -158,6 +146,42 @@ namespace BB.Caching.Redis
         public override string ToString()
         {
             return this.Name;
+        }
+
+        /// <summary>
+        /// Updates the read pool with connections.
+        /// </summary>
+        private void UpdateReadPool()
+        {
+            int writeCount = null == this._writeConnections ? 0 : this._writeConnections.Count;
+            int readCount = null == this._readConnections ? 0 : this._readConnections.Count;
+
+            this._readPool = new List<ConnectionMultiplexer>((writeCount * WRITE_WEIGHT) + (readCount * READ_WEIGHT));
+
+            int readIndex = 0;
+            int writeIndex = 0;
+
+            while (readIndex < readCount || writeIndex < writeCount)
+            {
+                if (null != this._readConnections)
+                {
+                    for (int i = 0; i < READ_WEIGHT; i++)
+                    {
+                        this._readPool.Add(this._readConnections[readIndex]);
+                    }
+                }
+
+                if (null != this._writeConnections)
+                {
+                    for (int i = 0; i < WRITE_WEIGHT; i++)
+                    {
+                        this._readPool.Add(this._writeConnections[writeIndex]);
+                    }
+                }
+
+                ++readIndex;
+                ++writeIndex;
+            }
         }
     }
 }

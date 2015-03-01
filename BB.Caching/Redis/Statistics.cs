@@ -1,12 +1,188 @@
-﻿using System;
-using System.Threading.Tasks;
-using BB.Caching.Redis.Lua;
-using StackExchange.Redis;
-
-namespace BB.Caching.Redis
+﻿namespace BB.Caching.Redis
 {
+    using System;
+    using System.Threading.Tasks;
+
+    using BB.Caching.Redis.Lua;
+
+    using StackExchange.Redis;
+
+    /// <summary>
+    /// Statistics class to track basic statistics across multiple servers using redis.
+    /// </summary>
     public static class Statistics
     {
+        /// <summary>
+        /// SHA hash for the SetStatistic lua script.
+        /// </summary>
+        private static byte[] SetStatisticHash { get; set; }
+
+        /// <summary>
+        /// SHA hash for the GetStatistic lua script.
+        /// </summary>
+        private static byte[] GetStatisticHash { get; set; }
+
+        /// <summary>
+        /// A class to calculate various statistics and give access to some statistical information.
+        /// </summary>
+        public class Stats
+        {
+            /// <summary>
+            /// The sum of values.
+            /// </summary>
+            private readonly double _sumOfValues;
+
+            /// <summary>
+            /// The sum of values squared.
+            /// </summary>
+            private readonly double _sumOfValuesSquared;
+
+            /// <summary>
+            /// Gets the number of values.
+            /// </summary>
+            public long NumberOfValues
+            {
+                get;
+                private set;
+            }
+
+            /// <summary>
+            /// Gets the minimum value.
+            /// </summary>
+            public double MinimumValue
+            {
+                get;
+                private set;
+            }
+
+            /// <summary>
+            /// Gets the maximum value.
+            /// </summary>
+            public double MaximumValue
+            {
+                get;
+                private set;
+            }
+
+            /// <summary>
+            /// Gets the mean.
+            /// </summary>
+            public double Mean
+            {
+                get
+                {
+                    if (0 >= this.NumberOfValues)
+                    {
+                        return 0.0f;
+                    }
+
+                    return this._sumOfValues / this.NumberOfValues;
+                }
+            }
+
+            /// <summary>
+            /// Gets the population variance.
+            /// </summary>
+            public double PopulationVariance
+            {
+                get
+                {
+                    if (1 >= this.NumberOfValues)
+                    {
+                        return 0.0;
+                    }
+
+                    return (this._sumOfValuesSquared - (this._sumOfValues * this.Mean)) / (this.NumberOfValues - 1.0);
+                }
+            }
+
+            /// <summary>
+            /// Gets the population standard deviation.
+            /// </summary>
+            public double PopulationStandardDeviation
+            {
+                get { return Math.Sqrt(this.PopulationVariance); }
+            }
+
+            /// <summary>
+            /// Gets the variance.
+            /// </summary>
+            public double Variance
+            {
+                get
+                {
+                    if (1 >= this.NumberOfValues)
+                    {
+                        return 0.0;
+                    }
+
+                    return (this._sumOfValuesSquared - (this._sumOfValues * this.Mean)) / this.NumberOfValues;
+                }
+            }
+
+            /// <summary>
+            /// Gets the standard deviation.
+            /// </summary>
+            public double StandardDeviation
+            {
+                get { return Math.Sqrt(this.Variance); }
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Stats"/> class.
+            /// </summary>
+            /// <param name="numberOfValues">
+            /// The number of values.
+            /// </param>
+            /// <param name="sumOfValues">
+            /// The sum of values.
+            /// </param>
+            /// <param name="sumOfValuesSquared">
+            /// The sum of values squared.
+            /// </param>
+            /// <param name="minimum">
+            /// The minimum.
+            /// </param>
+            /// <param name="maximum">
+            /// The maximum.
+            /// </param>
+            public Stats(
+                long numberOfValues,
+                double sumOfValues,
+                double sumOfValuesSquared,
+                double minimum,
+                double maximum)
+            {
+                this.NumberOfValues = numberOfValues;
+                this._sumOfValues = sumOfValues;
+                this._sumOfValuesSquared = sumOfValuesSquared;
+                this.MinimumValue = minimum;
+                this.MaximumValue = maximum;
+            }
+
+            /// <summary>
+            /// The to string.
+            /// </summary>
+            /// <returns>
+            /// The <see cref="string"/>.
+            /// </returns>
+            public override string ToString()
+            {
+                return string.Format(
+                    "MaximumValue: {0}, Mean: {1}, MinimumValue: {2}, NumberOfValues: {3}, PopulationStandardDeviation: {4}, PopulationVariance: {5}, StandardDeviation: {6}, Variance: {7}, SumOfValues: {8}, SumOfValuesSquared: {9}",
+                    this.MaximumValue,
+                    this.Mean,
+                    this.MinimumValue,
+                    this.NumberOfValues,
+                    this.PopulationStandardDeviation,
+                    this.PopulationVariance,
+                    this.StandardDeviation,
+                    this.Variance,
+                    this._sumOfValues,
+                    this._sumOfValuesSquared);
+            }
+        }
+        
         /// <summary>
         /// Loads the underlying Lua script(s) onto all necessary servers.
         /// </summary>
@@ -20,116 +196,21 @@ namespace BB.Caching.Redis
             {
                 foreach (var endpoint in connection.GetEndPoints())
                 {
-                    Statistics._getStatisticHash = connection.GetServer(endpoint).ScriptLoad(getScript);
-                    Statistics._setStatisticHash = connection.GetServer(endpoint).ScriptLoad(setScript);
+                    Statistics.GetStatisticHash = connection.GetServer(endpoint).ScriptLoad(getScript);
+                    Statistics.SetStatisticHash = connection.GetServer(endpoint).ScriptLoad(setScript);
                 }
             }
         }
 
-        private static byte[] SetStatisticHash
-        {
-            get { return _setStatisticHash; }
-        }
-
-        private static byte[] _setStatisticHash;
-
-        private static byte[] GetStatisticHash
-        {
-            get { return _getStatisticHash; }
-        }
-
-        private static byte[] _getStatisticHash;
-
-        public class Stats
-        {
-            public long NumberOfValues
-            {
-                get;
-                private set;
-            }
-
-            private readonly double _sumOfValues;
-
-            private readonly double _sumOfValuesSquared;
-
-            public double MinimumValue
-            {
-                get;
-                private set;
-            }
-
-            public double MaximumValue
-            {
-                get;
-                private set;
-            }
-
-            public double Mean
-            {
-                get
-                {
-                    if (0 >= this.NumberOfValues)
-                        return 0.0f;
-                    return this._sumOfValues / this.NumberOfValues;
-                }
-            }
-
-            public double PopulationVariance
-            {
-                get
-                {
-                    if (1 >= this.NumberOfValues)
-                        return 0.0;
-                    return (this._sumOfValuesSquared - (this._sumOfValues * this.Mean)) / (this.NumberOfValues - 1.0);
-                }
-            }
-
-            public double PopulationStandardDeviation
-            {
-                get { return Math.Sqrt(this.PopulationVariance); }
-            }
-
-            // ReSharper disable MemberCanBePrivate.Global
-            public double Variance
-            // ReSharper restore MemberCanBePrivate.Global
-            {
-                get
-                {
-                    if (1 >= this.NumberOfValues)
-                        return 0.0;
-                    return (this._sumOfValuesSquared - (this._sumOfValues * this.Mean)) / (this.NumberOfValues);
-                }
-            }
-
-            // ReSharper disable MemberCanBePrivate.Global
-            public double StandardDeviation
-            // ReSharper restore MemberCanBePrivate.Global
-            {
-                get { return Math.Sqrt(this.Variance); }
-            }
-
-            public Stats(long numberOfValues, double sumOfValues, double sumOfValuesSquared, double minimum,
-                double maximum)
-            {
-                this.NumberOfValues = numberOfValues;
-                this._sumOfValues = sumOfValues;
-                this._sumOfValuesSquared = sumOfValuesSquared;
-                this.MinimumValue = minimum;
-                this.MaximumValue = maximum;
-            }
-
-            public override string ToString()
-            {
-                return
-                    string.Format(
-                        "MaximumValue: {0}, Mean: {1}, MinimumValue: {2}, NumberOfValues: {3}, PopulationStandardDeviation: {4}, PopulationVariance: {5}, StandardDeviation: {6}, Variance: {7}, SumOfValues: {8}, SumOfValuesSquared: {9}",
-                        this.MaximumValue, this.Mean, this.MinimumValue, this.NumberOfValues,
-                        this.PopulationStandardDeviation, this.PopulationVariance, this.StandardDeviation,
-                        this.Variance,
-                        this._sumOfValues, this._sumOfValuesSquared);
-            }
-        }
-
+        /// <summary>
+        /// Sets the value at the key for a statistic we're tracking.
+        /// </summary>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <param name="value">
+        /// The value.
+        /// </param>
         public static void SetStatistic(string key, double value)
         {
             RedisKey[] keyArgs = { key };
@@ -143,6 +224,18 @@ namespace BB.Caching.Redis
             }
         }
 
+        /// <summary>
+        /// Sets the value at the key for a statistic we're tracking.
+        /// </summary>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <param name="value">
+        /// The value.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
         public static async Task SetStatisticAsync(string key, double value)
         {
             RedisKey[] keyArgs = { key };
@@ -156,6 +249,15 @@ namespace BB.Caching.Redis
             }
         }
 
+        /// <summary>
+        /// Gets the statistics being tracked at <paramref name="key"/>.
+        /// </summary>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Stats"/>.
+        /// </returns>
         public static Stats GetStatistics(string key)
         {
             RedisKey[] keyArgs = { key };
@@ -174,7 +276,7 @@ namespace BB.Caching.Redis
                 return null;
             }
 
-            RedisResult[] res = (RedisResult[]) result;
+            RedisResult[] res = (RedisResult[])result;
             long numberOfValues = (long)res[0];
             double sumOfValues = (double)res[1];
             double sumOfValuesSquared = (double)res[2];
@@ -184,6 +286,15 @@ namespace BB.Caching.Redis
             return new Stats(numberOfValues, sumOfValues, sumOfValuesSquared, minimum, maximum);
         }
 
+        /// <summary>
+        /// Gets the statistics being tracked at <paramref name="key"/>.
+        /// </summary>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
         public static async Task<Stats> GetStatisticsAsync(string key)
         {
             RedisKey[] keyArgs = { key };
@@ -197,13 +308,17 @@ namespace BB.Caching.Redis
                     .ScriptEvaluateAsync(Statistics.GetStatisticHash, keyArgs, valueArgs);
 
                 if (null == result)
+                {
                     result = task;
+                }
             }
 
             if (null == result)
+            {
                 return null;
+            }
 
-            RedisResult[] res = (RedisResult[]) result;
+            RedisResult[] res = (RedisResult[])result;
             long numberOfValues = (long)res[0];
             double sumOfValues = (double)res[1];
             double sumOfValuesSquared = (double)res[2];
