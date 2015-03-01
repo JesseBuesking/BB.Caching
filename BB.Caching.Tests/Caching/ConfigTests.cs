@@ -86,7 +86,7 @@ namespace BB.Caching.Tests.Caching
 
             var value = Cache.Config.Get<string>(KEY);
             Assert.Equal(VALUE, value);
-            Cache.Config.Remove(KEY);
+            Cache.Config.Delete(KEY);
 
             value = Cache.Config.Get<string>(KEY);
             Assert.Equal(null, value);
@@ -105,7 +105,7 @@ namespace BB.Caching.Tests.Caching
             Assert.Equal(this._value.Two, configDummy.Two);
             Assert.Equal(VALUE, value2);
 
-            Cache.Config.RemoveAsync(KEY2, false).Wait();
+            Cache.Config.DeleteAsync(KEY2, false).Wait();
             value2 = Cache.Config.GetAsync<string>(KEY2).Result;
             Assert.Equal(null, value2);
         }
@@ -123,7 +123,7 @@ namespace BB.Caching.Tests.Caching
             Assert.Equal(this._value.Two, configDummy.Two);
             Assert.Equal(VALUE, value2);
 
-            Cache.Config.Remove(KEY2, false);
+            Cache.Config.Delete(KEY2, false);
             value2 = Cache.Config.Get<string>(KEY2);
             Assert.Equal(null, value2);
         }
@@ -141,13 +141,13 @@ namespace BB.Caching.Tests.Caching
             Assert.Equal(this._value.Two, configDummy.Two);
             Assert.Equal(VALUE, value2);
 
-            Cache.Config.RemoveAsync(KEY2, false).Wait();
+            Cache.Config.DeleteAsync(KEY2, false).Wait();
             value2 = Cache.Config.GetAsync<string>(KEY2).Result;
             Assert.Equal(null, value2);
         }
 
         [Fact]
-        public void Remove()
+        public void Delete()
         {
             Cache.Config.Set(KEY, this._value, false);
             Cache.Config.Set(KEY2, VALUE, false);
@@ -159,13 +159,13 @@ namespace BB.Caching.Tests.Caching
             Assert.Equal(this._value.Two, configDummy.Two);
             Assert.Equal(VALUE, value2);
 
-            Cache.Config.Remove(KEY2, false);
+            Cache.Config.Delete(KEY2, false);
             value2 = Cache.Config.Get<string>(KEY2);
             Assert.Equal(null, value2);
         }
 
         [Fact]
-        public void RemoveAsync()
+        public void DeleteAsync()
         {
             Cache.Config.SetAsync(KEY, this._value, false).Wait();
             Cache.Config.SetAsync(KEY2, VALUE, false).Wait();
@@ -177,7 +177,7 @@ namespace BB.Caching.Tests.Caching
             Assert.Equal(this._value.Two, configDummy.Two);
             Assert.Equal(VALUE, value2);
 
-            Cache.Config.RemoveAsync(KEY2, false).Wait();
+            Cache.Config.DeleteAsync(KEY2, false).Wait();
             value2 = Cache.Config.GetAsync<string>(KEY2).Result;
             Assert.Equal(null, value2);
         }

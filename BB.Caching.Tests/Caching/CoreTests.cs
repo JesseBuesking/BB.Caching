@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Remoting.Channels;
 using System.Threading;
 using BB.Caching.Caching;
 using BB.Caching.Redis;
@@ -6,11 +7,13 @@ using Xunit;
 
 namespace BB.Caching.Tests.Caching
 {
-    public class CoreTests : IUseFixture<DefaultTestFixture>, IDisposable
+    public class CoreTests : IUseFixture<DefaultTestFixture>, IUseFixture<CoreTests.CoreTestsFixture>, IDisposable
     {
         private const string KEY = "CoreTests.Key";
 
         private const string VALUE = "CoreTests.Value";
+
+        private const string VALUE2 = "CoreTests.Value2";
 
         public class CoreTestsFixture : IDisposable
         {
@@ -21,7 +24,8 @@ namespace BB.Caching.Tests.Caching
                     Cache.Prepare();
                 }
                 catch (PubSub.ChannelAlreadySubscribedException)
-                { }
+                {
+                }
 
                 Cache.Memory.Strings.Delete(KEY);
                 Cache.Shared.Keys.Delete(KEY);
@@ -44,6 +48,108 @@ namespace BB.Caching.Tests.Caching
         {
             Cache.Memory.Strings.Delete(KEY);
             Cache.Shared.Keys.Delete(KEY);
+        }
+
+        [Fact]
+        public void DeleteMemory()
+        {
+            Assert.False(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.False(Cache.Exists(KEY, Cache.Store.Redis));
+
+            Cache.Set(KEY, VALUE, Cache.Store.Memory);
+
+            Assert.True(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.False(Cache.Exists(KEY, Cache.Store.Redis));
+
+            Cache.Delete(KEY, Cache.Store.Memory);
+
+            Assert.False(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.False(Cache.Exists(KEY, Cache.Store.Redis));
+        }
+
+        [Fact]
+        public void DeleteRedis()
+        {
+            Assert.False(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.False(Cache.Exists(KEY, Cache.Store.Redis));
+
+            Cache.Set(KEY, VALUE, Cache.Store.Redis);
+
+            Assert.False(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.True(Cache.Exists(KEY, Cache.Store.Redis));
+
+            Cache.Delete(KEY, Cache.Store.Redis);
+
+            Assert.False(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.False(Cache.Exists(KEY, Cache.Store.Redis));
+        }
+
+        [Fact]
+        public void DeleteMemoryAndRedis()
+        {
+            Assert.False(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.False(Cache.Exists(KEY, Cache.Store.Redis));
+
+            Cache.Set(KEY, VALUE, Cache.Store.MemoryAndRedis);
+
+            Assert.True(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.True(Cache.Exists(KEY, Cache.Store.Redis));
+
+            Cache.Delete(KEY, Cache.Store.MemoryAndRedis);
+
+            Assert.False(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.False(Cache.Exists(KEY, Cache.Store.Redis));
+        }
+
+        [Fact]
+        public void DeleteMemoryAsync()
+        {
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+
+            Cache.SetAsync(KEY, VALUE, Cache.Store.Memory).Wait();
+
+            Assert.True(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+
+            Cache.DeleteAsync(KEY, Cache.Store.Memory).Wait();
+
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+        }
+
+        [Fact]
+        public void DeleteRedisAsync()
+        {
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+
+            Cache.SetAsync(KEY, VALUE, Cache.Store.Redis).Wait();
+
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.True(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+
+            Cache.DeleteAsync(KEY, Cache.Store.Redis).Wait();
+
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+        }
+
+        [Fact]
+        public void DeleteMemoryAndRedisAsync()
+        {
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+
+            Cache.SetAsync(KEY, VALUE, Cache.Store.MemoryAndRedis).Wait();
+
+            Assert.True(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.True(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+
+            Cache.DeleteAsync(KEY, Cache.Store.MemoryAndRedis).Wait();
+
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
         }
 
         [Fact]
@@ -342,7 +448,8 @@ namespace BB.Caching.Tests.Caching
         {
             Cache.SetAsync(KEY, VALUE, Cache.Store.Memory).Wait();
 
-            MemoryValue<string> result1 = Cache.GetAsync<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Memory).Result;
+            MemoryValue<string> result1 =
+                Cache.GetAsync<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Memory).Result;
             Assert.Equal(VALUE, result1.Value);
 
             MemoryValue<string> memoryValue = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
@@ -390,7 +497,8 @@ namespace BB.Caching.Tests.Caching
         {
             Cache.SetAsync(KEY, VALUE, Cache.Store.MemoryAndRedis).Wait();
 
-            MemoryValue<string> result1 = Cache.GetAsync<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.MemoryAndRedis).Result;
+            MemoryValue<string> result1 =
+                Cache.GetAsync<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.MemoryAndRedis).Result;
             Assert.Equal(VALUE, result1.Value);
 
             MemoryValue<string> memoryValue = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
@@ -834,6 +942,685 @@ namespace BB.Caching.Tests.Caching
 
         public void SetFixture(DefaultTestFixture data)
         {
+        }
+
+        public void SetFixture(CoreTestsFixture data)
+        {
+        }
+
+        [Fact]
+        public void GetSetMemory()
+        {
+            Cache.Set(KEY, VALUE, Cache.Store.Memory);
+
+            MemoryValue<string> mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            MemoryValue<string> red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            mem = Cache.GetSet(KEY, VALUE2, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE2, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetRedis()
+        {
+            Cache.Set(KEY, VALUE, Cache.Store.Redis);
+
+            MemoryValue<string> mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            MemoryValue<string> red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.GetSet(KEY, VALUE2, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE2, red.Value);
+        }
+
+        [Fact]
+        public void GetSetMemoryAndRedis()
+        {
+            Cache.Set(KEY, VALUE, Cache.Store.MemoryAndRedis);
+
+            MemoryValue<string> mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            MemoryValue<string> red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            MemoryValue<string> both = Cache.GetSet(KEY, VALUE2, Cache.Store.MemoryAndRedis);
+
+            Assert.True(both.Exists);
+            Assert.Equal(VALUE, both.Value);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE2, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE2, red.Value);
+        }
+
+        [Fact]
+        public void GetSetMemoryAsync()
+        {
+            Cache.SetAsync(KEY, VALUE, Cache.Store.Memory).Wait();
+
+            MemoryValue<string> mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            MemoryValue<string> red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            mem = Cache.GetSetAsync(KEY, VALUE2, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE2, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetRedisAsync()
+        {
+            Cache.SetAsync(KEY, VALUE, Cache.Store.Redis).Wait();
+
+            MemoryValue<string> mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            MemoryValue<string> red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetSetAsync(KEY, VALUE2, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE2, red.Value);
+        }
+
+        [Fact]
+        public void GetSetMemoryAndRedisAsync()
+        {
+            Cache.SetAsync(KEY, VALUE, Cache.Store.MemoryAndRedis).Wait();
+
+            MemoryValue<string> mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            MemoryValue<string> red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            MemoryValue<string> both = Cache.GetSetAsync(KEY, VALUE2, Cache.Store.MemoryAndRedis).Result;
+
+            Assert.True(both.Exists);
+            Assert.Equal(VALUE, both.Value);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE2, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE2, red.Value);
+        }
+
+        [Fact]
+        public void GetSetAbsoluteMemory()
+        {
+            Cache.Set(KEY, VALUE, Cache.Store.Memory);
+
+            MemoryValue<string> mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            MemoryValue<string> red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            mem = Cache.GetSet(KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE2, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            Thread.Sleep(1200);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetAbsoluteRedis()
+        {
+            Cache.Set(KEY, VALUE, Cache.Store.Redis);
+
+            MemoryValue<string> mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            MemoryValue<string> red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.GetSet(KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE2, red.Value);
+
+            Thread.Sleep(1200);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetAbsoluteMemoryAndRedis()
+        {
+            Cache.Set(KEY, VALUE, Cache.Store.MemoryAndRedis);
+
+            MemoryValue<string> mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            MemoryValue<string> red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            MemoryValue<string> both = Cache.GetSet(KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.MemoryAndRedis);
+
+            Assert.True(both.Exists);
+            Assert.Equal(VALUE, both.Value);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE2, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE2, red.Value);
+
+            Thread.Sleep(1200);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetAbsoluteMemoryAsync()
+        {
+            Cache.SetAsync(KEY, VALUE, Cache.Store.Memory).Wait();
+
+            MemoryValue<string> mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            MemoryValue<string> red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            mem = Cache.GetSetAsync(KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE2, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            Thread.Sleep(1200);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetAbsoluteRedisAsync()
+        {
+            Cache.SetAsync(KEY, VALUE, Cache.Store.Redis).Wait();
+
+            MemoryValue<string> mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            MemoryValue<string> red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetSetAsync(KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE2, red.Value);
+
+            Thread.Sleep(1200);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetAbsoluteMemoryAndRedisAsync()
+        {
+            Cache.Set(KEY, VALUE, Cache.Store.MemoryAndRedis);
+
+            MemoryValue<string> mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            MemoryValue<string> red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            MemoryValue<string> both =
+                Cache.GetSetAsync(KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.MemoryAndRedis).Result;
+
+            Assert.True(both.Exists);
+            Assert.Equal(VALUE, both.Value);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE2, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE2, red.Value);
+
+            Thread.Sleep(1200);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetSlidingMemory()
+        {
+            Cache.Set(KEY, VALUE, Cache.Store.Memory);
+
+            MemoryValue<string> mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            MemoryValue<string> red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            mem = Cache.GetSetSliding(KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            for (int i = 0; i < 3; ++i)
+            {
+                Thread.Sleep(800);
+
+                mem = Cache.GetSliding<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Memory);
+                red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+                Assert.True(mem.Exists);
+                Assert.Equal(VALUE2, mem.Value);
+                Assert.False(red.Exists);
+                Assert.Equal(null, red.Value);
+            }
+
+            Thread.Sleep(1200);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetSlidingRedis()
+        {
+            Cache.Set(KEY, VALUE, Cache.Store.Redis);
+
+            MemoryValue<string> mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            MemoryValue<string> red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.GetSetSliding(KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            for (int i = 0; i < 3; ++i)
+            {
+                Thread.Sleep(800);
+
+                mem = Cache.GetSliding<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Memory);
+                red = Cache.GetSliding<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Redis);
+
+                Assert.False(mem.Exists);
+                Assert.Equal(null, mem.Value);
+                Assert.True(red.Exists);
+                Assert.Equal(VALUE2, red.Value);
+            }
+
+            Thread.Sleep(1200);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetSlidingMemoryAndRedis()
+        {
+            Cache.Set(KEY, VALUE, Cache.Store.MemoryAndRedis);
+
+            MemoryValue<string> mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            MemoryValue<string> red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            MemoryValue<string> both = Cache.GetSetSliding(
+                KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.MemoryAndRedis);
+
+            Assert.True(both.Exists);
+            Assert.Equal(VALUE, both.Value);
+
+            for (int i = 0; i < 3; ++i)
+            {
+                Thread.Sleep(800);
+
+                mem = Cache.GetSliding<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Memory);
+                red = Cache.GetSliding<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Redis);
+
+                Assert.True(mem.Exists);
+                Assert.Equal(VALUE2, mem.Value);
+                Assert.True(red.Exists);
+                Assert.Equal(VALUE2, red.Value);
+            }
+
+            Thread.Sleep(1200);
+
+            mem = Cache.Get<string>(KEY, Cache.Store.Memory);
+            red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetSlidingMemoryAsync()
+        {
+            Cache.SetAsync(KEY, VALUE, Cache.Store.Memory).Wait();
+
+            MemoryValue<string> mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            MemoryValue<string> red = Cache.Get<string>(KEY, Cache.Store.Redis);
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            mem = Cache.GetSetSlidingAsync(KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+
+            for (int i = 0; i < 3; ++i)
+            {
+                Thread.Sleep(800);
+
+                mem = Cache.GetSlidingAsync<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Memory).Result;
+                red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+                Assert.True(mem.Exists);
+                Assert.Equal(VALUE2, mem.Value);
+                Assert.False(red.Exists);
+                Assert.Equal(null, red.Value);
+            }
+
+            Thread.Sleep(1200);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetSlidingRedisAsync()
+        {
+            Cache.SetAsync(KEY, VALUE, Cache.Store.Redis).Wait();
+
+            MemoryValue<string> mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            MemoryValue<string> red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetSetSlidingAsync(KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            for (int i = 0; i < 3; ++i)
+            {
+                Thread.Sleep(800);
+
+                mem = Cache.GetSlidingAsync<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Memory).Result;
+                red = Cache.GetSlidingAsync<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Redis).Result;
+
+                Assert.False(mem.Exists);
+                Assert.Equal(null, mem.Value);
+                Assert.True(red.Exists);
+                Assert.Equal(VALUE2, red.Value);
+            }
+
+            Thread.Sleep(1200);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
+        }
+
+        [Fact]
+        public void GetSetSlidingMemoryAndRedisAsync()
+        {
+            Cache.SetAsync(KEY, VALUE, Cache.Store.MemoryAndRedis).Wait();
+
+            MemoryValue<string> mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            MemoryValue<string> red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.True(mem.Exists);
+            Assert.Equal(VALUE, mem.Value);
+            Assert.True(red.Exists);
+            Assert.Equal(VALUE, red.Value);
+
+            MemoryValue<string> both = Cache.GetSetSlidingAsync(
+                KEY, VALUE2, TimeSpan.FromSeconds(1), Cache.Store.MemoryAndRedis).Result;
+
+            Assert.True(both.Exists);
+            Assert.Equal(VALUE, both.Value);
+
+            for (int i = 0; i < 3; ++i)
+            {
+                Thread.Sleep(800);
+
+                mem = Cache.GetSlidingAsync<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Memory).Result;
+                red = Cache.GetSlidingAsync<string>(KEY, TimeSpan.FromSeconds(1), Cache.Store.Redis).Result;
+
+                Assert.True(mem.Exists);
+                Assert.Equal(VALUE2, mem.Value);
+                Assert.True(red.Exists);
+                Assert.Equal(VALUE2, red.Value);
+            }
+
+            Thread.Sleep(1200);
+
+            mem = Cache.GetAsync<string>(KEY, Cache.Store.Memory).Result;
+            red = Cache.GetAsync<string>(KEY, Cache.Store.Redis).Result;
+
+            Assert.False(mem.Exists);
+            Assert.Equal(null, mem.Value);
+            Assert.False(red.Exists);
+            Assert.Equal(null, red.Value);
         }
     }
 }

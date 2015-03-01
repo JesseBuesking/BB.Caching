@@ -35,7 +35,9 @@ namespace BB.Caching
             {
                 MemoryValue<TType> value = Cache.Memory.Strings.Get<TType>(KEY_PREFIX + key);
                 if (value.Exists)
+                {
                     return value.Value;
+                }
 
                 Task<RedisValue> byteArrayWrapper = Cache.Shared.Hashes.GetAsync(Config.KEY_PREFIX, key);
                 if (byteArrayWrapper.Result.IsNull)
@@ -48,74 +50,75 @@ namespace BB.Caching
                 return result;
             }
 
-            public static Task<TType> GetAsync<TType>(string key)
+            public static async Task<TType> GetAsync<TType>(string key)
             {
-                MemoryValue<TType> value = Cache.Memory.Strings.Get<TType>(KEY_PREFIX + key);
+                MemoryValue<TType> value = await Cache.Memory.Strings.GetAsync<TType>(KEY_PREFIX + key);
                 if (value.Exists)
-                    return Task.FromResult(value.Value);
+                {
+                    return value.Value;
+                }
 
-                var result = Task.Run(async () =>
-                    {
-                        var byteArrayWrapper = Cache.Shared.Hashes.GetAsync(Config.KEY_PREFIX, key);
-                        if (byteArrayWrapper.Result.IsNull)
-                        {
-                            return default(TType);
-                        }
+                var byteArrayWrapper = Cache.Shared.Hashes.GetAsync(Config.KEY_PREFIX, key);
+                if (byteArrayWrapper.Result.IsNull)
+                {
+                    return default(TType);
+                }
 
-                        byte[] byteArray = await byteArrayWrapper;
-                        TType res = Compress.Compression.Decompress<TType>(byteArray);
-                        return res;
-                    });
+                byte[] bytes = await byteArrayWrapper;
+                TType result = await Compress.Compression.DecompressAsync<TType>(bytes);
                 return result;
             }
 
             public static void Set<TType>(string key, TType value, bool broadcast = true)
             {
                 byte[] compact = Cache.Memory.Strings.Set(KEY_PREFIX + key, value);
-                Cache.Shared.Hashes.SetAsync(KEY_PREFIX, key, compact).Wait();
+                Cache.Shared.Hashes.Set(KEY_PREFIX, key, compact);
                 if (broadcast)
                 {
-                    PubSub.PublishAsync(Config.CACHE_CONFIG_CHANGE_CHANNEL, key).Wait();
+                    PubSub.Publish(Config.CACHE_CONFIG_CHANGE_CHANNEL, key);
                 }
             }
 
-            public static Task SetAsync<TType>(string key, TType value, bool broadcast = true)
+            public static async Task SetAsync<TType>(string key, TType value, bool broadcast = true)
             {
-                return Task.Run(async () =>
-                    {
-                        var compacted = Cache.Memory.Strings.Set(KEY_PREFIX + key, value);
-                        await Cache.Shared.Hashes.SetAsync(KEY_PREFIX, key, compacted);
-                        if (broadcast)
-                        {
-                            await PubSub.PublishAsync(Config.CACHE_CONFIG_CHANGE_CHANNEL, key);
-                        }
-                    });
+                var compacted = await Cache.Memory.Strings.SetAsync(KEY_PREFIX + key, value);
+                await Cache.Shared.Hashes.SetAsync(KEY_PREFIX, key, compacted);
+                if (broadcast)
+                {
+                    await PubSub.PublishAsync(Config.CACHE_CONFIG_CHANGE_CHANNEL, key);
+                }
             }
 
-            public static void Remove(string key, bool broadcast = true)
+            public static void Delete(string key, bool broadcast = true)
             {
-                Task.Run(async () =>
-                    {
-                        await Cache.Shared.Keys.InvalidateAsync(KEY_PREFIX + key);
-                        await Cache.Shared.Hashes.DeleteAsync(KEY_PREFIX, key);
-                        if (broadcast)
-                        {
-                            await Config.PublishRemoval(key);
-                        }
-                    }).Wait();
+                Cache.Shared.Keys.Invalidate(KEY_PREFIX + key);
+                Cache.Shared.Hashes.Delete(KEY_PREFIX, key);
+                if (broadcast)
+                {
+                    Config.PublishRemoval(key);
+                }
             }
 
-            public static Task RemoveAsync(string key, bool broadcast = true)
+            public static async Task DeleteAsync(string key, bool broadcast = true)
             {
-                return Task.Run(async () =>
-                    {
-                        await Cache.Shared.Keys.InvalidateAsync(KEY_PREFIX + key);
-                        await Cache.Shared.Hashes.DeleteAsync(KEY_PREFIX, key);
-                        if (broadcast)
-                        {
-                            await Config.PublishRemoval(key);
-                        }
-                    });
+                await Cache.Shared.Keys.InvalidateAsync(KEY_PREFIX + key);
+                await Cache.Shared.Hashes.DeleteAsync(KEY_PREFIX, key);
+                if (broadcast)
+                {
+                    await Config.PublishRemovalAsync(key);
+                }
+            }
+
+            private static void PublishRemoval(string configKey)
+            {
+                Config._alreadyRemoved.Add(configKey);
+                PubSub.Publish(Config.CACHE_CONFIG_REMOVED_CHANNEL, configKey);
+            }
+
+            private static Task PublishRemovalAsync(string configKey)
+            {
+                Config._alreadyRemoved.Add(configKey);
+                return PubSub.PublishAsync(Config.CACHE_CONFIG_REMOVED_CHANNEL, configKey);
             }
 
             private static void SetupSubscribeRemoval()
@@ -128,15 +131,9 @@ namespace BB.Caching
                         }
                         else
                         {
-                            Config.Remove(data, false);
+                            Config.Delete(data, false);
                         }
                     });
-            }
-
-            private static Task PublishRemoval(string configKey)
-            {
-                Config._alreadyRemoved.Add(configKey);
-                return PubSub.PublishAsync(Config.CACHE_CONFIG_REMOVED_CHANNEL, configKey);
             }
         }
     }

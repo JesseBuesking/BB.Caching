@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Dynamic;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using BB.Caching.Caching;
 using BB.Caching.Compression;
+using BB.Caching.Redis;
 using StackExchange.Redis;
 
 // ReSharper disable once CheckNamespace
@@ -18,6 +21,62 @@ namespace BB.Caching
             Memory = 0,
             Redis = 1,
             MemoryAndRedis = 2
+        }
+
+        /// <summary>
+        /// The channel used to publish and subscribe to configuration removal notifications.
+        /// </summary>
+        private const string CACHE_DELETE_CHANNEL = "cache/delete";
+
+        public static void SubscribeCacheDeleteChannel()
+        {
+            PubSub.SubscribeAsync(Cache.CACHE_DELETE_CHANNEL, Cache.Memory.Strings.Delete);
+        }
+
+        public static void Delete(string key, Store store = Store.Redis)
+        {
+            switch (store)
+            {
+                case Store.Memory:
+                {
+                    PubSub.Publish(Cache.CACHE_DELETE_CHANNEL, key);
+                    break;
+                }
+                case Store.Redis:
+                {
+                    Cache.Shared.Keys.Delete(key);
+                    break;
+                }
+                case Store.MemoryAndRedis:
+                {
+                    PubSub.Publish(Cache.CACHE_DELETE_CHANNEL, key);
+                    Cache.Shared.Keys.Delete(key);
+                    break;
+                }
+            }
+        }
+
+        public static async Task DeleteAsync(string key, Store store = Store.Redis)
+        {
+            switch (store)
+            {
+                case Store.Memory:
+                {
+                    await PubSub.PublishAsync(Cache.CACHE_DELETE_CHANNEL, key);
+                    break;
+                }
+                case Store.Redis:
+                {
+                    await Cache.Shared.Keys.DeleteAsync(key);
+                    break;
+                }
+                case Store.MemoryAndRedis:
+                {
+                    await PubSub.PublishAsync(Cache.CACHE_DELETE_CHANNEL, key);
+                    await Cache.Shared.Keys.DeleteAsync(key);
+                    break;
+                }
+            }
         }
 
         public static void Set(string key, object value, Store store = Store.Redis)
@@ -603,32 +662,34 @@ namespace BB.Caching
                 }
                 case Store.Redis:
                 {
-                    byte[] result = Compress.Compression.Compress(value);
-                    RedisValue rv = Cache.Shared.Strings.GetSet(key, result);
-                    if (rv.IsNull)
+                    byte[] compress = Compress.Compression.Compress(value);
+                    RedisValue redisValue = Cache.Shared.Strings.GetSet(key, compress);
+                    if (redisValue.IsNull)
                     {
                         return MemoryValue<TObject>.Null;
                     }
                     else
                     {
-                        TObject decompress = Compress.Compression.Decompress<TObject>(rv);
+                        TObject decompress = Compress.Compression.Decompress<TObject>(redisValue);
                         return new MemoryValue<TObject>(decompress, true);
                     }
                 }
                 case Store.MemoryAndRedis:
                 {
                     // try pulling from memory
-                    MemoryValue<TObject> result = Cache.Memory.Strings.GetSet<TObject>(key, value);
-                    if (result.Exists)
+                    MemoryValue<TObject> memoryValue = Cache.Memory.Strings.GetSet<TObject>(key, value);
+                    byte[] compress = Compress.Compression.Compress(value);
+                    if (memoryValue.Exists)
                     {
                         // found it? return the value
-                        return result;
+                        Cache.Shared.Strings.Set(key, compress);
+                        return memoryValue;
                     }
                     else
                     {
                         // not found? try getting from redis
-                        RedisValue rv = Cache.Shared.Strings.Get(key);
-                        if (rv.IsNull)
+                        RedisValue redisValue = Cache.Shared.Strings.GetSet(key, compress);
+                        if (redisValue.IsNull)
                         {
                             // not there? return null object
                             return MemoryValue<TObject>.Null;
@@ -636,7 +697,7 @@ namespace BB.Caching
                         else
                         {
                             // found it in redis?
-                            TObject decompress = Compress.Compression.Decompress<TObject>(rv);
+                            TObject decompress = Compress.Compression.Decompress<TObject>(redisValue);
                             return new MemoryValue<TObject>(decompress, true);
                         }
                     }
@@ -658,32 +719,36 @@ namespace BB.Caching
                 }
                 case Store.Redis:
                 {
-                    byte[] result = await Compress.Compression.CompressAsync(value);
-                    RedisValue rv = await Cache.Shared.Strings.GetSetAsync(key, result);
-                    if (rv.IsNull)
+                    byte[] bytes = await Compress.Compression.CompressAsync(value);
+                    RedisValue redisValue = await Cache.Shared.Strings.GetSetAsync(key, bytes);
+                    if (redisValue.IsNull)
                     {
                         return MemoryValue<TObject>.Null;
                     }
                     else
                     {
-                        TObject decompress = await Compress.Compression.DecompressAsync<TObject>(rv);
+                        TObject decompress = await Compress.Compression.DecompressAsync<TObject>(redisValue);
                         return new MemoryValue<TObject>(decompress, true);
                     }
                 }
                 case Store.MemoryAndRedis:
                 {
                     // try pulling from memory
-                    MemoryValue<TObject> result = await Cache.Memory.Strings.GetSetAsync<TObject>(key, value);
-                    if (result.Exists)
+                    MemoryValue<TObject> memoryValue = await Cache.Memory.Strings.GetSetAsync<TObject>(key, value);
+                    byte[] compress = await Compress.Compression.CompressAsync(value);
+                    if (memoryValue.Exists)
                     {
                         // found it? return the value
-                        return result;
+#pragma warning disable 4014
+                        Cache.Shared.Strings.SetAsync(key, compress);
+#pragma warning restore 4014
+                        return memoryValue;
                     }
                     else
                     {
                         // not found? try getting from redis
-                        RedisValue rv = await Cache.Shared.Strings.GetAsync(key);
-                        if (rv.IsNull)
+                        RedisValue redisValue = await Cache.Shared.Strings.GetSetAsync(key, compress);
+                        if (redisValue.IsNull)
                         {
                             // not there? return null object
                             return MemoryValue<TObject>.Null;
@@ -691,7 +756,7 @@ namespace BB.Caching
                         else
                         {
                             // found it in redis?
-                            TObject decompress = await Compress.Compression.DecompressAsync<TObject>(rv);
+                            TObject decompress = await Compress.Compression.DecompressAsync<TObject>(redisValue);
                             return new MemoryValue<TObject>(decompress, true);
                         }
                     }
@@ -729,15 +794,16 @@ namespace BB.Caching
                 {
                     // try pulling from memory
                     MemoryValue<TObject> memoryValue = Cache.Memory.Strings.GetSet<TObject>(key, value, absoluteExpiration);
+                    byte[] compress = Compress.Compression.Compress(value);
                     if (memoryValue.Exists)
                     {
                         // found it? return the value
+                        Cache.Shared.Strings.Set(key, compress, absoluteExpiration);
                         return memoryValue;
                     }
                     else
                     {
                         // not found? try getting from redis
-                        byte[] compress = Compress.Compression.Compress(value);
                         RedisValue redisValue = Cache.Shared.Strings.GetSet(key, compress, absoluteExpiration);
                         if (redisValue.IsNull)
                         {
@@ -786,15 +852,18 @@ namespace BB.Caching
                     // try pulling from memory
                     MemoryValue<TObject> memoryValue = await Cache.Memory.Strings.GetSetAsync<TObject>(
                         key, value, absoluteExpiration);
+                    byte[] compress = await Compress.Compression.CompressAsync(value);
                     if (memoryValue.Exists)
                     {
                         // found it? return the value
+#pragma warning disable 4014
+                        Cache.Shared.Strings.SetAsync(key, compress, absoluteExpiration);
+#pragma warning restore 4014
                         return memoryValue;
                     }
                     else
                     {
                         // not found? try getting from redis
-                        byte[] compress = await Compress.Compression.CompressAsync(value);
                         RedisValue redisValue = await Cache.Shared.Strings.GetSetAsync(key, compress, absoluteExpiration);
                         if (redisValue.IsNull)
                         {
@@ -843,16 +912,16 @@ namespace BB.Caching
                     // try pulling from memory
                     MemoryValue<TObject> sliding = Cache.Memory.Strings.GetSetSliding<TObject>(
                         key, value, slidingExpiration);
-
+                    byte[] compress = Compress.Compression.Compress(value);
                     if (sliding.Exists)
                     {
                         // found it? return the value
+                        Cache.Shared.Strings.Set(key, compress);
                         return sliding;
                     }
                     else
                     {
                         // not found? try getting from redis
-                        byte[] compress = Compress.Compression.Compress(value);
                         RedisValue redisValue = Cache.Shared.Strings.GetSet(key, compress, slidingExpiration);
                         if (redisValue.IsNull)
                         {
@@ -901,16 +970,16 @@ namespace BB.Caching
                     // try pulling from memory
                     MemoryValue<TObject> sliding = await Cache.Memory.Strings.GetSetSlidingAsync<TObject>(
                         key, value, slidingExpiration);
-
+                    byte[] compress = await Compress.Compression.CompressAsync(value);
                     if (sliding.Exists)
                     {
                         // found it? return the value
+                        Cache.Shared.Strings.Set(key, compress);
                         return sliding;
                     }
                     else
                     {
                         // not found? try getting from redis
-                        byte[] compress = await Compress.Compression.CompressAsync(value);
                         RedisValue redisValue = await Cache.Shared.Strings.GetSetAsync(key, compress, slidingExpiration);
                         if (redisValue.IsNull)
                         {

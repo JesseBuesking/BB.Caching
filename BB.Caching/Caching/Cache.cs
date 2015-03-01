@@ -15,6 +15,7 @@ namespace BB.Caching
         {
             // may have side-effects if called twice
             Cache.Config.SetupSubscriptions();
+            Cache.SubscribeCacheDeleteChannel();
 
             // free of side-effects
             RateLimiter.ScriptLoad();
