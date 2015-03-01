@@ -130,6 +130,19 @@ namespace BB.Caching.Redis
             }
         }
 
+        public static void SetStatistic(string key, double value)
+        {
+            RedisKey[] keyArgs = { key };
+            RedisValue[] valueArgs = { value };
+
+            var connections = SharedCache.Instance.GetWriteConnections(key);
+            foreach (var connection in connections)
+            {
+                connection.GetDatabase(SharedCache.Instance.Db)
+                    .ScriptEvaluate(Statistics.SetStatisticHash, keyArgs, valueArgs);
+            }
+        }
+
         public static async Task SetStatisticAsync(string key, double value)
         {
             RedisKey[] keyArgs = { key };
@@ -141,6 +154,34 @@ namespace BB.Caching.Redis
                 await connection.GetDatabase(SharedCache.Instance.Db)
                     .ScriptEvaluateAsync(Statistics.SetStatisticHash, keyArgs, valueArgs);
             }
+        }
+
+        public static Stats GetStatistics(string key)
+        {
+            RedisKey[] keyArgs = { key };
+            RedisValue[] valueArgs = new RedisValue[0];
+
+            var connections = SharedCache.Instance.GetWriteConnections(key);
+            RedisResult result = null;
+            foreach (var connection in connections)
+            {
+                result = connection.GetDatabase(SharedCache.Instance.Db)
+                    .ScriptEvaluate(Statistics.GetStatisticHash, keyArgs, valueArgs);
+            }
+
+            if (null == result)
+            {
+                return null;
+            }
+
+            RedisResult[] res = (RedisResult[]) result;
+            long numberOfValues = (long)res[0];
+            double sumOfValues = (double)res[1];
+            double sumOfValuesSquared = (double)res[2];
+            double minimum = (double)res[3];
+            double maximum = (double)res[4];
+
+            return new Stats(numberOfValues, sumOfValues, sumOfValuesSquared, minimum, maximum);
         }
 
         public static async Task<Stats> GetStatisticsAsync(string key)

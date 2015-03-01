@@ -98,6 +98,17 @@ namespace BB.Caching.Redis
 
         private static byte[] _setMultipleBitsHash;
 
+        public void Add(string key, string value)
+        {
+            var bits = new RedisValue[this.Options.NumberOfHashes];
+            for (int i = 0; i < this.Options.NumberOfHashes; i++)
+            {
+                bits[i] = Hashing.Murmur3.ComputeInt(value + i)%this.Options.NumberOfBits;
+            }
+
+            SetBits(key, bits, true);
+        }
+
         public async Task AddAsync(string key, string value)
         {
             var bits = new RedisValue[this.Options.NumberOfHashes];
@@ -107,6 +118,21 @@ namespace BB.Caching.Redis
             }
 
             await SetBitsAsync(key, bits, true);
+        }
+
+        private static void SetBits(string key, RedisValue[] bits, bool value)
+        {
+            RedisKey[] keyArgs = { key };
+            RedisValue[] valueArgs = new RedisValue[bits.Length + 1];
+            valueArgs[0] = value;
+            bits.CopyTo(valueArgs, 1);
+
+            var connections = SharedCache.Instance.GetWriteConnections(key);
+            foreach (var connection in connections)
+            {
+                connection.GetDatabase(SharedCache.Instance.Db)
+                    .ScriptEvaluate(BloomFilter.SetMultipleBitsHash, keyArgs, valueArgs);
+            }
         }
 
         private static async Task SetBitsAsync(string key, RedisValue[] bits, bool value)
@@ -124,6 +150,17 @@ namespace BB.Caching.Redis
             }
         }
 
+        public bool IsSet(string key, string value)
+        {
+            var bits = new RedisValue[this.Options.NumberOfHashes];
+            for (int i = 0; i < this.Options.NumberOfHashes; i++)
+            {
+                bits[i] = Hashing.Murmur3.ComputeInt(value + i) % this.Options.NumberOfBits;
+            }
+
+            return AllBitsSet(key, bits);
+        }
+
         public async Task<bool> IsSetAsync(string key, string value)
         {
             var bits = new RedisValue[this.Options.NumberOfHashes];
@@ -132,10 +169,28 @@ namespace BB.Caching.Redis
                 bits[i] = Hashing.Murmur3.ComputeInt(value + i) % this.Options.NumberOfBits;
             }
 
-            return await AllBitsSet(key, bits);
+            return await AllBitsSetAsync(key, bits);
         }
 
-        private static async Task<bool> AllBitsSet(string key, RedisValue[] bits)
+        private static bool AllBitsSet(string key, RedisValue[] bits)
+        {
+            RedisKey[] keyArgs = { key };
+            RedisValue[] valueArgs = new RedisValue[bits.Length];
+            bits.CopyTo(valueArgs, 0);
+
+            RedisResult result = null;
+
+            var connections = SharedCache.Instance.GetWriteConnections(key);
+            foreach (var connection in connections)
+            {
+                result = connection.GetDatabase(SharedCache.Instance.Db)
+                    .ScriptEvaluate(BloomFilter.AllBitsSetHash, keyArgs, valueArgs);
+            }
+
+            return null != result && !result.IsNull && 1L == (long)result;
+        }
+
+        private static async Task<bool> AllBitsSetAsync(string key, RedisValue[] bits)
         {
             RedisKey[] keyArgs = { key };
             RedisValue[] valueArgs = new RedisValue[bits.Length];
