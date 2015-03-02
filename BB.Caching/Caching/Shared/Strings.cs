@@ -1,14 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using StackExchange.Redis;
-
-// ReSharper disable once CheckNamespace
+﻿// ReSharper disable once CheckNamespace
 namespace BB.Caching
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+
+    using StackExchange.Redis;
+
+    /// <summary>
+    /// Contains the core methods for caching data in memory, redis, or both.
+    /// </summary>
     public static partial class Cache
     {
+        /// <summary>
+        /// The shared / L2 / redis cache.
+        /// </summary>
         public static partial class Shared
         {
             /// <summary>
@@ -21,11 +28,15 @@ namespace BB.Caching
                 /// If key already exists and is a string, this command appends the value at the end of the string. If key does
                 /// not exist it is created and set as an empty string, so APPEND will be similar to SET in this special case.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// the length of the string after the append operation.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/append
                 /// </remarks>
@@ -39,6 +50,7 @@ namespace BB.Caching
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringAppend(key, value);
                     }
+
                     return result;
                 }
 
@@ -46,11 +58,15 @@ namespace BB.Caching
                 /// If key already exists and is a string, this command appends the value at the end of the string. If key does
                 /// not exist it is created and set as an empty string, so APPEND will be similar to SET in this special case.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// the length of the string after the append operation.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/append
                 /// </remarks>
@@ -60,13 +76,11 @@ namespace BB.Caching
                     Task<long> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringAppendAsync(key, value);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
@@ -74,11 +88,15 @@ namespace BB.Caching
                 /// If key already exists and is a string, this command appends the value at the end of the string. If key does
                 /// not exist it is created and set as an empty string, so APPEND will be similar to SET in this special case.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// the length of the string after the append operation.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/append
                 /// </remarks>
@@ -92,6 +110,7 @@ namespace BB.Caching
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringAppend(key, value);
                     }
+
                     return result;
                 }
 
@@ -99,11 +118,15 @@ namespace BB.Caching
                 /// If key already exists and is a string, this command appends the value at the end of the string. If key does
                 /// not exist it is created and set as an empty string, so APPEND will be similar to SET in this special case.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// the length of the string after the append operation.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/append
                 /// </remarks>
@@ -113,13 +136,11 @@ namespace BB.Caching
                     Task<long> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringAppendAsync(key, value);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
@@ -128,15 +149,18 @@ namespace BB.Caching
                 /// performing the operation. An error is returned if the key contains a value of the wrong type or contains a
                 /// string that is not representable as integer. This operation is limited to 64 bit signed integers.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// the value of key after the increment
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/decrby
                 /// </remarks>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/decr
                 /// </remarks>
@@ -150,6 +174,7 @@ namespace BB.Caching
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringDecrement(key, value);
                     }
+
                     return result;
                 }
 
@@ -158,15 +183,18 @@ namespace BB.Caching
                 /// performing the operation. An error is returned if the key contains a value of the wrong type or contains a
                 /// string that is not representable as integer. This operation is limited to 64 bit signed integers.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// the value of key after the increment
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/decrby
                 /// </remarks>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/decr
                 /// </remarks>
@@ -176,13 +204,11 @@ namespace BB.Caching
                     Task<long> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringDecrementAsync(key, value);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
@@ -191,15 +217,18 @@ namespace BB.Caching
                 /// performing the operation. An error is returned if the key contains a value of the wrong type or contains a
                 /// string that is not representable as integer. This operation is limited to 64 bit signed integers.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// the value of key after the increment
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/incrby
                 /// </remarks>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/incr
                 /// </remarks>
@@ -213,6 +242,7 @@ namespace BB.Caching
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringIncrement(key, value);
                     }
+
                     return result;
                 }
 
@@ -221,15 +251,18 @@ namespace BB.Caching
                 /// performing the operation. An error is returned if the key contains a value of the wrong type or contains a
                 /// string that is not representable as integer. This operation is limited to 64 bit signed integers.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// the value of key after the increment
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/incrby
                 /// </remarks>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/incr
                 /// </remarks>
@@ -239,13 +272,11 @@ namespace BB.Caching
                     Task<long> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringIncrementAsync(key, value);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
@@ -253,11 +284,12 @@ namespace BB.Caching
                 /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
                 /// the value stored at key is not a string, because GET only handles string values.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
                 /// <returns>
                 /// the value of key, or nil when key does not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/get
                 /// </remarks>
@@ -274,11 +306,12 @@ namespace BB.Caching
                 /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
                 /// the value stored at key is not a string, because GET only handles string values.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
                 /// <returns>
                 /// the value of key, or nil when key does not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/get
                 /// </remarks>
@@ -295,11 +328,15 @@ namespace BB.Caching
                 /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
                 /// the value stored at key is not a string, because GET only handles string values.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="expire">
+                /// The expire.
+                /// </param>
                 /// <returns>
                 /// the value of key, or nil when key does not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/get
                 /// </remarks>
@@ -317,15 +354,20 @@ namespace BB.Caching
                 }
 
                 // TODO why is this slower than calling each separately?
+
                 /// <summary>
                 /// Get the value of key. If the key does not exist the special value nil is returned. An error is returned if
                 /// the value stored at key is not a string, because GET only handles string values.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="expire">
+                /// The expire.
+                /// </param>
                 /// <returns>
                 /// the value of key, or nil when key does not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/get
                 /// </remarks>
@@ -347,17 +389,23 @@ namespace BB.Caching
                 /// Returns the substring of the string value stored at key, determined by the offsets start and end (both are
                 /// inclusive).
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="start">
+                /// The start.
+                /// </param>
+                /// <param name="end">
+                /// The end.
+                /// </param>
                 /// <remarks>
                 /// Negative offsets can be used in order to provide an offset starting from the end of the string. So -1 means
                 /// the last character, -2 the penultimate and so forth. The function handles out of range requests by limiting
                 /// the resulting range to the actual length of the string.
                 /// </remarks>
-                /// 
                 /// <returns>
                 /// the value of key, or nil when key does not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/getrange
                 /// </remarks>
@@ -374,17 +422,23 @@ namespace BB.Caching
                 /// Returns the substring of the string value stored at key, determined by the offsets start and end (both are
                 /// inclusive).
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="start">
+                /// The start.
+                /// </param>
+                /// <param name="end">
+                /// The end.
+                /// </param>
                 /// <remarks>
                 /// Negative offsets can be used in order to provide an offset starting from the end of the string. So -1 means
                 /// the last character, -2 the penultimate and so forth. The function handles out of range requests by limiting
                 /// the resulting range to the actual length of the string.
                 /// </remarks>
-                /// 
                 /// <returns>
                 /// the value of key, or nil when key does not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/getrange
                 /// </remarks>
@@ -401,11 +455,12 @@ namespace BB.Caching
                 /// Returns the values of all specified keys. For every key that does not hold a string value or does
                 /// not exist, the special value nil is returned. Because of this, the operation never fails.
                 /// </summary>
-                /// 
+                /// <param name="keys">
+                /// The keys.
+                /// </param>
                 /// <returns>
                 /// list of values at the specified keys.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/mget
                 /// </remarks>
@@ -417,12 +472,9 @@ namespace BB.Caching
                     {
                         foreach (var connection in dictionary.ElementAt(i).Key)
                         {
-                            var task = connection
+                            values[i] = connection
                                 .GetDatabase(SharedCache.Instance.Db)
                                 .StringGet(dictionary.ElementAt(i).Value);
-
-                            if (null == values[i])
-                                values[i] = task;
                         }
                     }
 
@@ -440,12 +492,16 @@ namespace BB.Caching
                         for (; i < dictionary.Count; i++)
                         {
                             if (dictionary.ElementAt(i).Value.Contains(key))
+                            {
                                 break;
+                            }
                         }
 
                         // Cache the results.
                         if (null == results[i])
+                        {
                             results[i] = values[i];
+                        }
 
                         // Store a local copy of the data (so our inner tasks return the correct value).
                         RedisValue val = results[i][indexes[i]];
@@ -453,6 +509,7 @@ namespace BB.Caching
                         ++indexes[i];
                         ++counter;
                     }
+
                     return ret;
                 }
 
@@ -460,11 +517,12 @@ namespace BB.Caching
                 /// Returns the values of all specified keys. For every key that does not hold a string value or does
                 /// not exist, the special value nil is returned. Because of this, the operation never fails.
                 /// </summary>
-                /// 
+                /// <param name="keys">
+                /// The keys.
+                /// </param>
                 /// <returns>
                 /// list of values at the specified keys.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/mget
                 /// </remarks>
@@ -476,12 +534,9 @@ namespace BB.Caching
                     {
                         foreach (var connection in dictionary.ElementAt(i).Key)
                         {
-                            var task = connection
+                            tasks[i] = connection
                                 .GetDatabase(SharedCache.Instance.Db)
                                 .StringGetAsync(dictionary.ElementAt(i).Value);
-
-                            if (null == tasks[i])
-                                tasks[i] = task;
                         }
                     }
 
@@ -501,12 +556,16 @@ namespace BB.Caching
                             for (; i < dictionary.Count; i++)
                             {
                                 if (dictionary.ElementAt(i).Value.Contains(key))
+                                {
                                     break;
+                                }
                             }
 
                             // Cache the results.
                             if (null == results[i])
+                            {
                                 results[i] = await tasks[i];
+                            }
 
                             // Store a local copy of the data (so our inner tasks return the correct value).
                             RedisValue val = results[i][indexes[i]];
@@ -514,6 +573,7 @@ namespace BB.Caching
                             ++indexes[i];
                             ++counter;
                         }
+
                         return ret;
                     });
                     return result;
@@ -523,11 +583,15 @@ namespace BB.Caching
                 /// Atomically sets key to value and returns the old value stored at key. Returns an error when key exists but
                 /// does not hold a string value.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// the old value stored at key, or nil when key did not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/getset
                 /// </remarks>
@@ -541,6 +605,7 @@ namespace BB.Caching
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringGetSet(key, value);
                     }
+
                     return result;
                 }
 
@@ -548,11 +613,15 @@ namespace BB.Caching
                 /// Atomically sets key to value and returns the old value stored at key. Returns an error when key exists but
                 /// does not hold a string value.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// the old value stored at key, or nil when key did not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/getset
                 /// </remarks>
@@ -562,13 +631,11 @@ namespace BB.Caching
                     Task<RedisValue> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringGetSetAsync(key, value);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
@@ -576,11 +643,18 @@ namespace BB.Caching
                 /// Atomically sets key to value and returns the old value stored at key. Returns an error when key exists but
                 /// does not hold a string value.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
+                /// <param name="expire">
+                /// An expiration lifetime.
+                /// </param>
                 /// <returns>
                 /// the old value stored at key, or nil when key did not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/getset
                 /// </remarks>
@@ -600,22 +674,25 @@ namespace BB.Caching
                         tran.Execute();
                     }
 
-                    if (null == result)
-                    {
-                        return RedisValue.Null;
-                    }
-                    return result.Result;
+                    return null == result ? RedisValue.Null : result.Result;
                 }
 
                 /// <summary>
                 /// Atomically sets key to value and returns the old value stored at key. Returns an error when key exists but
                 /// does not hold a string value.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
+                /// <param name="expire">
+                /// An expiration lifetime.
+                /// </param>
                 /// <returns>
                 /// the old value stored at key, or nil when key did not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/getset
                 /// </remarks>
@@ -637,17 +714,18 @@ namespace BB.Caching
 #pragma warning restore 4014
                     }
 
-                    if (null == result)
-                    {
-                        return RedisValue.Null;
-                    }
-                    return await result;
+                    return null == result ? RedisValue.Null : await result;
                 }
 
                 /// <summary>
                 /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <remarks>
                 /// http://redis.io/commands/set
                 /// </remarks>
@@ -665,30 +743,44 @@ namespace BB.Caching
                 /// <summary>
                 /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <remarks>
                 /// http://redis.io/commands/set
                 /// </remarks>
+                /// <returns>
+                /// The <see cref="Task"/> (void).
+                /// </returns>
                 public static Task SetAsync(RedisKey key, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringSetAsync(key, value);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
                 /// <summary>
                 /// Set key to hold the string value and set key to timeout after a given number of seconds.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
+                /// <param name="expiry">
+                /// An expiration lifetime.
+                /// </param>
                 /// <remarks>
                 /// http://redis.io/commands/setex
                 /// </remarks>
@@ -706,23 +798,32 @@ namespace BB.Caching
                 /// <summary>
                 /// Set key to hold the string value and set key to timeout after a given number of seconds.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
+                /// <param name="expiry">
+                /// An expiration lifetime.
+                /// </param>
                 /// <remarks>
                 /// http://redis.io/commands/setex
                 /// </remarks>
+                /// <returns>
+                /// The <see cref="Task"/> (void).
+                /// </returns>
                 public static Task SetAsync(RedisKey key, RedisValue value, TimeSpan expiry)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringSetAsync(key, value, expiry);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
@@ -732,7 +833,15 @@ namespace BB.Caching
                 /// zero-bytes to make offset fit. Non-existing keys are considered as empty strings, so this command will make
                 /// sure it holds a string large enough to be able to set value at offset.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="offset">
+                /// The offset.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <remarks>
                 /// Note that the maximum offset that you can set is 229 -1 (536870911), as Redis Strings are limited to 512
                 /// megabytes. If you need to grow beyond this size, you can use multiple keys.
@@ -745,11 +854,9 @@ namespace BB.Caching
                 /// is done, subsequent calls to SETRANGE for the same key will not have the allocation overhead.
                 /// </para>
                 /// </remarks>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/setrange
                 /// </remarks>
-                /// 
                 /// <returns>
                 /// the length of the string after it was modified by the command.
                 /// </returns>
@@ -763,6 +870,7 @@ namespace BB.Caching
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringSetRange(key, offset, value);
                     }
+
                     return result;
                 }
 
@@ -772,7 +880,15 @@ namespace BB.Caching
                 /// zero-bytes to make offset fit. Non-existing keys are considered as empty strings, so this command will make
                 /// sure it holds a string large enough to be able to set value at offset.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="offset">
+                /// The offset.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <remarks>
                 /// Note that the maximum offset that you can set is 229 -1 (536870911), as Redis Strings are limited to 512
                 /// megabytes. If you need to grow beyond this size, you can use multiple keys.
@@ -785,11 +901,9 @@ namespace BB.Caching
                 /// is done, subsequent calls to SETRANGE for the same key will not have the allocation overhead.
                 /// </para>
                 /// </remarks>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/setrange
                 /// </remarks>
-                /// 
                 /// <returns>
                 /// the length of the string after it was modified by the command.
                 /// </returns>
@@ -799,13 +913,11 @@ namespace BB.Caching
                     Task<RedisValue> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringSetRangeAsync(key, offset, value);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
@@ -813,12 +925,13 @@ namespace BB.Caching
                 /// Sets the given keys to their respective values. MSET replaces existing values with new values, just as
                 /// regular SET. See MSETNX if you don't want to overwrite existing values.
                 /// </summary>
-                /// 
+                /// <param name="values">
+                /// A collection of key-value pairs to be set.
+                /// </param>
                 /// <remarks>
                 /// MSET is atomic, so all given keys are set at once. It is not possible for clients to see that some of the
                 /// keys were updated while others are unchanged.
                 /// </remarks>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/mset
                 /// </remarks>
@@ -845,15 +958,19 @@ namespace BB.Caching
                 /// Sets the given keys to their respective values. MSET replaces existing values with new values, just as
                 /// regular SET. See MSETNX if you don't want to overwrite existing values.
                 /// </summary>
-                /// 
+                /// <param name="values">
+                /// A collection of key-value pairs to be set.
+                /// </param>
                 /// <remarks>
                 /// MSET is atomic, so all given keys are set at once. It is not possible for clients to see that some of the
                 /// keys were updated while others are unchanged.
                 /// </remarks>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/mset
                 /// </remarks>
+                /// <returns>
+                /// The <see cref="Task"/> (void).
+                /// </returns>
                 public static Task SetAsync(Dictionary<RedisKey, RedisValue> values)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(values.Keys.ToArray());
@@ -867,15 +984,12 @@ namespace BB.Caching
 
                         foreach (var connection in connections.ElementAt(i).Key)
                         {
-                            var task = connection
+                            results[i] = connection
                                 .GetDatabase(SharedCache.Instance.Db)
                                 .StringSetAsync(dictionary);
-
-
-                            if (null == results[i])
-                                results[i] = task;
                         }
                     }
+
                     return Task.WhenAll(results);
                 }
 
@@ -883,7 +997,9 @@ namespace BB.Caching
                 /// Sets the given keys to their respective values. MSETNX will not perform any operation at all even if just a
                 /// single key already exists.
                 /// </summary>
-                /// 
+                /// <param name="values">
+                /// A collection of key-value pairs to be set.
+                /// </param>
                 /// <remarks>
                 /// Because of this semantic MSETNX can be used in order to set different keys representing different fields of
                 /// an unique logic object in a way that ensures that either all the fields or none at all are set.
@@ -892,11 +1008,9 @@ namespace BB.Caching
                 /// keys were updated while others are unchanged.
                 /// </para>
                 /// </remarks>
-                /// 
                 /// <returns>
                 /// 1 if all the keys were set, 0 if no key was set (at least one key already existed).
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/msetnx
                 /// </remarks>
@@ -921,11 +1035,15 @@ namespace BB.Caching
 
                     bool res = results.All(b => b);
                     if (res)
+                    {
                         return true;
+                    }
 
                     res = results.All(b => !b);
                     if (res)
+                    {
                         return false;
+                    }
 
                     throw new Exception("inconsistent results");
                 }
@@ -934,7 +1052,9 @@ namespace BB.Caching
                 /// Sets the given keys to their respective values. MSETNX will not perform any operation at all even if just a
                 /// single key already exists.
                 /// </summary>
-                /// 
+                /// <param name="values">
+                /// A collection of key-value pairs to be set.
+                /// </param>
                 /// <remarks>
                 /// Because of this semantic MSETNX can be used in order to set different keys representing different fields of
                 /// an unique logic object in a way that ensures that either all the fields or none at all are set.
@@ -943,11 +1063,9 @@ namespace BB.Caching
                 /// keys were updated while others are unchanged.
                 /// </para>
                 /// </remarks>
-                /// 
                 /// <returns>
-                /// 1 if the all the keys were set, 0 if no key was set (at least one key already existed).
+                /// 1 if all the keys were set, 0 if no key was set (at least one key already existed).
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/msetnx
                 /// </remarks>
@@ -964,12 +1082,9 @@ namespace BB.Caching
 
                         foreach (var connection in connections.ElementAt(i).Key)
                         {
-                            var task = connection
+                            results[i] = connection
                                 .GetDatabase(SharedCache.Instance.Db)
                                 .StringSetAsync(dictionary, When.NotExists);
-
-                            if (null == results[i])
-                                results[i] = task;
                         }
                     }
 
@@ -978,11 +1093,15 @@ namespace BB.Caching
                         bool[] blah = await Task.WhenAll(results);
                         bool res = blah.All(b => b);
                         if (res)
+                        {
                             return true;
+                        }
 
                         res = blah.All(b => !b);
                         if (res)
+                        {
                             return false;
+                        }
 
                         throw new Exception("inconsistent results");
                     });
@@ -993,11 +1112,15 @@ namespace BB.Caching
                 /// Set key to hold string value if key does not exist. In that case, it is equal to SET. When key already holds
                 /// a value, no operation is performed.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// 1 if the key was set, 0 if the key was not set
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/setnx
                 /// </remarks>
@@ -1011,6 +1134,7 @@ namespace BB.Caching
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringSet(key, value, when: When.NotExists);
                     }
+
                     return result;
                 }
 
@@ -1018,11 +1142,15 @@ namespace BB.Caching
                 /// Set key to hold string value if key does not exist. In that case, it is equal to SET. When key already holds
                 /// a value, no operation is performed.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <returns>
                 /// 1 if the key was set, 0 if the key was not set
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/setnx
                 /// </remarks>
@@ -1032,30 +1160,31 @@ namespace BB.Caching
                     Task<bool> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringSetAsync(key, value, when: When.NotExists);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
                 /// <summary>
                 /// Returns the bit value at offset in the string value stored at key.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="offset">
+                /// The offset.
+                /// </param>
                 /// <remarks>
                 /// When offset is beyond the string length, the string is assumed to be a contiguous space with 0 bits. When
                 /// key does not exist it is assumed to be an empty string, so offset is always out of range and the value is
                 /// also assumed to be a contiguous space with 0 bits.
                 /// </remarks>
-                /// 
                 /// <returns>
                 /// the bit value stored at offset.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/getbit
                 /// </remarks>
@@ -1069,17 +1198,20 @@ namespace BB.Caching
                 /// <summary>
                 /// Returns the bit value at offset in the string value stored at key.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="offset">
+                /// The offset.
+                /// </param>
                 /// <remarks>
                 /// When offset is beyond the string length, the string is assumed to be a contiguous space with 0 bits. When
                 /// key does not exist it is assumed to be an empty string, so offset is always out of range and the value is
                 /// also assumed to be a contiguous space with 0 bits.
                 /// </remarks>
-                /// 
                 /// <returns>
                 /// the bit value stored at offset.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/getbit
                 /// </remarks>
@@ -1094,11 +1226,12 @@ namespace BB.Caching
                 /// Returns the length of the string value stored at key. An error is returned when key holds a non-string
                 /// value.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
                 /// <returns>
                 /// the length of the string at key, or 0 when key does not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/strlen
                 /// </remarks>
@@ -1113,11 +1246,12 @@ namespace BB.Caching
                 /// Returns the length of the string value stored at key. An error is returned when key holds a non-string
                 /// value.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
                 /// <returns>
                 /// the length of the string at key, or 0 when key does not exist.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/strlen
                 /// </remarks>
@@ -1131,7 +1265,15 @@ namespace BB.Caching
                 /// <summary>
                 /// Sets or clears the bit at offset in the string value stored at key.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="offset">
+                /// The offset.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <remarks>
                 /// The bit is either set or cleared depending on value, which can be either 0 or 1. When key does not exist, a
                 /// new string value is created. The string is grown to make sure it can hold a bit at offset. The offset
@@ -1147,11 +1289,9 @@ namespace BB.Caching
                 /// overhead.
                 /// </para>
                 /// </remarks>
-                /// 
                 /// <returns>
                 /// the original bit value stored at offset.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/setbit
                 /// </remarks>
@@ -1165,13 +1305,22 @@ namespace BB.Caching
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringSetBit(key, offset, value);
                     }
+
                     return result;
                 }
 
                 /// <summary>
                 /// Sets or clears the bit at offset in the string value stored at key.
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="offset">
+                /// The offset.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 /// <remarks>
                 /// The bit is either set or cleared depending on value, which can be either 0 or 1. When key does not exist, a
                 /// new string value is created. The string is grown to make sure it can hold a bit at offset. The offset
@@ -1187,11 +1336,9 @@ namespace BB.Caching
                 /// overhead.
                 /// </para>
                 /// </remarks>
-                /// 
                 /// <returns>
                 /// the original bit value stored at offset.
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// http://redis.io/commands/setbit
                 /// </remarks>
@@ -1201,13 +1348,11 @@ namespace BB.Caching
                     Task<bool> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .StringSetBitAsync(key, offset, value);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
@@ -1222,11 +1367,22 @@ namespace BB.Caching
                 /// from the end of the string, where -1 is the last byte, -2 is the penultimate, and so forth.
                 /// </para>
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="start">
+                /// The start.
+                /// </param>
+                /// <param name="end">
+                /// The end.
+                /// </param>
                 /// <remarks>
                 /// http://redis.io/commands/bitcount
                 /// </remarks>
-                public static long CountSetBits(RedisKey key, long start = 0, long count = -1)
+                /// <returns>
+                /// The number of set bits.
+                /// </returns>
+                public static long CountSetBits(RedisKey key, long start = 0, long end = -1)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     long result = 0;
@@ -1234,8 +1390,9 @@ namespace BB.Caching
                     {
                         result = connection
                             .GetDatabase(SharedCache.Instance.Db)
-                            .StringBitCount(key, start, count);
+                            .StringBitCount(key, start, end);
                     }
+
                     return result;
                 }
 
@@ -1250,23 +1407,32 @@ namespace BB.Caching
                 /// from the end of the string, where -1 is the last byte, -2 is the penultimate, and so forth.
                 /// </para>
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="start">
+                /// The start.
+                /// </param>
+                /// <param name="end">
+                /// The end.
+                /// </param>
                 /// <remarks>
                 /// http://redis.io/commands/bitcount
                 /// </remarks>
-                public static Task<long> CountSetBitsAsync(RedisKey key, long start = 0, long count = -1)
+                /// <returns>
+                /// The number of set bits.
+                /// </returns>
+                public static Task<long> CountSetBitsAsync(RedisKey key, long start = 0, long end = -1)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
                     Task<long> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
-                            .StringBitCountAsync(key, start, count);
-
-                        if (null == result)
-                            result = task;
+                            .StringBitCountAsync(key, start, end);
                     }
+
                     return result;
                 }
 
@@ -1275,11 +1441,9 @@ namespace BB.Caching
                 ///// Perform a bitwise AND operation between multiple keys (containing string values) and store the result in the
                 ///// destination key.
                 ///// </summary>
-                ///// 
                 ///// <returns>
                 ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
                 ///// </returns>
-                ///// 
                 ///// <remarks>
                 ///// http://redis.io/commands/bitop
                 ///// </remarks>
@@ -1320,11 +1484,9 @@ namespace BB.Caching
                 ///// Perform a bitwise OR operation between multiple keys (containing string values) and store the result in the
                 ///// destination key.
                 ///// </summary>
-                ///// 
                 ///// <returns>
                 ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
                 ///// </returns>
-                ///// 
                 ///// <remarks>
                 ///// http://redis.io/commands/bitop
                 ///// </remarks>
@@ -1365,11 +1527,9 @@ namespace BB.Caching
                 ///// Perform a bitwise XOR operation between multiple keys (containing string values) and store the result in the
                 ///// destination key.
                 ///// </summary>
-                ///// 
                 ///// <returns>
                 ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
                 ///// </returns>
-                ///// 
                 ///// <remarks>
                 ///// http://redis.io/commands/bitop
                 ///// </remarks>
@@ -1410,11 +1570,9 @@ namespace BB.Caching
                 ///// Perform a bitwise NOT operation on a key (containing a string value) and store the result in the destination
                 ///// key.
                 ///// </summary>
-                ///// 
                 ///// <returns>
                 ///// The size of the string stored in the destination key, that is equal to the size of the longest input string.
                 ///// </returns>
-                ///// 
                 ///// <remarks>
                 ///// http://redis.io/commands/bitop
                 ///// </remarks>
@@ -1459,11 +1617,18 @@ namespace BB.Caching
                 /// <see cref="ReleaseLockAsync">ReleaseLockAsync</see>.
                 /// </para>
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
+                /// <param name="expiry">
+                /// An expiration lifetime.
+                /// </param>
                 /// <returns>
                 /// <c>null</c> if the lock was successfully taken; the competing value otherwise
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// It transpires that robust locking in redis is actually remarkably hard, and most implementations are broken
                 /// in one way or another (most commonly: thread-race, or extending the lock duration when failing to take the
@@ -1479,6 +1644,7 @@ namespace BB.Caching
                             .GetDatabase(SharedCache.Instance.Db)
                             .LockTake(key, value, expiry);
                     }
+
                     return result;
                 }
 
@@ -1494,11 +1660,18 @@ namespace BB.Caching
                 /// <see cref="ReleaseLockAsync">ReleaseLockAsync</see>.
                 /// </para>
                 /// </summary>
-                /// 
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
+                /// <param name="expiry">
+                /// An expiration lifetime.
+                /// </param>
                 /// <returns>
                 /// <c>null</c> if the lock was successfully taken; the competing value otherwise
                 /// </returns>
-                /// 
                 /// <remarks>
                 /// It transpires that robust locking in redis is actually remarkably hard, and most implementations are broken
                 /// in one way or another (most commonly: thread-race, or extending the lock duration when failing to take the
@@ -1510,13 +1683,11 @@ namespace BB.Caching
                     Task<bool> result = null;
                     foreach (var connection in connections)
                     {
-                        var task = connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .LockTakeAsync(key, value, expiry);
-
-                        if (null == result)
-                            result = task;
                     }
+
                     return result;
                 }
 
@@ -1524,6 +1695,12 @@ namespace BB.Caching
                 /// Releases a lock that was taken successfully via TakeLock. You should not release a lock that you did not
                 /// take, as this will cause problems.
                 /// </summary>
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
                 public static void ReleaseLock(RedisKey key, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
@@ -1539,16 +1716,27 @@ namespace BB.Caching
                 /// Releases a lock that was taken successfully via TakeLock. You should not release a lock that you did not
                 /// take, as this will cause problems.
                 /// </summary>
+                /// <param name="key">
+                /// The key.
+                /// </param>
+                /// <param name="value">
+                /// The value.
+                /// </param>
+                /// <returns>
+                /// The <see cref="Task"/> (void).
+                /// </returns>
                 public static Task ReleaseLockAsync(RedisKey key, RedisValue value)
                 {
                     var connections = SharedCache.Instance.GetWriteConnections(key);
+                    Task result = null;
                     foreach (var connection in connections)
                     {
-                        connection
+                        result = connection
                             .GetDatabase(SharedCache.Instance.Db)
                             .LockReleaseAsync(key, value);
                     }
-                    return Task.FromResult(false);
+
+                    return result;
                 }
             }
         }
