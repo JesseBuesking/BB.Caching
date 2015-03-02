@@ -3,39 +3,40 @@
     /// <summary>
     /// Represents values that can be stored in memory.
     /// </summary>
+    /// <typeparam name="TObject">
+    /// The type of the underlying value.
+    /// </typeparam>
     public struct MemoryValue<TObject>
     {
         /// <summary>
         /// The actual value stored in memory.
         /// </summary>
-        public TObject Value
-        {
-            get { return this._value; }
-        }
-
-        private readonly TObject _value;
+        public TObject Value { get; private set; }
 
         /// <summary>
         /// Indicates whether the key existed.
         /// </summary>
-        public bool Exists
-        {
-            get { return this._exists; }
-        }
-
-        private readonly bool _exists;
-
-        public static MemoryValue<TObject> Null = new MemoryValue<TObject>(default(TObject), false); 
+        public bool Exists { get; private set; }
 
         /// <summary>
-        /// 
+        /// Default null instance.
         /// </summary>
-        /// <param name="value">the value stored in memory</param>
-        /// <param name="exists">indicates whether the key existed</param>
+        public static MemoryValue<TObject> Null = new MemoryValue<TObject>(default(TObject), false);
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MemoryValue{TObject}"/> struct.
+        /// </summary>
+        /// <param name="value">
+        /// The value.
+        /// </param>
+        /// <param name="exists">
+        /// Whether the key existed.
+        /// </param>
         public MemoryValue(TObject value, bool exists)
+            : this()
         {
-            this._value = value;
-            this._exists = exists;
+            this.Value = value;
+            this.Exists = exists;
         }
     }
 }

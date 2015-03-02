@@ -1,10 +1,10 @@
-﻿using BB.Caching.Redis;
-
-// ReSharper disable once CheckNamespace
+﻿// ReSharper disable once CheckNamespace
 namespace BB.Caching
 {
+    using BB.Caching.Redis;
+
     /// <summary>
-    /// Contains access to all available caching mechanisms. (In-memory, Shared)
+    /// Contains the core methods for caching data in memory, redis, or both.
     /// </summary>
     public static partial class Cache
     {

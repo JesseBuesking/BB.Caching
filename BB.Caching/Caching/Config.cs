@@ -1,15 +1,23 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using BB.Caching.Caching;
-using BB.Caching.Compression;
-using BB.Caching.Redis;
-using StackExchange.Redis;
-
-// ReSharper disable once CheckNamespace
+﻿// ReSharper disable once CheckNamespace
 namespace BB.Caching
 {
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    using BB.Caching.Caching;
+    using BB.Caching.Compression;
+    using BB.Caching.Redis;
+
+    using StackExchange.Redis;
+
+    /// <summary>
+    /// Contains the core methods for caching data in memory, redis, or both.
+    /// </summary>
     public static partial class Cache
     {
+        /// <summary>
+        /// The config.
+        /// </summary>
         public static class Config
         {
             /// <summary>
