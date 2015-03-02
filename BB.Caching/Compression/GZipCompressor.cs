@@ -19,18 +19,18 @@
             () => new GZipCompressor(), LazyThreadSafetyMode.ExecutionAndPublication);
 
         /// <summary>
+        /// Prevents a default instance of the <see cref="GZipCompressor"/> class from being created.
+        /// </summary>
+        private GZipCompressor()
+        {
+        }
+
+        /// <summary>
         /// Gets the instance.
         /// </summary>
         public static GZipCompressor Instance
         {
             get { return GZipCompressor._Lazy.Value; }
-        }
-
-        /// <summary>
-        /// Prevents a default instance of the <see cref="GZipCompressor"/> class from being created.
-        /// </summary>
-        private GZipCompressor()
-        {
         }
 
         /// <summary>

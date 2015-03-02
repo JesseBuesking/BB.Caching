@@ -1,9 +1,12 @@
-﻿using System;
-using BB.Caching.Redis;
-using Xunit;
-
-namespace BB.Caching.Tests.Redis
+﻿namespace BB.Caching.Tests.Redis
 {
+    using System;
+    using System.Diagnostics.CodeAnalysis;
+
+    using BB.Caching.Redis;
+
+    using Xunit;
+
     public class StatisticTestsFixture : IDisposable
     {
         public StatisticTestsFixture()
@@ -13,7 +16,8 @@ namespace BB.Caching.Tests.Redis
                 Cache.Prepare();
             }
             catch (PubSub.ChannelAlreadySubscribedException)
-            { }
+            {
+            }
         }
 
         public void Dispose()
@@ -21,6 +25,10 @@ namespace BB.Caching.Tests.Redis
         }
     }
 
+    [SuppressMessage(
+        "StyleCop.CSharp.MaintainabilityRules",
+        "SA1402:FileMayOnlyContainASingleClass",
+        Justification = "Reviewed. Suppression is OK here.")]
     public class StatisticTests : IUseFixture<DefaultTestFixture>, IUseFixture<StatisticTestsFixture>, IDisposable
     {
         private const string KEY = "StatisticTests.Key";
@@ -50,8 +58,8 @@ namespace BB.Caching.Tests.Redis
             Assert.Equal(3.0, stat.Mean);
             Assert.Equal(1.0, stat.MinimumValue);
             Assert.Equal(5, stat.NumberOfValues);
-            Assert.Equal(Math.Sqrt(5.0d/2.0d), stat.PopulationStandardDeviation);
-            Assert.Equal(5.0d/2.0d, stat.PopulationVariance);
+            Assert.Equal(Math.Sqrt(5.0d / 2.0d), stat.PopulationStandardDeviation);
+            Assert.Equal(5.0d / 2.0d, stat.PopulationVariance);
 
             stat = Statistics.GetStatisticsAsync(KEY).Result;
 
@@ -59,8 +67,8 @@ namespace BB.Caching.Tests.Redis
             Assert.Equal(3.0, stat.Mean);
             Assert.Equal(1.0, stat.MinimumValue);
             Assert.Equal(5, stat.NumberOfValues);
-            Assert.Equal(Math.Sqrt(5.0d/2.0d), stat.PopulationStandardDeviation);
-            Assert.Equal(5.0d/2.0d, stat.PopulationVariance);
+            Assert.Equal(Math.Sqrt(5.0d / 2.0d), stat.PopulationStandardDeviation);
+            Assert.Equal(5.0d / 2.0d, stat.PopulationVariance);
         }
 
         public void SetFixture(DefaultTestFixture data)

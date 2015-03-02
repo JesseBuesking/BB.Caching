@@ -1,29 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using BB.Caching.Redis;
-using Xunit;
-
-namespace BB.Caching.Tests.Redis
+﻿namespace BB.Caching.Tests.Redis
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using BB.Caching.Redis;
+
+    using Xunit;
+
     public class BloomFilterTests : IUseFixture<DefaultTestFixture>, IUseFixture<BloomFilterTests.BloomFilterFixture>
     {
         private const string KEY = "BloomFilterTests.Key";
 
         private const float FALSE_POSITIVE_PERCENTAGE = 0.001f;
-
-        public class BloomFilterFixture : IDisposable
-        {
-            public BloomFilterFixture()
-            {
-                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
-            }
-
-            public void Dispose()
-            {
-                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
-            }
-        }
 
         [Fact]
         public void Add()
@@ -41,16 +30,25 @@ namespace BB.Caching.Tests.Redis
         [Fact]
         public void FalsePositiveTest()
         {
-            const int stringLength = 3;
-            int half = (int)Math.Pow(26, stringLength) / 2;
+            const int STRING_LENGTH = 3;
+            int half = (int)Math.Pow(26, STRING_LENGTH) / 2;
             // ReSharper disable RedundantArgumentDefaultValue
             var bloomFilter = new BloomFilter(half, FALSE_POSITIVE_PERCENTAGE);
             // ReSharper restore RedundantArgumentDefaultValue
-            float fpPercentage = BloomTest(bloomFilter, 3, KEY);
+            float falsePositivePercentage = BloomTest(bloomFilter, 3, KEY);
 
             Console.WriteLine("Target false positive percentage: {0:#0.#%}", FALSE_POSITIVE_PERCENTAGE);
-            Console.WriteLine("Actual: {0:#0.###%}, or 1 in {1:#,###.#}", fpPercentage, 1 / fpPercentage);
-            Assert.True(FALSE_POSITIVE_PERCENTAGE * 2 >= fpPercentage);
+            Console.WriteLine(
+                "Actual: {0:#0.###%}, or 1 in {1:#,###.#}", falsePositivePercentage, 1 / falsePositivePercentage);
+            Assert.True(FALSE_POSITIVE_PERCENTAGE * 2 >= falsePositivePercentage);
+        }
+
+        public void SetFixture(DefaultTestFixture data)
+        {
+        }
+
+        public void SetFixture(BloomFilterFixture data)
+        {
         }
 
         private static float BloomTest(BloomFilter bloomFilter, int stringLength, string key)
@@ -60,10 +58,10 @@ namespace BB.Caching.Tests.Redis
             for (int i = 0; i < dbl; i++)
             {
                 int z = i;
-                string s = "";
+                string s = string.Empty;
                 for (int j = 1; j < stringLength + 1; ++j)
                 {
-                    s = (char)(z % 26 + 65) + s;
+                    s = (char)((z % 26) + 65) + s;
                     z = z / 26;
                 }
 // ReSharper disable once UnusedVariable
@@ -72,26 +70,32 @@ namespace BB.Caching.Tests.Redis
                 ++i;
                 z = i;
 
-                s = "";
+                s = string.Empty;
                 for (int j = 1; j < stringLength + 1; ++j)
                 {
-                    s = (char)(z % 26 + 65) + s;
+                    s = (char)((z % 26) + 65) + s;
                     z = z / 26;
                 }
+
                 values.Add(s);
             }
 
-            int fpCount = values.Sum(value => bloomFilter.IsSetAsync(key, value).Result ? 1 : 0);
+            int falsePositiveCount = values.Sum(value => bloomFilter.IsSetAsync(key, value).Result ? 1 : 0);
 
-            return ((float)fpCount) / bloomFilter.Options.NumberOfItems;
+            return ((float)falsePositiveCount) / bloomFilter.Options.NumberOfItems;
         }
 
-        public void SetFixture(DefaultTestFixture data)
+        public class BloomFilterFixture : IDisposable
         {
-        }
+            public BloomFilterFixture()
+            {
+                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
+            }
 
-        public void SetFixture(BloomFilterFixture data)
-        {
+            public void Dispose()
+            {
+                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
+            }
         }
     }
 }

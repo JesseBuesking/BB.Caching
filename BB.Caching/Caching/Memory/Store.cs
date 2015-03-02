@@ -27,6 +27,14 @@ namespace BB.Caching
                     () => new Core(), LazyThreadSafetyMode.ExecutionAndPublication);
 
                 /// <summary>
+                /// Prevents a default instance of the <see cref="Core"/> class from being created.
+                /// </summary>
+                private Core()
+                {
+                    this.CacheStore = new MemoryCache("l1-cache");
+                }
+
+                /// <summary>
                 /// Gets the instance.
                 /// </summary>
                 public static Core Instance
@@ -41,14 +49,6 @@ namespace BB.Caching
                 {
                     get;
                     set;
-                }
-
-                /// <summary>
-                /// Prevents a default instance of the <see cref="Core"/> class from being created.
-                /// </summary>
-                private Core()
-                {
-                    this.CacheStore = new MemoryCache("l1-cache");
                 }
             }
         }

@@ -1,58 +1,27 @@
-﻿using System;
-using System.Threading;
-using BB.Caching.Redis;
-using ProtoBuf;
-using Xunit;
-
-namespace BB.Caching.Tests.Caching
+﻿namespace BB.Caching.Tests.Caching
 {
+    using System;
+    using System.Threading;
+
+    using BB.Caching.Redis;
+
+    using ProtoBuf;
+
+    using Xunit;
+
     public class ConfigTests : IUseFixture<DefaultTestFixture>, IUseFixture<ConfigTests.ConfigTestsFixture>, IDisposable
     {
-        public class ConfigTestsFixture : IDisposable
-        {
-            public ConfigTestsFixture()
-            {
-                try
-                {
-                    Cache.Prepare();
-                }
-                catch (PubSub.ChannelAlreadySubscribedException)
-                { }
-
-                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
-                Cache.Shared.Keys.DeleteAsync(KEY2).Wait();
-            }
-
-            public void Dispose()
-            {
-                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
-                Cache.Shared.Keys.DeleteAsync(KEY2).Wait();
-            }
-        }
-
-        [ProtoContract]
-        public class ConfigDummy
-        {
-            [ProtoMember(1)]
-            public int One
-            {
-                get;
-                set;
-            }
-
-            [ProtoMember(2)]
-            public int Two
-            {
-                get;
-                set;
-            }
-        }
-
         private const string KEY = "ConfigTests.Key";
 
         private const string KEY2 = "ConfigTests.Key2";
 
         private const string VALUE = "ConfigTests.Value";
+
+        private readonly ConfigDummy _value = new ConfigDummy
+            {
+                One = 1,
+                Two = 2
+            };
 
         public ConfigTests()
         {
@@ -71,12 +40,6 @@ namespace BB.Caching.Tests.Caching
             Assert.False(Cache.Shared.Keys.ExistsAsync(KEY).Result);
             Assert.False(Cache.Shared.Keys.ExistsAsync(KEY2).Result);
         }
-
-        private readonly ConfigDummy _value = new ConfigDummy
-            {
-                One = 1,
-                Two = 2
-            };
 
         [Fact]
         public void Set()
@@ -188,6 +151,47 @@ namespace BB.Caching.Tests.Caching
 
         public void SetFixture(DefaultTestFixture data)
         {
+        }
+
+        public class ConfigTestsFixture : IDisposable
+        {
+            public ConfigTestsFixture()
+            {
+                try
+                {
+                    Cache.Prepare();
+                }
+                catch (PubSub.ChannelAlreadySubscribedException)
+                {
+                }
+
+                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
+                Cache.Shared.Keys.DeleteAsync(KEY2).Wait();
+            }
+
+            public void Dispose()
+            {
+                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
+                Cache.Shared.Keys.DeleteAsync(KEY2).Wait();
+            }
+        }
+
+        [ProtoContract]
+        public class ConfigDummy
+        {
+            [ProtoMember(1)]
+            public int One
+            {
+                get;
+                set;
+            }
+
+            [ProtoMember(2)]
+            public int Two
+            {
+                get;
+                set;
+            }
         }
     }
 }

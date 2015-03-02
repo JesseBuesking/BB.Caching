@@ -9,16 +9,6 @@
     public struct MemoryValue<TObject>
     {
         /// <summary>
-        /// The actual value stored in memory.
-        /// </summary>
-        public TObject Value { get; private set; }
-
-        /// <summary>
-        /// Indicates whether the key existed.
-        /// </summary>
-        public bool Exists { get; private set; }
-
-        /// <summary>
         /// Default null instance.
         /// </summary>
         public static MemoryValue<TObject> Null = new MemoryValue<TObject>(default(TObject), false);
@@ -38,5 +28,15 @@
             this.Value = value;
             this.Exists = exists;
         }
+
+        /// <summary>
+        /// The actual value stored in memory.
+        /// </summary>
+        public TObject Value { get; private set; }
+
+        /// <summary>
+        /// Indicates whether the key existed.
+        /// </summary>
+        public bool Exists { get; private set; }
     }
 }

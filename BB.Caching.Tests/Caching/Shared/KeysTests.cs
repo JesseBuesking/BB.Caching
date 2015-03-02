@@ -1,55 +1,62 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using BB.Caching.Caching;
-using StackExchange.Redis;
-using Xunit;
-
-namespace BB.Caching.Tests.Caching.Shared
+﻿namespace BB.Caching.Tests.Caching.Shared
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading;
+
+    using BB.Caching.Caching;
+
+    using StackExchange.Redis;
+
+    using Xunit;
+
     public class KeysTests : IUseFixture<DefaultTestFixture>, IDisposable
     {
-        private readonly Dictionary<string, string> _kvPs = new Dictionary<string, string>
+        private readonly Dictionary<string, string> _keyValuePairs = new Dictionary<string, string>
             {
-                {"key1", "0"},
-                {"key2", "1"},
-                {"key003", "2"},
-                {"key4", "3"}
+                { "key1", "0" },
+                { "key2", "1" },
+                { "key003", "2" },
+                { "key4", "3" }
             };
-
-        private Dictionary<RedisKey, RedisValue> KVPs
-        {
-            get { return this._kvPs.ToDictionary(x => (RedisKey)x.Key, x => (RedisValue)x.Value); }
-        }
-
-        private RedisKey Key
-        {
-            get { return this._kvPs.First().Key; }
-        }
-
-        private RedisKey[] Keyz
-        {
-            get { return this._kvPs.Keys.Select(x => (RedisKey)x).ToArray(); }
-        }
-
-        private RedisValue Value
-        {
-            get { return this._kvPs.First().Value; }
-        }
 
         public KeysTests()
         {
             Cache.Shared.Keys.DeleteAsync(this.Keyz).Wait();
-            foreach (var key in this._kvPs.Keys)
+            foreach (var key in this._keyValuePairs.Keys)
+            {
                 Assert.False(Cache.Shared.Keys.ExistsAsync(key).Result);
+            }
+        }
+
+        private Dictionary<RedisKey, RedisValue> KVPs
+        {
+            get { return this._keyValuePairs.ToDictionary(x => (RedisKey)x.Key, x => (RedisValue)x.Value); }
+        }
+
+        private RedisKey Key
+        {
+            get { return this._keyValuePairs.First().Key; }
+        }
+
+        private RedisKey[] Keyz
+        {
+            get { return this._keyValuePairs.Keys.Select(x => (RedisKey)x).ToArray(); }
+        }
+
+        private RedisValue Value
+        {
+            get { return this._keyValuePairs.First().Value; }
         }
 
         public void Dispose()
         {
             Cache.Shared.Keys.DeleteAsync(this.Keyz).Wait();
-            foreach (var key in this._kvPs.Keys)
+            foreach (var key in this._keyValuePairs.Keys)
+            {
                 Assert.False(Cache.Shared.Keys.ExistsAsync(key).Result);
+            }
         }
 
         [Fact]
@@ -75,31 +82,43 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void DeleteMultiple()
         {
-            foreach (var kvp in this._kvPs)
+            foreach (var kvp in this._keyValuePairs)
+            {
                 Cache.Shared.Strings.Set(kvp.Key, kvp.Value);
+            }
 
-            foreach (var key in this._kvPs.Keys)
+            foreach (var key in this._keyValuePairs.Keys)
+            {
                 Assert.True(Cache.Shared.Keys.Exists(key));
+            }
 
-            Assert.Equal(this._kvPs.Count, Cache.Shared.Keys.Delete(this.Keyz));
+            Assert.Equal(this._keyValuePairs.Count, Cache.Shared.Keys.Delete(this.Keyz));
 
-            foreach (var key in this._kvPs.Keys)
+            foreach (var key in this._keyValuePairs.Keys)
+            {
                 Assert.False(Cache.Shared.Keys.Exists(key));
+            }
         }
 
         [Fact]
         public void DeleteMultipleAsync()
         {
-            foreach (var kvp in this._kvPs)
+            foreach (var kvp in this._keyValuePairs)
+            {
                 Cache.Shared.Strings.SetAsync(kvp.Key, kvp.Value).Wait();
+            }
 
-            foreach (var key in this._kvPs.Keys)
+            foreach (var key in this._keyValuePairs.Keys)
+            {
                 Assert.True(Cache.Shared.Keys.ExistsAsync(key).Result);
+            }
 
-            Assert.Equal(this._kvPs.Count, Cache.Shared.Keys.DeleteAsync(this.Keyz).Result);
+            Assert.Equal(this._keyValuePairs.Count, Cache.Shared.Keys.DeleteAsync(this.Keyz).Result);
 
-            foreach (var key in this._kvPs.Keys)
+            foreach (var key in this._keyValuePairs.Keys)
+            {
                 Assert.False(Cache.Shared.Keys.ExistsAsync(key).Result);
+            }
         }
 
         [Fact]
@@ -200,20 +219,6 @@ namespace BB.Caching.Tests.Caching.Shared
             Assert.True(Cache.Shared.Keys.ExistsAsync(this.Key).Result);
         }
 
-        // TODO FIX
-        //[Fact]
-        //public void Find()
-        //{
-        //    Cache.Shared.Strings.SetAsync(this.KVPs).Wait();
-        //    string[] keys = Cache.Shared.Keys.Find("key").Result;
-
-        //    Assert.Equal(0, keys.Length);
-
-        //    keys = Cache.Shared.Keys.Find("key*").Result;
-
-        //    Assert.Equal(4, keys.Length);
-        //}
-
         [Fact(Skip = "Skipping")]
         public void Random()
         {
@@ -227,9 +232,13 @@ namespace BB.Caching.Tests.Caching.Shared
                 if (null == (string)key)
                 {
                     if (1000 < i)
+                    {
                         Assert.True(false, "didn't find the value");
+                    }
+
                     continue;
                 }
+
                 Assert.Equal(this.Key, key);
                 break;
             }
@@ -248,9 +257,13 @@ namespace BB.Caching.Tests.Caching.Shared
                 if (null == (string)key)
                 {
                     if (1000 < i)
+                    {
                         Assert.True(false, "didn't find the value");
+                    }
+
                     continue;
                 }
+
                 Assert.Equal(this.Key, key);
                 break;
             }
@@ -314,7 +327,7 @@ namespace BB.Caching.Tests.Caching.Shared
             // 1 b/c bb.cache.config
             Assert.Equal(1, Cache.Shared.Keys.GetLength());
             Cache.Shared.Strings.SetAsync(this.KVPs);
-            Assert.Equal(this._kvPs.Count + 1, Cache.Shared.Keys.GetLength());
+            Assert.Equal(this._keyValuePairs.Count + 1, Cache.Shared.Keys.GetLength());
         }
 
         [Fact]
@@ -368,23 +381,23 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void InvalidateMultiple()
         {
-            foreach (var kvp in this._kvPs)
+            foreach (var kvp in this._keyValuePairs)
             {
                 Cache.Memory.Strings.Set(kvp.Key, kvp.Value);
             }
 
             MemoryValue<string> value;
-            foreach (var kvp in this._kvPs)
+            foreach (var kvp in this._keyValuePairs)
             {
                 value = Cache.Memory.Strings.Get<string>(kvp.Key);
                 Assert.True(value.Exists);
                 Assert.Equal(kvp.Value, value.Value);
             }
 
-            long receivedBy = Cache.Shared.Keys.Invalidate(this._kvPs.Keys.ToArray());
+            long receivedBy = Cache.Shared.Keys.Invalidate(this._keyValuePairs.Keys.ToArray());
             Assert.Equal(1, receivedBy);
 
-            foreach (var kvp in this._kvPs)
+            foreach (var kvp in this._keyValuePairs)
             {
                 value = Cache.Memory.Strings.Get<string>(kvp.Key);
                 Assert.False(value.Exists);
@@ -394,23 +407,23 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void InvalidateMultipleAsync()
         {
-            foreach (var kvp in this._kvPs)
+            foreach (var kvp in this._keyValuePairs)
             {
                 Cache.Memory.Strings.SetAsync(kvp.Key, kvp.Value).Wait();
             }
 
             MemoryValue<string> value;
-            foreach (var kvp in this._kvPs)
+            foreach (var kvp in this._keyValuePairs)
             {
                 value = Cache.Memory.Strings.GetAsync<string>(kvp.Key).Result;
                 Assert.True(value.Exists);
                 Assert.Equal(kvp.Value, value.Value);
             }
 
-            long receivedBy = Cache.Shared.Keys.InvalidateAsync(this._kvPs.Keys.ToArray()).Result;
+            long receivedBy = Cache.Shared.Keys.InvalidateAsync(this._keyValuePairs.Keys.ToArray()).Result;
             Assert.Equal(1, receivedBy);
 
-            foreach (var kvp in this._kvPs)
+            foreach (var kvp in this._keyValuePairs)
             {
                 value = Cache.Memory.Strings.GetAsync<string>(kvp.Key).Result;
                 Assert.False(value.Exists);

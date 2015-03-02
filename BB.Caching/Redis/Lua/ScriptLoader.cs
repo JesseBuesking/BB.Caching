@@ -19,17 +19,24 @@
             () => new ScriptLoader(), LazyThreadSafetyMode.ExecutionAndPublication);
 
         /// <summary>
+        /// A cache to store the contents of the lua files.
+        /// </summary>
+        private readonly Dictionary<string, string> _cache = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Prevents a default instance of the <see cref="ScriptLoader"/> class from being created.
+        /// </summary>
+        private ScriptLoader()
+        {
+        }
+
+        /// <summary>
         /// Gets the instance.
         /// </summary>
         public static ScriptLoader Instance
         {
             get { return _Lazy.Value; }
         }
-
-        /// <summary>
-        /// A cache to store the contents of the lua files.
-        /// </summary>
-        private readonly Dictionary<string, string> _cache = new Dictionary<string, string>();
 
         /// <summary>
         /// Index to get a script for a particular key.
@@ -53,13 +60,6 @@
                 this._cache[key] = ScriptLoader.LuaFileToString(key);
                 return this._cache[key];
             }
-        }
-
-        /// <summary>
-        /// Prevents a default instance of the <see cref="ScriptLoader"/> class from being created.
-        /// </summary>
-        private ScriptLoader()
-        {
         }
 
         /// <summary>

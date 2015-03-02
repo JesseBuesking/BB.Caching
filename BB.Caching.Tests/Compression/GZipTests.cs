@@ -1,12 +1,14 @@
-﻿using System;
-using System.Diagnostics;
-using System.Text;
-using System.Threading.Tasks;
-using BB.Caching.Compression;
-using Xunit;
-
-namespace BB.Caching.Tests.Compression
+﻿namespace BB.Caching.Tests.Compression
 {
+    using System;
+    using System.Diagnostics;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    using BB.Caching.Compression;
+
+    using Xunit;
+
     public class GZipTests
     {
         private const string VALUE = "I am the string that we want to compress, but it's never smaller! :(";
@@ -42,32 +44,30 @@ namespace BB.Caching.Tests.Compression
         [Fact(Skip = "Skipping")]
         public void AsyncFaster()
         {
-            const int iterations = 100000;
+            const int ITERATIONS = 100000;
 
-// ReSharper disable TooWideLocalVariableScope
+            // ReSharper disable once TooWideLocalVariableScope
             byte[] compressSync;
 #pragma warning disable 219
             byte[] decompressSync;
 #pragma warning restore 219
-// ReSharper restore TooWideLocalVariableScope
             Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
                 compressSync = GZipCompressor.Instance.Compress(VALUE);
-// ReSharper disable RedundantAssignment
+                // ReSharper disable once RedundantAssignment
                 decompressSync = GZipCompressor.Instance.Decompress(compressSync);
-// ReSharper restore RedundantAssignment
             }
+
             long sync = sw.ElapsedTicks;
 
-// ReSharper disable TooWideLocalVariableScope
+            // ReSharper disable once TooWideLocalVariableScope
             byte[] compressAsync;
 #pragma warning disable 219
             byte[] decompressAsync;
 #pragma warning restore 219
-// ReSharper restore TooWideLocalVariableScope
             sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
                 Task.Run(async () =>
                     {
@@ -75,23 +75,15 @@ namespace BB.Caching.Tests.Compression
                         decompressAsync = await GZipCompressor.Instance.DecompressAsync(compressAsync);
                     });
             }
+
             long async = sw.ElapsedTicks;
 
-//            compressAsync = GZip.Instance.CompressAsync(Value).Result;
-//            decompressAsync = GZip.Instance.DecompressAsync(compressAsync).Result;
-
-            string debugInfo = "";
-            debugInfo += "async vs sync: " + ((float) async/sync)*100 + "%\n";
+            string debugInfo = string.Empty;
+            debugInfo += "async vs sync: " + (((float)async / sync) * 100) + "%\n";
             debugInfo += "\n";
             Console.WriteLine(debugInfo);
 
             Assert.True(sync > async);
-//            Assert.Equal(compressSync, compressAsync);
-//            Assert.Equal(decompressSync, decompressAsync);
-//            Assert.True(0 < compressSync.Length);
-//            Assert.True(0 < compressAsync.Length);
-//            Assert.True(0 < decompressSync.Length);
-//            Assert.True(0 < decompressAsync.Length);
         }
     }
 }

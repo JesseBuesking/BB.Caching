@@ -13,97 +13,6 @@
     public class BloomFilter
     {
         /// <summary>
-        /// The bloom filter options.
-        /// </summary>
-        internal class BFOptions
-        {
-            /// <summary>
-            /// Gets the number of bits.
-            /// </summary>
-            public long NumberOfBits
-            {
-                get;
-                private set;
-            }
-
-            /// <summary>
-            /// Gets the number of hashes.
-            /// </summary>
-            public int NumberOfHashes
-            {
-                get;
-                private set;
-            }
-
-            /// <summary>
-            /// Gets the number of items.
-            /// </summary>
-            internal long NumberOfItems
-            {
-                get;
-                private set;
-            }
-
-            /// <summary>
-            /// Gets or sets the probability of false positives.
-            /// </summary>
-            private float ProbabilityOfFalsePositives
-            {
-                get;
-                set;
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref="BFOptions"/> class.
-            /// </summary>
-            /// <param name="numberOfItems">
-            /// The number of items.
-            /// </param>
-            /// <param name="probabilityOfFalsePositives">
-            /// The probability of false positives.
-            /// </param>
-            public BFOptions(long numberOfItems, float probabilityOfFalsePositives)
-            {
-                this.NumberOfItems = numberOfItems;
-                this.ProbabilityOfFalsePositives = probabilityOfFalsePositives;
-
-                double numberOfBits = Math.Ceiling(
-                    (numberOfItems * Math.Log(probabilityOfFalsePositives)) /
-                        Math.Log(1.0 / Math.Pow(2.0, Math.Log(2.0))));
-
-                this.NumberOfBits = (long)numberOfBits;
-
-                double numberOfHashes = Math.Round(Math.Log(2.0) * numberOfBits / numberOfItems);
-
-                this.NumberOfHashes = (int)numberOfHashes;
-            }
-
-            /// <summary>
-            /// The to string.
-            /// </summary>
-            /// <returns>
-            /// The <see cref="string"/>.
-            /// </returns>
-            public override string ToString()
-            {
-                return string.Format(
-                    "{0} hashes, {1:#,##0}KB, {2:#0.##%} fp",
-                    this.NumberOfHashes,
-                    (this.NumberOfBits / 8) / 1024,
-                    this.ProbabilityOfFalsePositives);
-            }
-        }
-
-        /// <summary>
-        /// Gets the options.
-        /// </summary>
-        internal BFOptions Options
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="BloomFilter"/> class.
         /// </summary>
         /// <param name="numberOfItems">
@@ -127,6 +36,15 @@
                     BloomFilter.SetMultipleBitsHash = connection.GetServer(endpoint).ScriptLoad(multipleScript);
                 }
             }
+        }
+
+        /// <summary>
+        /// Gets the options.
+        /// </summary>
+        internal BFOptions Options
+        {
+            get;
+            private set;
         }
 
         /// <summary>
@@ -360,6 +278,88 @@
 
             RedisResult value = await result;
             return !value.IsNull && 1L == (long)value;
+        }
+
+        /// <summary>
+        /// The bloom filter options.
+        /// </summary>
+        internal class BFOptions
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="BFOptions"/> class.
+            /// </summary>
+            /// <param name="numberOfItems">
+            /// The number of items.
+            /// </param>
+            /// <param name="probabilityOfFalsePositives">
+            /// The probability of false positives.
+            /// </param>
+            public BFOptions(long numberOfItems, float probabilityOfFalsePositives)
+            {
+                this.NumberOfItems = numberOfItems;
+                this.ProbabilityOfFalsePositives = probabilityOfFalsePositives;
+
+                double numberOfBits = Math.Ceiling(
+                    (numberOfItems * Math.Log(probabilityOfFalsePositives)) /
+                        Math.Log(1.0 / Math.Pow(2.0, Math.Log(2.0))));
+
+                this.NumberOfBits = (long)numberOfBits;
+
+                double numberOfHashes = Math.Round(Math.Log(2.0) * numberOfBits / numberOfItems);
+
+                this.NumberOfHashes = (int)numberOfHashes;
+            }
+
+            /// <summary>
+            /// Gets the number of bits.
+            /// </summary>
+            public long NumberOfBits
+            {
+                get;
+                private set;
+            }
+
+            /// <summary>
+            /// Gets the number of hashes.
+            /// </summary>
+            public int NumberOfHashes
+            {
+                get;
+                private set;
+            }
+
+            /// <summary>
+            /// Gets the number of items.
+            /// </summary>
+            internal long NumberOfItems
+            {
+                get;
+                private set;
+            }
+
+            /// <summary>
+            /// Gets or sets the probability of false positives.
+            /// </summary>
+            private float ProbabilityOfFalsePositives
+            {
+                get;
+                set;
+            }
+
+            /// <summary>
+            /// The to string.
+            /// </summary>
+            /// <returns>
+            /// The <see cref="string"/>.
+            /// </returns>
+            public override string ToString()
+            {
+                return string.Format(
+                    "{0} hashes, {1:#,##0}KB, {2:#0.##%} fp",
+                    this.NumberOfHashes,
+                    (this.NumberOfBits / 8) / 1024,
+                    this.ProbabilityOfFalsePositives);
+            }
         }
     }
 }

@@ -14,17 +14,17 @@
     public static class RateLimiter
     {
         /// <summary>
+        /// The rate limit increment hash.
+        /// </summary>
+        private static byte[] _rateLimitIncrementHash;
+
+        /// <summary>
         /// SHA hash for the RateLimitIncrement lua script.
         /// </summary>
         private static byte[] RateLimitIncrementHash
         {
             get { return RateLimiter._rateLimitIncrementHash; }
         }
-
-        /// <summary>
-        /// The rate limit increment hash.
-        /// </summary>
-        private static byte[] _rateLimitIncrementHash;
 
         /// <summary>
         /// Loads the underlying Lua script(s) onto all necessary servers.

@@ -23,6 +23,14 @@ namespace BB.Caching
                 () => new Core(), LazyThreadSafetyMode.ExecutionAndPublication);
 
             /// <summary>
+            /// Prevents a default instance of the <see cref="Core"/> class from being created.
+            /// </summary>
+            private Core()
+            {
+                this.Initialize();
+            }
+
+            /// <summary>
             /// Gets the instance.
             /// </summary>
             public static Core Instance
@@ -34,14 +42,6 @@ namespace BB.Caching
             /// The murmur hash.
             /// </summary>
             internal Murmur32 MurmurHash { get; private set; }
-
-            /// <summary>
-            /// Prevents a default instance of the <see cref="Core"/> class from being created.
-            /// </summary>
-            private Core()
-            {
-                this.Initialize();
-            }
 
             /// <summary>
             /// Initializes the hashing core.

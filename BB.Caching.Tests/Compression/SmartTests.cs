@@ -1,9 +1,11 @@
-﻿using System.Text;
-using BB.Caching.Compression;
-using Xunit;
-
-namespace BB.Caching.Tests.Compression
+﻿namespace BB.Caching.Tests.Compression
 {
+    using System.Text;
+
+    using BB.Caching.Compression;
+
+    using Xunit;
+
     public class SmartTests
     {
         private const string VALUE_BAD_COMPRESSION =

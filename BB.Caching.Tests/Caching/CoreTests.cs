@@ -1,12 +1,13 @@
-﻿using System;
-using System.Runtime.Remoting.Channels;
-using System.Threading;
-using BB.Caching.Caching;
-using BB.Caching.Redis;
-using Xunit;
-
-namespace BB.Caching.Tests.Caching
+﻿namespace BB.Caching.Tests.Caching
 {
+    using System;
+    using System.Threading;
+
+    using BB.Caching.Caching;
+    using BB.Caching.Redis;
+
+    using Xunit;
+
     public class CoreTests : IUseFixture<DefaultTestFixture>, IUseFixture<CoreTests.CoreTestsFixture>, IDisposable
     {
         private const string KEY = "CoreTests.Key";
@@ -14,29 +15,6 @@ namespace BB.Caching.Tests.Caching
         private const string VALUE = "CoreTests.Value";
 
         private const string VALUE2 = "CoreTests.Value2";
-
-        public class CoreTestsFixture : IDisposable
-        {
-            public CoreTestsFixture()
-            {
-                try
-                {
-                    Cache.Prepare();
-                }
-                catch (PubSub.ChannelAlreadySubscribedException)
-                {
-                }
-
-                Cache.Memory.Strings.Delete(KEY);
-                Cache.Shared.Keys.Delete(KEY);
-            }
-
-            public void Dispose()
-            {
-                Cache.Memory.Strings.Delete(KEY);
-                Cache.Shared.Keys.Delete(KEY);
-            }
-        }
 
         public CoreTests()
         {
@@ -1621,6 +1599,29 @@ namespace BB.Caching.Tests.Caching
             Assert.Equal(null, mem.Value);
             Assert.False(red.Exists);
             Assert.Equal(null, red.Value);
+        }
+
+        public class CoreTestsFixture : IDisposable
+        {
+            public CoreTestsFixture()
+            {
+                try
+                {
+                    Cache.Prepare();
+                }
+                catch (PubSub.ChannelAlreadySubscribedException)
+                {
+                }
+
+                Cache.Memory.Strings.Delete(KEY);
+                Cache.Shared.Keys.Delete(KEY);
+            }
+
+            public void Dispose()
+            {
+                Cache.Memory.Strings.Delete(KEY);
+                Cache.Shared.Keys.Delete(KEY);
+            }
         }
     }
 }

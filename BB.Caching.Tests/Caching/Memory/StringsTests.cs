@@ -1,11 +1,13 @@
-using System;
-using System.Globalization;
-using System.Threading;
-using BB.Caching.Caching;
-using Xunit;
-
 namespace BB.Caching.Tests.Caching.Memory
 {
+    using System;
+    using System.Globalization;
+    using System.Threading;
+
+    using BB.Caching.Caching;
+
+    using Xunit;
+
     public class StringsTests : IDisposable
     {
         private const string KEY = "Memory.StringsTests.Key";

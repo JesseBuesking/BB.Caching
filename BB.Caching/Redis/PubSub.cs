@@ -14,6 +14,134 @@
     public static class PubSub
     {
         /// <summary>
+        /// Use this to separate your messages if you plan on sending multiple at once.
+        /// </summary>
+        public const string MULTIPLE_MESSAGE_SEPARATOR = "||";
+
+        /// <summary>
+        /// Configures the pub sub instance.
+        /// </summary>
+        /// <param name="connection">
+        /// The connection.
+        /// </param>
+        public static void Configure(ConnectionMultiplexer connection)
+        {
+            PubSubSingleton.Instance.Init(connection);
+        }
+
+        /// <summary>
+        /// Creates a subscription to a channel.
+        /// </summary>
+        /// <param name="channel">The channel of the subscription.</param>
+        /// <param name="subscriptionCallback">The callback method.</param>
+        public static void Subscribe(string channel, Action<string> subscriptionCallback)
+        {
+            PubSubSingleton.Instance.Subscribe(channel, subscriptionCallback);
+        }
+
+        /// <summary>
+        /// Creates a subscription to a channel.
+        /// </summary>
+        /// <param name="channel">
+        /// The channel of the subscription.
+        /// </param>
+        /// <param name="subscriptionCallback">
+        /// The callback method.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/> (void).
+        /// </returns>
+        public static Task SubscribeAsync(string channel, Action<string> subscriptionCallback)
+        {
+            return PubSubSingleton.Instance.SubscribeAsync(channel, subscriptionCallback);
+        }
+
+        /// <summary>
+        /// Creates a subscription to a channel for a specific key.
+        /// </summary>
+        /// <param name="channel">The channel of the subscription.</param>
+        /// <param name="key">The key to target.</param>
+        /// <param name="subscriptionCallback">The callback method.</param>
+        public static void Subscribe(string channel, string key, Action<string> subscriptionCallback)
+        {
+            PubSubSingleton.Instance.Subscribe(channel, key, subscriptionCallback);
+        }
+
+        /// <summary>
+        /// Creates a subscription to a channel for a specific key.
+        /// </summary>
+        /// <param name="channel">
+        /// The channel of the subscription.
+        /// </param>
+        /// <param name="key">
+        /// The key to target.
+        /// </param>
+        /// <param name="subscriptionCallback">
+        /// The callback method.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
+        public static Task SubscribeAsync(string channel, string key, Action<string> subscriptionCallback)
+        {
+            return PubSubSingleton.Instance.SubscribeAsync(channel, key, subscriptionCallback);
+        }
+
+        /// <summary>
+        /// Publishes a message to a channel.
+        /// </summary>
+        /// <param name="channel">The channel to publish to.</param>
+        /// <param name="value">The value of the message.</param>
+        /// <returns>
+        /// The number of clients that received the message.
+        /// </returns>
+        public static long Publish(string channel, string value)
+        {
+            return PubSubSingleton.Instance.Publish(channel, value);
+        }
+
+        /// <summary>
+        /// Publishes a message to a channel.
+        /// </summary>
+        /// <param name="channel">The channel to publish to.</param>
+        /// <param name="value">The value of the message.</param>
+        /// <returns>
+        /// The number of clients that received the message.
+        /// </returns>
+        public static Task<long> PublishAsync(string channel, string value)
+        {
+            return PubSubSingleton.Instance.PublishAsync(channel, value);
+        }
+
+        /// <summary>
+        /// Publishes a message to a channel for a specific key.
+        /// </summary>
+        /// <param name="channel">The channel to publish to.</param>
+        /// <param name="key">The key to target.</param>
+        /// <param name="value">The value of the message.</param>
+        /// <returns>
+        /// The number of clients that received the message.
+        /// </returns>
+        public static long Publish(string channel, string key, string value)
+        {
+            return PubSubSingleton.Instance.Publish(channel, key, value);
+        }
+
+        /// <summary>
+        /// Publishes a message to a channel for a specific key.
+        /// </summary>
+        /// <param name="channel">The channel to publish to.</param>
+        /// <param name="key">The key to target.</param>
+        /// <param name="value">The value of the message.</param>
+        /// <returns>
+        /// The number of clients that received the message.
+        /// </returns>
+        public static Task<long> PublishAsync(string channel, string key, string value)
+        {
+            return PubSubSingleton.Instance.PublishAsync(channel, key, value);
+        }
+
+        /// <summary>
         /// Exception when a channel is already subscribed.
         /// </summary>
         public class ChannelAlreadySubscribedException : Exception
@@ -42,20 +170,34 @@
                 () => new PubSubSingleton(), LazyThreadSafetyMode.ExecutionAndPublication);
 
             /// <summary>
-            /// Gets the instance.
-            /// </summary>
-            public static PubSubSingleton Instance
-            {
-                get { return PubSubSingleton._Lazy.Value; }
-            }
-
-            /// <summary>
             /// A connection specifically used for transmitting pub/sub information.
             /// TODO: consider relying on the existing connections + consistent hashing (pub/sub would then happen across
             /// all the redis instances that are currently running => scales up; minus for cache/invalidate since it'll
             /// always hash to the same box)
             /// </summary>
             private ConnectionMultiplexer _pubSubConnection;
+
+            /// <summary>
+            /// The subscriptions.
+            /// </summary>
+            private ISubscriber _subscriptions;
+
+            /// <summary>
+            /// Prevents a default instance of the <see cref="PubSubSingleton"/> class from being created.
+            /// </summary>
+            private PubSubSingleton()
+            {
+                this.ActiveKeyedSubscriptions = new Dictionary<string, Dictionary<string, Action<string>>>();
+                this.ActiveKeylessSubscriptions = new Dictionary<string, Action<string>>();
+            }
+
+            /// <summary>
+            /// Gets the instance.
+            /// </summary>
+            public static PubSubSingleton Instance
+            {
+                get { return PubSubSingleton._Lazy.Value; }
+            }
 
             /// <summary>
             /// Keeps open all subscriptions that have been made.
@@ -76,11 +218,6 @@
             }
 
             /// <summary>
-            /// The subscriptions.
-            /// </summary>
-            private ISubscriber _subscriptions;
-
-            /// <summary>
             /// All of the active subscriptions that are key-unspecific.
             /// </summary>
             private Dictionary<string, Action<string>> ActiveKeylessSubscriptions
@@ -96,15 +233,6 @@
             {
                 get;
                 set;
-            }
-
-            /// <summary>
-            /// Prevents a default instance of the <see cref="PubSubSingleton"/> class from being created.
-            /// </summary>
-            private PubSubSingleton()
-            {
-                this.ActiveKeyedSubscriptions = new Dictionary<string, Dictionary<string, Action<string>>>();
-                this.ActiveKeylessSubscriptions = new Dictionary<string, Action<string>>();
             }
 
             /// <summary>
@@ -234,7 +362,9 @@
 
                         string pubKey = value.Substring(0, idx);
                         if (key != pubKey)
+                        {
                             return;
+                        }
 
                         string pubData = value.Substring(idx + 1, value.Length - (idx + 1));
                         subscriptionCallback(pubData);
@@ -387,114 +517,6 @@
                 var connection = this._pubSubConnection;
                 return connection;
             }
-        }
-
-        /// <summary>
-        /// Configures the pub sub instance.
-        /// </summary>
-        /// <param name="connection">
-        /// The connection.
-        /// </param>
-        public static void Configure(ConnectionMultiplexer connection)
-        {
-            PubSubSingleton.Instance.Init(connection);
-        }
-
-        /// <summary>
-        /// Use this to separate your messages if you plan on sending multiple at once.
-        /// </summary>
-        public const string MULTIPLE_MESSAGE_SEPARATOR = "||";
-
-        /// <summary>
-        /// Creates a subscription to a channel.
-        /// </summary>
-        /// <param name="channel">The channel of the subscription.</param>
-        /// <param name="subscriptionCallback">The callback method.</param>
-        /// <returns></returns>
-        public static void Subscribe(string channel, Action<string> subscriptionCallback)
-        {
-            PubSubSingleton.Instance.Subscribe(channel, subscriptionCallback);
-        }
-
-        /// <summary>
-        /// Creates a subscription to a channel.
-        /// </summary>
-        /// <param name="channel">The channel of the subscription.</param>
-        /// <param name="subscriptionCallback">The callback method.</param>
-        /// <returns></returns>
-        public static Task SubscribeAsync(string channel, Action<string> subscriptionCallback)
-        {
-            return PubSubSingleton.Instance.SubscribeAsync(channel, subscriptionCallback);
-        }
-
-        /// <summary>
-        /// Creates a subscription to a channel for a specific key.
-        /// </summary>
-        /// <param name="channel">The channel of the subscription.</param>
-        /// <param name="key">The key to target.</param>
-        /// <param name="subscriptionCallback">The callback method.</param>
-        /// <returns></returns>
-        public static void Subscribe(string channel, string key, Action<string> subscriptionCallback)
-        {
-            PubSubSingleton.Instance.Subscribe(channel, key, subscriptionCallback);
-        }
-
-        /// <summary>
-        /// Creates a subscription to a channel for a specific key.
-        /// </summary>
-        /// <param name="channel">The channel of the subscription.</param>
-        /// <param name="key">The key to target.</param>
-        /// <param name="subscriptionCallback">The callback method.</param>
-        /// <returns></returns>
-        public static Task SubscribeAsync(string channel, string key, Action<string> subscriptionCallback)
-        {
-            return PubSubSingleton.Instance.SubscribeAsync(channel, key, subscriptionCallback);
-        }
-
-        /// <summary>
-        /// Publishes a message to a channel.
-        /// </summary>
-        /// <param name="channel">The channel to publish to.</param>
-        /// <param name="value">The value of the message.</param>
-        /// <returns></returns>
-        public static long Publish(string channel, string value)
-        {
-            return PubSubSingleton.Instance.Publish(channel, value);
-        }
-
-        /// <summary>
-        /// Publishes a message to a channel.
-        /// </summary>
-        /// <param name="channel">The channel to publish to.</param>
-        /// <param name="value">The value of the message.</param>
-        /// <returns></returns>
-        public static Task<long> PublishAsync(string channel, string value)
-        {
-            return PubSubSingleton.Instance.PublishAsync(channel, value);
-        }
-
-        /// <summary>
-        /// Publishes a message to a channel for a specific key.
-        /// </summary>
-        /// <param name="channel">The channel to publish to.</param>
-        /// <param name="key">The key to target.</param>
-        /// <param name="value">The value of the message.</param>
-        /// <returns></returns>
-        public static long Publish(string channel, string key, string value)
-        {
-            return PubSubSingleton.Instance.Publish(channel, key, value);
-        }
-
-        /// <summary>
-        /// Publishes a message to a channel for a specific key.
-        /// </summary>
-        /// <param name="channel">The channel to publish to.</param>
-        /// <param name="key">The key to target.</param>
-        /// <param name="value">The value of the message.</param>
-        /// <returns></returns>
-        public static Task<long> PublishAsync(string channel, string key, string value)
-        {
-            return PubSubSingleton.Instance.PublishAsync(channel, key, value);
         }
     }
 }

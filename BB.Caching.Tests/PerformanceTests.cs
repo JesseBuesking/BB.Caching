@@ -1,114 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
-using BB.Caching.Redis;
-using SimpleSpeedTester.Core;
-using SimpleSpeedTester.Core.OutcomeFilters;
-using SimpleSpeedTester.Interfaces;
-using StackExchange.Redis;
-using Xunit;
-
-namespace BB.Caching.Tests
+﻿namespace BB.Caching.Tests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Linq;
+    using System.Threading.Tasks;
+
+    using BB.Caching.Redis;
+
+    using SimpleSpeedTester.Core;
+    using SimpleSpeedTester.Core.OutcomeFilters;
+    using SimpleSpeedTester.Interfaces;
+
+    using StackExchange.Redis;
+
+    using Xunit;
+
     public class PerformanceTests : IUseFixture<DefaultTestFixture>
     {
-        private class CustomResultSummary : ITestResultSummary
-        {
-            internal CustomResultSummary(TestResult testResult, ITestOutcomeFilter outcomeFilter)
-            {
-                TestResult = testResult;
-                Successes = TestResult.Outcomes.Count(o => o.Exception == null);
-                Failures = TestResult.Outcomes.Count() - Successes;
-
-                var eligibleOutcomes = outcomeFilter.Filter(TestResult.Outcomes);
-
-                if (eligibleOutcomes.Any())
-                {
-                    AverageExecutionTime = eligibleOutcomes.Average(o => o.Elapsed.TotalMilliseconds);
-                    ExecutionsPerSecond = eligibleOutcomes.Count / eligibleOutcomes.Sum(o => o.Elapsed.TotalSeconds);
-
-                    double sum = eligibleOutcomes.Sum(
-                        o => Math.Pow(o.Elapsed.TotalMilliseconds - AverageExecutionTime, 2)
-                    );
-                    StandardDeviation = Math.Sqrt(sum/(eligibleOutcomes.Count - 1)) * ExecutionsPerSecond;
-                }            
-            }        
-
-            /// <summary>
-            /// The number of test runs that finished without exception
-            /// </summary>
-            public int Successes { get; private set; }
-
-            /// <summary>
-            /// The number of test runs that excepted
-            /// </summary>
-            public int Failures { get; private set; }
-
-            /// <summary>
-            /// THe average execution time in milliseconds
-            /// </summary>
-            public double AverageExecutionTime { get; private set; }
-
-            /// <summary>
-            /// The number of executions that can be performed per second
-            /// </summary>
-            private double ExecutionsPerSecond { get; set; }
-
-            /// <summary>
-            /// Standard deviation for each.
-            /// </summary>
-            private double StandardDeviation { get; set; }
-
-            /// <summary>
-            /// The test result this summary corresponds to
-            /// </summary>
-            public TestResult TestResult { get; private set; }
-
-            public override string ToString()
-            {
-                return string.Format(
-    @"
-  '{0}' results summary:
-    Successes         [{1}]
-    Failures          [{2}] 
-    Average Exec Time [{3:0.###0}] ms
-    Per Second        [{4:#,##0}]
-    Stdev Per Second  [+/-{5:#,##0}]", 
-                            TestResult.Test,
-                            Successes,
-                            Failures,
-                            AverageExecutionTime,
-                            ExecutionsPerSecond,
-                            StandardDeviation);
-            }
-        }
-
-        private static string TestToString(TestGroup group, ITestOutcomeFilter filter = null)
-        {
-            if (null == filter)
-            {
-                filter = new DefaultTestOutcomeFilter();
-            }
-
-            string header = null;
-            string results = group.GetPlannedTests()
-                .Select(x =>
-                {
-                    var summary = new CustomResultSummary((TestResult) x.GetResult(), filter);
-                    if (null == header)
-                    {
-                        header = summary.TestResult.Test.TestGroup.Name;
-                    }
-                    var result = summary.ToString();
-                    return result;
-                })
-                .Aggregate("", (agg, curr) => agg + curr);
-
-            return String.Format("{0}{1}", header, results);
-        }
-
         private const int ITERATIONS = 10000;
 
         [Fact]
@@ -120,7 +29,8 @@ namespace BB.Caching.Tests
                 Cache.Prepare();
             }
             catch (PubSub.ChannelAlreadySubscribedException)
-            { }
+            {
+            }
 
             Cache.Shared.Keys.ExistsAsync("warmup");
 
@@ -136,13 +46,42 @@ namespace BB.Caching.Tests
             Console.WriteLine(Hashing.Murmur3.All());
         }
 
+        public void SetFixture(DefaultTestFixture data)
+        {
+        }
+
+        private static string TestToString(TestGroup group, ITestOutcomeFilter filter = null)
+        {
+            if (null == filter)
+            {
+                filter = new DefaultTestOutcomeFilter();
+            }
+
+            string header = null;
+            string results = group.GetPlannedTests()
+                .Select(x =>
+                {
+                    var summary = new CustomResultSummary((TestResult)x.GetResult(), filter);
+                    if (null == header)
+                    {
+                        header = summary.TestResult.Test.TestGroup.Name;
+                    }
+
+                    var result = summary.ToString();
+                    return result;
+                })
+                .Aggregate(string.Empty, (agg, curr) => agg + curr);
+
+            return string.Format("{0}{1}", header, results);
+        }
+
         private static class Shared
         {
-            private static readonly RedisKey _key = "PerformanceTests.Shared.Key";
+            private static readonly RedisKey _Key = "PerformanceTests.Shared.Key";
 
-            private static readonly RedisValue _field = "PerformanceTests.Shared.Field";
+            private static readonly RedisValue _Field = "PerformanceTests.Shared.Field";
 
-            private static readonly RedisValue _value = "PerformanceTests.Shared.Value";
+            private static readonly RedisValue _Value = "PerformanceTests.Shared.Value";
 
             public static class Keys
             {
@@ -160,22 +99,22 @@ namespace BB.Caching.Tests
 
                 private static void ExistsAsync()
                 {
-                    Cache.Shared.Keys.ExistsAsync(_key);
+                    Cache.Shared.Keys.ExistsAsync(_Key);
                 }
 
                 private static void ExpireAsync()
                 {
-                    Cache.Shared.Keys.ExpireAsync(_key, TimeSpan.FromSeconds(.5));
+                    Cache.Shared.Keys.ExpireAsync(_Key, TimeSpan.FromSeconds(.5));
                 }
 
                 private static void PersistAsync()
                 {
-                    Cache.Shared.Keys.PersistAsync(_key);
+                    Cache.Shared.Keys.PersistAsync(_Key);
                 }
 
                 private static void DeleteAsync()
                 {
-                    Cache.Shared.Keys.DeleteAsync(_key);
+                    Cache.Shared.Keys.DeleteAsync(_Key);
                 }
             }
 
@@ -195,27 +134,28 @@ namespace BB.Caching.Tests
 
                 private static void SetAsync()
                 {
-// ReSharper disable once UnusedVariable
-                    Task task = Cache.Shared.Strings.SetAsync(_key, _value);
+                    // ReSharper disable once UnusedVariable
+                    Task task = Cache.Shared.Strings.SetAsync(_Key, _Value);
                 }
 
                 private static void GetAsync()
                 {
-// ReSharper disable once UnusedVariable
-                    Task<RedisValue> task = Cache.Shared.Strings.GetAsync(_key);
+                    // ReSharper disable once UnusedVariable
+                    Task<RedisValue> task = Cache.Shared.Strings.GetAsync(_Key);
                 }
 
                 private static void GetExpireAsync()
                 {
-// ReSharper disable once UnusedVariable
-                    Task<RedisValue> task = Cache.Shared.Strings.GetAsync(_key, TimeSpan.FromSeconds(2));
+                    // ReSharper disable once UnusedVariable
+                    Task<RedisValue> task = Cache.Shared.Strings.GetAsync(_Key, TimeSpan.FromSeconds(2));
                 }
 
                 private static void GetExpireSlowAsync()
                 {
-// ReSharper disable once UnusedVariable
-                    Task<RedisValue> task1 = Cache.Shared.Strings.GetAsync(_key);
-                    Task<bool> task2 = Cache.Shared.Keys.ExpireAsync(_key, TimeSpan.FromSeconds(2));
+                    // ReSharper disable once UnusedVariable
+                    Task<RedisValue> task1 = Cache.Shared.Strings.GetAsync(_Key);
+                    // ReSharper disable once UnusedVariable
+                    Task<bool> task2 = Cache.Shared.Keys.ExpireAsync(_Key, TimeSpan.FromSeconds(2));
                 }
             }
 
@@ -233,14 +173,14 @@ namespace BB.Caching.Tests
 
                 private static void SetAsync()
                 {
-// ReSharper disable once UnusedVariable
-                    Task<bool> task = Cache.Shared.Hashes.SetAsync(_key, _field, _value);
+                    // ReSharper disable once UnusedVariable
+                    Task<bool> task = Cache.Shared.Hashes.SetAsync(_Key, _Field, _Value);
                 }
 
                 private static void GetAsync()
                 {
-// ReSharper disable once UnusedVariable
-                    Task<RedisValue> value = Cache.Shared.Hashes.GetAsync(_key, _field);
+                    // ReSharper disable once UnusedVariable
+                    Task<RedisValue> value = Cache.Shared.Hashes.GetAsync(_Key, _Field);
                 }
             }
         }
@@ -249,9 +189,9 @@ namespace BB.Caching.Tests
         {
             public static class BloomFilter
             {
-                private static readonly RedisKey _key = "PerformanceTests.Redis.BloomFilter.Key";
+                private static readonly RedisKey _Key = "PerformanceTests.Redis.BloomFilter.Key";
 
-                private static readonly RedisValue _value = "PerformanceTests.Redis.BloomFilter.Value";
+                private static readonly RedisValue _Value = "PerformanceTests.Redis.BloomFilter.Value";
 
                 public static string All()
                 {
@@ -267,20 +207,20 @@ namespace BB.Caching.Tests
 
                 private static void SetAsync(BB.Caching.Redis.BloomFilter bloomFilter)
                 {
-// ReSharper disable once UnusedVariable
-                    Task t = bloomFilter.AddAsync(_key, _value);
+                    // ReSharper disable once UnusedVariable
+                    Task t = bloomFilter.AddAsync(_Key, _Value);
                 }
 
                 private static void GetAsync(BB.Caching.Redis.BloomFilter bloomFilter)
                 {
-// ReSharper disable once UnusedVariable
-                    Task<bool> task = bloomFilter.IsSetAsync(_key, _value);
+                    // ReSharper disable once UnusedVariable
+                    Task<bool> task = bloomFilter.IsSetAsync(_Key, _Value);
                 }
             }
 
             public static class RateLimiter
             {
-                private static readonly RedisKey _key = "PerformanceTests.Redis.RateLimiter.Key";
+                private static readonly RedisKey _Key = "PerformanceTests.Redis.RateLimiter.Key";
 
                 public static string All()
                 {
@@ -293,15 +233,15 @@ namespace BB.Caching.Tests
 
                 private static void IncrementAsync()
                 {
-// ReSharper disable once UnusedVariable
+                    // ReSharper disable once UnusedVariable
                     Task<RedisResult> result = BB.Caching.Redis.RateLimiter.IncrementAsync(
-                        _key, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1), 1);
+                        _Key, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1), 1);
                 }
             }
 
             public static class Statistics
             {
-                private static readonly RedisKey _key = "PerformanceTests.Redis.Statistics.Key";
+                private static readonly RedisKey _Key = "PerformanceTests.Redis.Statistics.Key";
 
                 public static string All()
                 {
@@ -315,14 +255,14 @@ namespace BB.Caching.Tests
 
                 private static void SetAsync()
                 {
-// ReSharper disable once UnusedVariable
-                    Task t = BB.Caching.Redis.Statistics.SetStatisticAsync(_key, 1.0);
+                    // ReSharper disable once UnusedVariable
+                    Task t = BB.Caching.Redis.Statistics.SetStatisticAsync(_Key, 1.0);
                 }
 
                 private static void GetAsync()
                 {
-// ReSharper disable once UnusedVariable
-                    Task<BB.Caching.Redis.Statistics.Stats> result = BB.Caching.Redis.Statistics.GetStatisticsAsync(_key);
+                    // ReSharper disable once UnusedVariable
+                    Task<BB.Caching.Redis.Statistics.Stats> result = BB.Caching.Redis.Statistics.GetStatisticsAsync(_Key);
                 }
             }
         }
@@ -331,7 +271,7 @@ namespace BB.Caching.Tests
         {
             public static class ConsistentHashRing
             {
-                private static readonly Random _random = new Random(0);
+                private static readonly Random _Random = new Random(0);
 
                 public static string All()
                 {
@@ -339,22 +279,22 @@ namespace BB.Caching.Tests
 
                     var nodes = new Dictionary<string, int>
                         {
-                            {"node1", 1},
-                            {"node2", 1},
-                            {"node3", 1},
-                            {"node4", 1},
-                            {"node5", 1},
-                            {"node6", 1},
-                            {"node7", 1},
-                            {"node8", 1},
-                            {"node9", 1},
-                            {"node10", 1}
+                            { "node1", 1 },
+                            { "node2", 1 },
+                            { "node3", 1 },
+                            { "node4", 1 },
+                            { "node5", 1 },
+                            { "node6", 1 },
+                            { "node7", 1 },
+                            { "node8", 1 },
+                            { "node9", 1 },
+                            { "node10", 1 }
                         };
 
-                    const int replications = 500;
+                    const int REPLICATIONS = 500;
 
                     var ring = new BB.Caching.Hashing.ConsistentHashRing<string>();
-                    ring.Init(nodes, replications);
+                    ring.Init(nodes, REPLICATIONS);
 
                     group.Plan("GetNode", Hashing.ConsistentHashRing.GetNode, ring, ITERATIONS);
 
@@ -367,7 +307,7 @@ namespace BB.Caching.Tests
                 /// <param name="ring"></param>
                 private static void GetNode(BB.Caching.Hashing.ConsistentHashRing<string> ring)
                 {
-                    ring.GetNode(_random.Next(333333).ToString(CultureInfo.InvariantCulture));
+                    ring.GetNode(_Random.Next(333333).ToString(CultureInfo.InvariantCulture));
                 }
             }
 
@@ -390,8 +330,74 @@ namespace BB.Caching.Tests
             }
         }
 
-        public void SetFixture(DefaultTestFixture data)
+        private class CustomResultSummary : ITestResultSummary
         {
+            internal CustomResultSummary(TestResult testResult, ITestOutcomeFilter outcomeFilter)
+            {
+                TestResult = testResult;
+                this.Successes = TestResult.Outcomes.Count(o => o.Exception == null);
+                this.Failures = TestResult.Outcomes.Count() - this.Successes;
+
+                var eligibleOutcomes = outcomeFilter.Filter(TestResult.Outcomes);
+
+                if (eligibleOutcomes.Any())
+                {
+                    this.AverageExecutionTime = eligibleOutcomes.Average(o => o.Elapsed.TotalMilliseconds);
+                    this.ExecutionsPerSecond = eligibleOutcomes.Count / eligibleOutcomes.Sum(o => o.Elapsed.TotalSeconds);
+
+                    double sum = eligibleOutcomes.Sum(
+                        o => Math.Pow(o.Elapsed.TotalMilliseconds - this.AverageExecutionTime, 2));
+                    this.StandardDeviation = Math.Sqrt(sum / (eligibleOutcomes.Count - 1)) * this.ExecutionsPerSecond;
+                }
+            }        
+
+            /// <summary>
+            /// The number of test runs that finished without exception
+            /// </summary>
+            public int Successes { get; private set; }
+
+            /// <summary>
+            /// The number of test runs that excepted
+            /// </summary>
+            public int Failures { get; private set; }
+
+            /// <summary>
+            /// THe average execution time in milliseconds
+            /// </summary>
+            public double AverageExecutionTime { get; private set; }
+
+            /// <summary>
+            /// The test result this summary corresponds to
+            /// </summary>
+            public TestResult TestResult { get; private set; }
+
+            /// <summary>
+            /// The number of executions that can be performed per second
+            /// </summary>
+            private double ExecutionsPerSecond { get; set; }
+
+            /// <summary>
+            /// Standard deviation for each.
+            /// </summary>
+            private double StandardDeviation { get; set; }
+
+            public override string ToString()
+            {
+                return string.Format(
+    @"
+  '{0}' results summary:
+    Successes         [{1}]
+    Failures          [{2}] 
+    Average Exec Time [{3:0.###0}] ms
+    Per Second        [{4:#,##0}]
+    Stdev Per Second  [+/-{5:#,##0}]", 
+                            TestResult.Test,
+                            this.Successes,
+                            this.Failures,
+                            this.AverageExecutionTime,
+                            this.ExecutionsPerSecond,
+                            this.StandardDeviation);
+            }
         }
     }
 }

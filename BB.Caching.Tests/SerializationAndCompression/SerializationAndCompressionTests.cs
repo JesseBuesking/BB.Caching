@@ -1,54 +1,33 @@
-﻿using System;
-using System.Diagnostics;
-using System.Globalization;
-using System.Runtime.Caching;
-using System.Text;
-using BB.Caching.Compression;
-using BB.Caching.Serialization;
-using ProtoBuf;
-using Xunit;
-
-namespace BB.Caching.Tests.SerializationAndCompression
+﻿namespace BB.Caching.Tests.SerializationAndCompression
 {
+    using System;
+    using System.Diagnostics;
+    using System.Globalization;
+    using System.Runtime.Caching;
+    using System.Text;
+
+    using BB.Caching.Compression;
+    using BB.Caching.Serialization;
+
+    using ProtoBuf;
+
+    using Xunit;
+
     public class SerializationAndCompressionTests
     {
-        private static readonly Random _random = new Random(1);
+        private static readonly Random _Random = new Random(1);
 
-        [ProtoContract]
-        private class OneLong
+        [Fact]
+        public void Performance()
         {
-            [ProtoMember(1)]
-            public long Id
-            {
-// ReSharper disable once UnusedAutoPropertyAccessor.Local
-                private get;
-                set;
-            }
-        }
-
-        [ProtoContract]
-        private class MultipleProperties
-        {
-            [ProtoMember(1)]
-            public long Id
-            {
-// ReSharper disable once UnusedAutoPropertyAccessor.Local
-                private get;
-                set;
-            }
-
-            [ProtoMember(2)]
-            public string Name
-            {
-// ReSharper disable once UnusedAutoPropertyAccessor.Local
-                private get;
-                set;
-            }
+            MemorySpeedPerformance();
+            Console.WriteLine(string.Empty);
+            MemorySizePerformance();
         }
 
         private static long GenerateId()
         {
-            return _random.Next(1, int.MaxValue);
+            return _Random.Next(1, int.MaxValue);
         }
 
         /// <summary>
@@ -64,21 +43,16 @@ namespace BB.Caching.Tests.SerializationAndCompression
         /// <returns></returns>
         private static string GenerateString(int length, int repeatSize)
         {
-            int iterations = 0 == repeatSize ? length : length/repeatSize;
+            int iterations = 0 == repeatSize ? length : length / repeatSize;
             repeatSize = 0 == repeatSize ? 1 : repeatSize;
 
             StringBuilder sb = new StringBuilder(length);
             for (int i = 0; i < iterations; i++)
-                sb.Append((char) _random.Next(32, 127), repeatSize);
-            return sb.ToString();
-        }
+            {
+                sb.Append((char)_Random.Next(32, 127), repeatSize);
+            }
 
-        [Fact]
-        public void Performance()
-        {
-            MemorySpeedPerformance();
-            Console.WriteLine("");
-            MemorySizePerformance();
+            return sb.ToString();
         }
 
         private static void MemorySpeedPerformance()
@@ -162,8 +136,8 @@ namespace BB.Caching.Tests.SerializationAndCompression
              * Compression v Raw Set:   175.661x        99.6618x
              */
 
-            const int iterations = 30000;
-            const string key = "impt-key";
+            const int ITERATIONS = 30000;
+            const string KEY = "impt-key";
 
             var value = new OneLong
                 {
@@ -176,110 +150,105 @@ namespace BB.Caching.Tests.SerializationAndCompression
             // warmup
             byte[] serialize = ProtoBufSerializer.Serialize(value);
             byte[] compress = SmartCompressor.Instance.Compress(serialize);
-            cM.Set(key, compress, null);
+            cM.Set(KEY, compress, null);
 
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
                 serialize = ProtoBufSerializer.Serialize(value);
                 compress = SmartCompressor.Instance.Compress(serialize);
-                cM.Set(key, compress, null);
+                cM.Set(KEY, compress, null);
             }
+
             long compressSet = sw.ElapsedMilliseconds;
 
             // warmup
-            byte[] compressed = (byte[]) cM.Get(key);
+            byte[] compressed = (byte[])cM.Get(KEY);
             byte[] decompressed = SmartCompressor.Instance.Decompress(compressed);
             ProtoBufSerializer.Deserialize<OneLong>(decompressed);
 
             sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
-                compressed = (byte[]) cM.Get(key);
+                compressed = (byte[])cM.Get(KEY);
                 decompressed = SmartCompressor.Instance.Decompress(compressed);
                 ProtoBufSerializer.Deserialize<OneLong>(decompressed);
             }
+
             long compressGet = sw.ElapsedMilliseconds;
 
             MemoryCache sM = new MemoryCache("sM");
 
             // warmup
             serialize = ProtoBufSerializer.Serialize(value);
-            sM.Set(key, serialize, null);
+            sM.Set(KEY, serialize, null);
 
             sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
                 serialize = ProtoBufSerializer.Serialize(value);
-                sM.Set(key, serialize, null);
+                sM.Set(KEY, serialize, null);
             }
+
             long serializeSet = sw.ElapsedMilliseconds;
 
-
             // warmup
-            compressed = (byte[]) sM.Get(key);
+            compressed = (byte[])sM.Get(KEY);
             ProtoBufSerializer.Deserialize<OneLong>(compressed);
 
             sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
-                compressed = (byte[]) sM.Get(key);
+                compressed = (byte[])sM.Get(KEY);
                 ProtoBufSerializer.Deserialize<OneLong>(compressed);
             }
+
             long serializeGet = sw.ElapsedMilliseconds;
 
             MemoryCache rM = new MemoryCache("rM");
 
             // warmup
-            rM.Set(key, value, null);
+            rM.Set(KEY, value, null);
 
             sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
-                rM.Set(key, value, null);
+                rM.Set(KEY, value, null);
             }
+
             long rawSet = sw.ElapsedMilliseconds;
 
             // warmup
-            rM.Get(key);
+            rM.Get(KEY);
 
             sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
-                rM.Get(key);
+                rM.Get(KEY);
             }
+
             long rawGet = sw.ElapsedMilliseconds;
 
             Console.WriteLine("Memory Speed: (operations per second)");
             Console.WriteLine("  Set:");
-            Console.WriteLine(
-                "    Raw: {0:#,##0.0#}",
-                (float) iterations/rawSet * 1000.0
-            );
+            Console.WriteLine("    Raw: {0:#,##0.0#}", (float)ITERATIONS / rawSet * 1000.0);
             Console.WriteLine(
                 "    Serialized: {0:#,##0.0#} ({1:0.00})%",
-                (float) iterations/serializeSet * 1000.0,
-                (float) rawSet/serializeSet * 100.0
-            );
+                (float)ITERATIONS / serializeSet * 1000.0,
+                (float)rawSet / serializeSet * 100.0);
             Console.WriteLine(
                 "    Serialized + Compressed: {0:#,##0.0#} ({1:0.00})%",
-                (float) iterations/compressSet * 1000.0,
-                (float) rawSet/compressSet * 100.0
-            );
+                (float)ITERATIONS / compressSet * 1000.0,
+                (float)rawSet / compressSet * 100.0);
             Console.WriteLine("  Get:");
-            Console.WriteLine(
-                "    Raw: {0:#,##0.0#}",
-                (float) iterations/rawGet * 1000.0
-            );
+            Console.WriteLine("    Raw: {0:#,##0.0#}", (float)ITERATIONS / rawGet * 1000.0);
             Console.WriteLine(
                 "    Serialized: {0:#,##0.0#} ({1:0.00})%",
-                (float) iterations/serializeGet * 1000.0,
-                (float) rawGet/serializeGet * 100.0
-            );
+                (float)ITERATIONS / serializeGet * 1000.0,
+                (float)rawGet / serializeGet * 100.0);
             Console.WriteLine(
                 "    Serialized + Compressed: {0:#,##0.0#} ({1:0.00})%",
-                (float) iterations/compressGet * 1000.0,
-                (float) rawGet/compressGet * 100.0
-            );
+                (float)ITERATIONS / compressGet * 1000.0,
+                (float)rawGet / compressGet * 100.0);
         }
 
         private static void MemorySizePerformance()
@@ -305,10 +274,10 @@ namespace BB.Caching.Tests.SerializationAndCompression
              * 100,000                  100,000                      50.1%                         0.2%
              */
 
-            const int maxStringSize = 10000;
-            const int repeatStringSize = 10;
-            const int iterations = 1000;
-            const string key = "impt-key";
+            const int MAX_STRING_SIZE = 10000;
+            const int REPEAT_STRING_SIZE = 10;
+            const int ITERATIONS = 1000;
+            const string KEY = "impt-key";
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -317,26 +286,26 @@ namespace BB.Caching.Tests.SerializationAndCompression
 
             long mCs = GC.GetTotalMemory(true);
             MemoryCache cM = new MemoryCache("cM");
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
                 var m = new MultipleProperties
                     {
                         Id = GenerateId(),
-                        Name = GenerateString(maxStringSize, repeatStringSize)
+                        Name = GenerateString(MAX_STRING_SIZE, REPEAT_STRING_SIZE)
                     };
 
                 byte[] s = ProtoBufSerializer.Serialize(m);
                 byte[] c = SmartCompressor.Instance.CompressAsync(s).Result;
-                cM.Set(key + i.ToString(CultureInfo.InvariantCulture), c, null);
+                cM.Set(KEY + i.ToString(CultureInfo.InvariantCulture), c, null);
             }
+
             long mCe = GC.GetTotalMemory(true);
             long compressMemory = mCe - mCs;
 
             cM.Trim(100);
             cM.Dispose();
-// ReSharper disable RedundantAssignment
+            // ReSharper disable once RedundantAssignment
             cM = null;
-// ReSharper restore RedundantAssignment
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -345,25 +314,25 @@ namespace BB.Caching.Tests.SerializationAndCompression
 
             long mSs = GC.GetTotalMemory(true);
             MemoryCache sM = new MemoryCache("sM");
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
                 var m = new MultipleProperties
                     {
                         Id = GenerateId(),
-                        Name = GenerateString(maxStringSize, repeatStringSize)
+                        Name = GenerateString(MAX_STRING_SIZE, REPEAT_STRING_SIZE)
                     };
 
                 byte[] s = ProtoBufSerializer.Serialize(m);
-                sM.Set(key + i.ToString(CultureInfo.InvariantCulture), s, null);
+                sM.Set(KEY + i.ToString(CultureInfo.InvariantCulture), s, null);
             }
+
             long mSe = GC.GetTotalMemory(true);
             long serializeMemory = mSe - mSs;
 
             sM.Trim(100);
             sM.Dispose();
-// ReSharper disable RedundantAssignment
+            // ReSharper disable once RedundantAssignment
             sM = null;
-// ReSharper restore RedundantAssignment
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -372,23 +341,23 @@ namespace BB.Caching.Tests.SerializationAndCompression
 
             long mRs = GC.GetTotalMemory(true);
             MemoryCache rM = new MemoryCache("rM");
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < ITERATIONS; i++)
             {
                 var m = new MultipleProperties
                     {
                         Id = GenerateId(),
-                        Name = GenerateString(maxStringSize, repeatStringSize)
+                        Name = GenerateString(MAX_STRING_SIZE, REPEAT_STRING_SIZE)
                     };
-                rM.Set(key + i.ToString(CultureInfo.InvariantCulture), m, null);
+                rM.Set(KEY + i.ToString(CultureInfo.InvariantCulture), m, null);
             }
+
             long mRe = GC.GetTotalMemory(true);
             long rawMemory = mRe - mRs;
 
             rM.Trim(100);
             rM.Dispose();
-// ReSharper disable RedundantAssignment
+            // ReSharper disable once RedundantAssignment
             rM = null;
-// ReSharper restore RedundantAssignment
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -396,17 +365,47 @@ namespace BB.Caching.Tests.SerializationAndCompression
             GC.WaitForPendingFinalizers();
 
             Console.WriteLine("Memory Size:");
-            Console.WriteLine("  Raw: {0:#,##0.#}KB", rawMemory/1024.0);
+            Console.WriteLine("  Raw: {0:#,##0.#}KB", rawMemory / 1024.0);
             Console.WriteLine(
                 "  Serialized: {0:#,##0.#}KB ({1:0.00}%)",
-                serializeMemory/1024.0,
-                ((float) serializeMemory/rawMemory)*100
-            );
+                serializeMemory / 1024.0,
+                ((float)serializeMemory / rawMemory) * 100);
             Console.WriteLine(
                 "  Serialized + Compressed: {0:#,##0.#}KB ({1:0.00}%)",
-                compressMemory/1024.0,
-                ((float) compressMemory/rawMemory)*100
-            );
+                compressMemory / 1024.0,
+                ((float)compressMemory / rawMemory) * 100);
+        }
+
+        [ProtoContract]
+        private class OneLong
+        {
+            [ProtoMember(1)]
+            public long Id
+            {
+// ReSharper disable once UnusedAutoPropertyAccessor.Local
+                private get;
+                set;
+            }
+        }
+
+        [ProtoContract]
+        private class MultipleProperties
+        {
+            [ProtoMember(1)]
+            public long Id
+            {
+// ReSharper disable once UnusedAutoPropertyAccessor.Local
+                private get;
+                set;
+            }
+
+            [ProtoMember(2)]
+            public string Name
+            {
+// ReSharper disable once UnusedAutoPropertyAccessor.Local
+                private get;
+                set;
+            }
         }
     }
 }

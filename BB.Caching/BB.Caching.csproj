@@ -64,9 +64,6 @@
     <Compile Include="Caching\MemoryValue.cs" />
     <Compile Include="Caching\Memory\Store.cs" />
     <Compile Include="Caching\Memory\Strings.cs" />
-    <Compile Include="Caching\Shared\ILists.cs" />
-    <Compile Include="Caching\Shared\ISets.cs" />
-    <Compile Include="Caching\Shared\ISortedSets.cs" />
     <Compile Include="Caching\Shared\SharedCache.cs" />
     <Compile Include="Caching\Shared\Hashes.cs" />
     <Compile Include="Caching\Shared\Keys.cs" />

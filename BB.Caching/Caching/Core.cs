@@ -16,6 +16,11 @@ namespace BB.Caching
     public static partial class Cache
     {
         /// <summary>
+        /// The channel used to publish and subscribe to configuration removal notifications.
+        /// </summary>
+        private const string CACHE_DELETE_CHANNEL = "cache/delete";
+
+        /// <summary>
         /// Where the data should be stored.
         /// </summary>
         public enum Store
@@ -35,11 +40,6 @@ namespace BB.Caching
             /// </summary>
             MemoryAndRedis = 2
         }
-
-        /// <summary>
-        /// The channel used to publish and subscribe to configuration removal notifications.
-        /// </summary>
-        private const string CACHE_DELETE_CHANNEL = "cache/delete";
 
         /// <summary>
         /// Subscribes a method to the cache/delete channel.

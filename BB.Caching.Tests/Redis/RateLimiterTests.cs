@@ -1,14 +1,18 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using BB.Caching.Redis;
-using StackExchange.Redis;
-using Xunit;
-
-namespace BB.Caching.Tests.Redis
+﻿namespace BB.Caching.Tests.Redis
 {
+    using System;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Linq;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    using BB.Caching.Redis;
+
+    using StackExchange.Redis;
+
+    using Xunit;
+
     public class RateLimiterTestsFixture : IDisposable
     {
         public RateLimiterTestsFixture()
@@ -18,7 +22,8 @@ namespace BB.Caching.Tests.Redis
                 Cache.Prepare();
             }
             catch (PubSub.ChannelAlreadySubscribedException)
-            { }
+            {
+            }
         }
 
         public void Dispose()
@@ -26,6 +31,10 @@ namespace BB.Caching.Tests.Redis
         }
     }
 
+    [SuppressMessage(
+        "StyleCop.CSharp.MaintainabilityRules",
+        "SA1402:FileMayOnlyContainASingleClass",
+        Justification = "Reviewed. Suppression is OK here.")]
     public class RateLimiterTests : IUseFixture<DefaultTestFixture>, IUseFixture<RateLimiterTestsFixture>, IDisposable
     {
         private const string KEY = "key1";
@@ -43,14 +52,14 @@ namespace BB.Caching.Tests.Redis
         [Fact]
         public void CountCheckTest()
         {
-            const int amount = 1000;
+            const int AMOUNT = 1000;
             
-            var tasks = new Task<RedisResult>[amount];
-            for (int i = 0; i < amount; i++)
+            var tasks = new Task<RedisResult>[AMOUNT];
+            for (int i = 0; i < AMOUNT; i++)
             {
                 // ReSharper disable RedundantArgumentDefaultValue
                 tasks[i] = RateLimiter.IncrementAsync(
-                    KEY, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1), amount, 1);
+                    KEY, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1), AMOUNT, 1);
                 // ReSharper restore RedundantArgumentDefaultValue
             }
 
@@ -61,7 +70,7 @@ namespace BB.Caching.Tests.Redis
                 .Select(kvp => long.Parse(Encoding.UTF8.GetString(kvp.Value)))
                 .Sum();
 
-            Assert.True(amount - (amount * .2) < count);
+            Assert.True(AMOUNT - (AMOUNT * .2) < count);
         }
 
         [Fact]

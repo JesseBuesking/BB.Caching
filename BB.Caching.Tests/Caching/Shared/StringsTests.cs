@@ -1,56 +1,63 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using BB.Caching.Compression;
-using StackExchange.Redis;
-using Xunit;
-
-namespace BB.Caching.Tests.Caching.Shared
+﻿namespace BB.Caching.Tests.Caching.Shared
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading;
+
+    using BB.Caching.Compression;
+
+    using StackExchange.Redis;
+
+    using Xunit;
+
     public class StringsTests : IUseFixture<DefaultTestFixture>, IDisposable
     {
-        private readonly Dictionary<string, string> _kvPs = new Dictionary<string, string>
+        private readonly Dictionary<string, string> _keyValuePairs = new Dictionary<string, string>
             {
-                {"key1", "0"},
-                {"key2", "1"},
-                {"key003", "2"},
-                {"key4", "3"}
+                { "key1", "0" },
+                { "key2", "1" },
+                { "key003", "2" },
+                { "key4", "3" }
             };
-
-        private Dictionary<RedisKey, RedisValue> KVPs
-        {
-            get { return this._kvPs.ToDictionary(x => (RedisKey)x.Key, x => (RedisValue)x.Value); }
-        }
-
-        private RedisKey Key
-        {
-            get { return this._kvPs.First().Key; }
-        }
-
-        private RedisKey[] Keys
-        {
-            get { return this._kvPs.Keys.Select(x => (RedisKey) x).ToArray(); }
-        }
-
-        private RedisValue Value
-        {
-            get { return this._kvPs.First().Value; }
-        }
 
         public StringsTests()
         {
             Cache.Shared.Keys.DeleteAsync(this.Keys).Wait();
-            foreach (var key in this._kvPs.Keys)
+            foreach (var key in this._keyValuePairs.Keys)
+            {
                 Assert.False(Cache.Shared.Keys.ExistsAsync(key).Result);
+            }
+        }
+
+        private Dictionary<RedisKey, RedisValue> KVPs
+        {
+            get { return this._keyValuePairs.ToDictionary(x => (RedisKey)x.Key, x => (RedisValue)x.Value); }
+        }
+
+        private RedisKey Key
+        {
+            get { return this._keyValuePairs.First().Key; }
+        }
+
+        private RedisKey[] Keys
+        {
+            get { return this._keyValuePairs.Keys.Select(x => (RedisKey)x).ToArray(); }
+        }
+
+        private RedisValue Value
+        {
+            get { return this._keyValuePairs.First().Value; }
         }
 
         public void Dispose()
         {
             Cache.Shared.Keys.DeleteAsync(this.Keys).Wait();
-            foreach (var key in this._kvPs.Keys)
+            foreach (var key in this._keyValuePairs.Keys)
+            {
                 Assert.False(Cache.Shared.Keys.ExistsAsync(key).Result);
+            }
         }
 
         [Fact]
@@ -82,8 +89,7 @@ namespace BB.Caching.Tests.Caching.Shared
             Assert.Equal(bytes.Length * 2, Cache.Shared.Strings.Append(this.Key, bytes));
             Assert.Equal(
                 Encoding.UTF8.GetBytes(this.Value + this.Value),
-                (byte[])Cache.Shared.Strings.Get(this.Key)
-            );
+                (byte[])Cache.Shared.Strings.Get(this.Key));
         }
 
         [Fact]
@@ -95,8 +101,7 @@ namespace BB.Caching.Tests.Caching.Shared
             Assert.Equal(bytes.Length * 2, Cache.Shared.Strings.AppendAsync(this.Key, bytes).Result);
             Assert.Equal(
                 Encoding.UTF8.GetBytes(this.Value + this.Value),
-                (byte[])Cache.Shared.Strings.GetAsync(this.Key).Result
-            );
+                (byte[])Cache.Shared.Strings.GetAsync(this.Key).Result);
         }
 
         [Fact]
@@ -240,8 +245,8 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void GetByteArraySubset()
         {
-            const string value = "hello";
-            byte[] bytes = Encoding.UTF8.GetBytes(value);
+            const string VALUE = "hello";
+            byte[] bytes = Encoding.UTF8.GetBytes(VALUE);
             Cache.Shared.Strings.Set(this.Key, bytes);
 
             byte[] subset = new byte[3];
@@ -255,8 +260,8 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void GetByteArraySubsetAsync()
         {
-            const string value = "hello";
-            byte[] bytes = Encoding.UTF8.GetBytes(value);
+            const string VALUE = "hello";
+            byte[] bytes = Encoding.UTF8.GetBytes(VALUE);
             Cache.Shared.Strings.SetAsync(this.Key, bytes).Wait();
 
             byte[] subset = new byte[3];
@@ -270,32 +275,32 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void GetStringSubset()
         {
-            const string value = "hello";
-            Cache.Shared.Strings.Set(this.Key, value);
+            const string VALUE = "hello";
+            Cache.Shared.Strings.Set(this.Key, VALUE);
 
             var result = Cache.Shared.Strings.Get(this.Key, 0, 2);
             Assert.False(result.IsNull);
-            Assert.Equal(value.Substring(0, 3), (string)result);
+            Assert.Equal(VALUE.Substring(0, 3), (string)result);
         }
 
         [Fact]
         public void GetStringSubsetAsync()
         {
-            const string value = "hello";
-            Cache.Shared.Strings.SetAsync(this.Key, value).Wait();
+            const string VALUE = "hello";
+            Cache.Shared.Strings.SetAsync(this.Key, VALUE).Wait();
 
             var result = Cache.Shared.Strings.GetAsync(this.Key, 0, 2).Result;
             Assert.False(result.IsNull);
-            Assert.Equal(value.Substring(0, 3), (string)result);
+            Assert.Equal(VALUE.Substring(0, 3), (string)result);
         }
 
         [Fact]
         public void GetMultipleByteArray()
         {
-            var dictionary = this._kvPs.ToDictionary(k => (RedisKey)k.Key, k => (RedisValue)Encoding.UTF8.GetBytes(k.Value));
+            var dictionary = this._keyValuePairs.ToDictionary(k => (RedisKey)k.Key, k => (RedisValue)Encoding.UTF8.GetBytes(k.Value));
             Cache.Shared.Strings.Set(dictionary);
 
-            var results = Cache.Shared.Strings.Get(this._kvPs.Keys.Select(x => (RedisKey)x).ToArray());
+            var results = Cache.Shared.Strings.Get(this._keyValuePairs.Keys.Select(x => (RedisKey)x).ToArray());
             int i = 0;
             foreach (var result in results)
             {
@@ -308,10 +313,10 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void GetMultipleByteArrayAsync()
         {
-            var dictionary = this._kvPs.ToDictionary(k => (RedisKey)k.Key, k => (RedisValue)Encoding.UTF8.GetBytes(k.Value));
+            var dictionary = this._keyValuePairs.ToDictionary(k => (RedisKey)k.Key, k => (RedisValue)Encoding.UTF8.GetBytes(k.Value));
             Cache.Shared.Strings.SetAsync(dictionary).Wait();
 
-            var results = Cache.Shared.Strings.GetAsync(this._kvPs.Keys.Select(x => (RedisKey)x).ToArray()).Result;
+            var results = Cache.Shared.Strings.GetAsync(this._keyValuePairs.Keys.Select(x => (RedisKey)x).ToArray()).Result;
             int i = 0;
             foreach (var result in results)
             {
@@ -331,7 +336,7 @@ namespace BB.Caching.Tests.Caching.Shared
             foreach (var result in results)
             {
                 Assert.False(result.IsNull);
-                Assert.Equal(this._kvPs.ElementAt(i).Value, (string)result);
+                Assert.Equal(this._keyValuePairs.ElementAt(i).Value, (string)result);
                 ++i;
             }
         }
@@ -346,7 +351,7 @@ namespace BB.Caching.Tests.Caching.Shared
             foreach (var result in results)
             {
                 Assert.False(result.IsNull);
-                Assert.Equal(this._kvPs.ElementAt(i).Value, (string)result);
+                Assert.Equal(this._keyValuePairs.ElementAt(i).Value, (string)result);
                 ++i;
             }
         }
@@ -378,35 +383,35 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void GetSetString()
         {
-            const string first = "0";
-            const string second = "1";
+            const string FIRST = "0";
+            const string SECOND = "1";
 
-            Cache.Shared.Strings.Set(this.Key, first);
-            string result = Cache.Shared.Strings.GetSet(this.Key, second);
-            Assert.Equal(first, result);
-            Assert.Equal(second, (string)Cache.Shared.Strings.Get(this.Key));
+            Cache.Shared.Strings.Set(this.Key, FIRST);
+            string result = Cache.Shared.Strings.GetSet(this.Key, SECOND);
+            Assert.Equal(FIRST, result);
+            Assert.Equal(SECOND, (string)Cache.Shared.Strings.Get(this.Key));
         }
 
         [Fact]
         public void GetSetStringAsync()
         {
-            const string first = "0";
-            const string second = "1";
+            const string FIRST = "0";
+            const string SECOND = "1";
 
-            Cache.Shared.Strings.SetAsync(this.Key, first).Wait();
-            string result = Cache.Shared.Strings.GetSetAsync(this.Key, second).Result;
-            Assert.Equal(first, result);
-            Assert.Equal(second, (string)Cache.Shared.Strings.GetAsync(this.Key).Result);
+            Cache.Shared.Strings.SetAsync(this.Key, FIRST).Wait();
+            string result = Cache.Shared.Strings.GetSetAsync(this.Key, SECOND).Result;
+            Assert.Equal(FIRST, result);
+            Assert.Equal(SECOND, (string)Cache.Shared.Strings.GetAsync(this.Key).Result);
         }
 
         [Fact]
         public void GetSetExpire()
         {
             long value = long.Parse(this.Value);
-            const long value2 = 234;
+            const long VALUE2 = 234;
             Cache.Shared.Strings.Set(this.Key, value);
 
-            var result = Cache.Shared.Strings.GetSet(this.Key, value2, TimeSpan.FromSeconds(.2));
+            var result = Cache.Shared.Strings.GetSet(this.Key, VALUE2, TimeSpan.FromSeconds(.2));
             Assert.Equal(value, result);
 
             TimeSpan? ttl = Cache.Shared.Keys.TimeToLive(this.Key);
@@ -414,7 +419,7 @@ namespace BB.Caching.Tests.Caching.Shared
             Assert.True(ttl > TimeSpan.FromSeconds(.1));
 
             var result2 = Cache.Shared.Strings.Get(this.Key);
-            Assert.Equal(value2, result2);
+            Assert.Equal(VALUE2, result2);
 
             Thread.Sleep(210);
 
@@ -426,10 +431,10 @@ namespace BB.Caching.Tests.Caching.Shared
         public void GetSetExpireAsync()
         {
             long value = long.Parse(this.Value);
-            const long value2 = 234;
+            const long VALUE2 = 234;
             Cache.Shared.Strings.SetAsync(this.Key, value).Wait();
 
-            var result = Cache.Shared.Strings.GetSetAsync(this.Key, value2, TimeSpan.FromSeconds(.2)).Result;
+            var result = Cache.Shared.Strings.GetSetAsync(this.Key, VALUE2, TimeSpan.FromSeconds(.2)).Result;
             Assert.Equal(value, result);
 
             TimeSpan? ttl = Cache.Shared.Keys.TimeToLiveAsync(this.Key).Result;
@@ -437,7 +442,7 @@ namespace BB.Caching.Tests.Caching.Shared
             Assert.True(ttl > TimeSpan.FromSeconds(.1));
 
             var result2 = Cache.Shared.Strings.GetAsync(this.Key).Result;
-            Assert.Equal(value2, result2);
+            Assert.Equal(VALUE2, result2);
 
             Thread.Sleep(210);
 
@@ -572,16 +577,20 @@ namespace BB.Caching.Tests.Caching.Shared
         public void SetMultipleStrings()
         {
             Cache.Shared.Strings.Set(this.KVPs);
-            foreach (var kvp in this._kvPs)
+            foreach (var kvp in this._keyValuePairs)
+            {
                 Assert.Equal(kvp.Value, (string)Cache.Shared.Strings.Get(kvp.Key));
+            }
         }
 
         [Fact]
         public void SetMultipleStringsAsync()
         {
             Cache.Shared.Strings.SetAsync(this.KVPs).Wait();
-            foreach (var kvp in this._kvPs)
+            foreach (var kvp in this._keyValuePairs)
+            {
                 Assert.Equal(kvp.Value, (string)Cache.Shared.Strings.GetAsync(kvp.Key).Result);
+            }
         }
 
         [Fact]
@@ -591,7 +600,9 @@ namespace BB.Caching.Tests.Caching.Shared
 
             Cache.Shared.Strings.Set(dict);
             foreach (var kvp in dict)
+            {
                 Assert.Equal((byte[])kvp.Value, (byte[])Cache.Shared.Strings.Get(kvp.Key));
+            }
         }
 
         [Fact]
@@ -601,7 +612,9 @@ namespace BB.Caching.Tests.Caching.Shared
 
             Cache.Shared.Strings.SetAsync(dict).Wait();
             foreach (var kvp in dict)
+            {
                 Assert.Equal((byte[])kvp.Value, (byte[])Cache.Shared.Strings.GetAsync(kvp.Key).Result);
+            }
         }
 
         [Fact]
@@ -809,23 +822,23 @@ namespace BB.Caching.Tests.Caching.Shared
         [Fact]
         public void CompressionTest()
         {
-            const string expected = "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd";
-            byte[] compressSet = Compress.Compression.Compress(expected);
+            const string EXPECTED = "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd";
+            byte[] compressSet = Compress.Compression.Compress(EXPECTED);
             Cache.Shared.Strings.Set(this.Key, compressSet);
 
             byte[] compressGet = Cache.Shared.Strings.Get(this.Key);
-            Assert.Equal(expected, Compress.Compression.Decompress<string>(compressGet));
+            Assert.Equal(EXPECTED, Compress.Compression.Decompress<string>(compressGet));
         }
 
         [Fact]
         public void CompressionTestAsync()
         {
-            const string expected = "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd";
-            byte[] compressSet = Compress.Compression.CompressAsync(expected).Result;
+            const string EXPECTED = "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd";
+            byte[] compressSet = Compress.Compression.CompressAsync(EXPECTED).Result;
             Cache.Shared.Strings.SetAsync(this.Key, compressSet).Wait();
 
             byte[] compressGet = Cache.Shared.Strings.GetAsync(this.Key).Result;
-            Assert.Equal(expected, Compress.Compression.DecompressAsync<string>(compressGet).Result);
+            Assert.Equal(EXPECTED, Compress.Compression.DecompressAsync<string>(compressGet).Result);
         }
 
         public void SetFixture(DefaultTestFixture data)

@@ -14,15 +14,6 @@ namespace BB.Caching.Redis
     public class ConnectionGroup
     {
         /// <summary>
-        /// The name of this redis connection wrapper.
-        /// </summary>
-        private string Name
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
         /// When creating the read pool, read connections are added with this weight.
         /// </summary>
         private const int READ_WEIGHT = 2;
@@ -68,6 +59,15 @@ namespace BB.Caching.Redis
         {
             this.Name = name;
             this.AddWriteConnection(defaultWriteConnection);
+        }
+
+        /// <summary>
+        /// The name of this redis connection wrapper.
+        /// </summary>
+        private string Name
+        {
+            get;
+            set;
         }
 
         /// <summary>

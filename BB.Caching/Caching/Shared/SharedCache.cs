@@ -16,22 +16,6 @@ namespace BB.Caching
     public class SharedCache
     {
         /// <summary>
-        /// Gets the instance.
-        /// </summary>
-        public static SharedCache Instance
-        {
-            get { return SharedCache._Lazy.Value; }
-        }
-
-        /// <summary>
-        /// Gets the db.
-        /// </summary>
-        public int Db
-        {
-            get { return 0; }
-        }
-
-        /// <summary>
         /// The channel used to publish and subscribe to cache invalidation requests.
         /// </summary>
         internal const string CACHE_INVALIDATION_CHANNEL = "cache/invalidate";
@@ -75,6 +59,22 @@ namespace BB.Caching
         private SharedCache()
         {
             this._consistentHashRing.Init(null);
+        }
+
+        /// <summary>
+        /// Gets the instance.
+        /// </summary>
+        public static SharedCache Instance
+        {
+            get { return SharedCache._Lazy.Value; }
+        }
+
+        /// <summary>
+        /// Gets the db.
+        /// </summary>
+        public int Db
+        {
+            get { return 0; }
         }
 
         /// <summary>

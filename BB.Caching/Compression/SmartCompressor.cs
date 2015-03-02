@@ -18,18 +18,18 @@
             () => new SmartCompressor(), LazyThreadSafetyMode.ExecutionAndPublication);
 
         /// <summary>
+        /// Prevents a default instance of the <see cref="SmartCompressor"/> class from being created.
+        /// </summary>
+        private SmartCompressor()
+        {
+        }
+
+        /// <summary>
         /// Gets the instance.
         /// </summary>
         public static SmartCompressor Instance
         {
             get { return SmartCompressor._Lazy.Value; }
-        }
-
-        /// <summary>
-        /// Prevents a default instance of the <see cref="SmartCompressor"/> class from being created.
-        /// </summary>
-        private SmartCompressor()
-        {
         }
 
         /// <summary>
