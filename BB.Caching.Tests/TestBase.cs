@@ -12,8 +12,7 @@
         {
             var connectionGroup1 = new ConnectionGroup("node-0");
 
-            connectionGroup1.AddWriteConnection(
-                ConnectionMultiplexer.Connect(string.Format("{0}:{1},allowAdmin=True", this.TestIp, this.TestPort1)));
+            connectionGroup1.AddWriteConnection(string.Format("{0}:{1},allowAdmin=True", this.TestIp, this.TestPort1));
 
             SharedCache.Instance.AddRedisConnectionGroup(connectionGroup1);
 
@@ -21,8 +20,7 @@
             {
                 var connectionGroup2 = new ConnectionGroup("node-1");
 
-                connectionGroup2.AddWriteConnection(
-                    ConnectionMultiplexer.Connect(string.Format("{0}:{1}", this.TestIp, this.TestPort1)));
+                connectionGroup2.AddWriteConnection(string.Format("{0}:{1}", this.TestIp, this.TestPort1));
 
                 SharedCache.Instance.AddRedisConnectionGroup(connectionGroup2);
             }

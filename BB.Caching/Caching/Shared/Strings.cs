@@ -1449,8 +1449,8 @@ namespace BB.Caching
                 ///// </remarks>
                 //Task<long> BitwiseAnd(RedisKey destination, RedisKey[] keys)
                 //{
-                //    var connections = SharedCache.Instance.GetWriteConnections(keys);
-                //    var dest = SharedCache.Instance.GetWriteConnections(destination);
+                //    var connections = SharedCache.Instance.GetWriteMultiplexers(keys);
+                //    var dest = SharedCache.Instance.GetWriteMultiplexers(destination);
                 //    Task<long> result = null;
                 //    // All ops performed on same machine, so we can do this in a MUCH faster way.
                 //    if (1 == connections.Count
@@ -1492,8 +1492,8 @@ namespace BB.Caching
                 ///// </remarks>
                 //Task<long> BitwiseOr(string destination, string[] keys)
                 //{
-                //    var connections = SharedCache.Instance.GetWriteConnections(keys);
-                //    var dest = SharedCache.Instance.GetWriteConnections(destination);
+                //    var connections = SharedCache.Instance.GetWriteMultiplexers(keys);
+                //    var dest = SharedCache.Instance.GetWriteMultiplexers(destination);
                 //    Task<long> result = null;
                 //    // All ops performed on same machine, so we can do this in a MUCH faster way.
                 //    if (1 == connections.Count
@@ -1535,8 +1535,8 @@ namespace BB.Caching
                 ///// </remarks>
                 //Task<long> BitwiseXOr(string destination, string[] keys)
                 //{
-                //    var connections = SharedCache.Instance.GetWriteConnections(keys);
-                //    var dest = SharedCache.Instance.GetWriteConnections(destination);
+                //    var connections = SharedCache.Instance.GetWriteMultiplexers(keys);
+                //    var dest = SharedCache.Instance.GetWriteMultiplexers(destination);
                 //    Task<long> result = null;
                 //    // All ops performed on same machine, so we can do this in a MUCH faster way.
                 //    if (1 == connections.Count
@@ -1578,8 +1578,8 @@ namespace BB.Caching
                 ///// </remarks>
                 //Task<long> BitwiseNot(string destination, RedisKey key)
                 //{
-                //    var connections = SharedCache.Instance.GetWriteConnections(key);
-                //    var dest = SharedCache.Instance.GetWriteConnections(destination);
+                //    var connections = SharedCache.Instance.GetWriteMultiplexers(key);
+                //    var dest = SharedCache.Instance.GetWriteMultiplexers(destination);
                 //    // All ops performed on same machine, so we can do this in a MUCH faster way.
                 //    if (1 == connections.Length
                 //        && connections[0].Host == dest[0].Host

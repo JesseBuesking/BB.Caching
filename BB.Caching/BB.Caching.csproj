@@ -52,6 +52,7 @@
       <HintPath>..\packages\StackExchange.Redis.1.0.394\lib\net45\StackExchange.Redis.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.XML" />
@@ -70,6 +71,7 @@
     <Compile Include="Compression\Compression.cs" />
     <Compile Include="Compression\GZipCompressor.cs" />
     <Compile Include="Compression\SmartCompressor.cs" />
+    <Compile Include="Configuration.cs" />
     <Compile Include="Hashing\ConsistentHashRing.cs" />
     <Compile Include="Hashing\Core.cs" />
     <Compile Include="Hashing\Murmur3.cs" />

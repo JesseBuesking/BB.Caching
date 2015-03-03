@@ -5,6 +5,7 @@
     /// defaults to SUM, where the score of an element is summed across the inputs where it exists. When this option is
     /// set to either MIN or MAX, the resulting set will contain the minimum or maximum score of an element across the
     /// inputs where it exists.
+    /// TODO remove this (use a tool to find unused things)
     /// </summary>
     public enum CacheAggregate
     {

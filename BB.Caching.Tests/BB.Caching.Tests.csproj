@@ -55,6 +55,7 @@
       <HintPath>..\packages\StackExchange.Redis.1.0.394\lib\net45\StackExchange.Redis.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Runtime.Caching" />
     <Reference Include="xunit, Version=1.9.2.1705, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -74,6 +75,7 @@
     <Compile Include="PerformanceTests.cs" />
     <Compile Include="Redis\BloomFilterTests.cs" />
     <Compile Include="Caching\Memory\StringsTests.cs" />
+    <Compile Include="Redis\ConnectionGroupTests.cs" />
     <Compile Include="Redis\PubSubTests.cs" />
     <Compile Include="Redis\RateLimiterTests.cs" />
     <Compile Include="Caching\Shared\HashesTests.cs" />
@@ -91,6 +93,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <EmbeddedResource Include="writeonly.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="readonly.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="readandwrite.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BB.Caching\BB.Caching.csproj">

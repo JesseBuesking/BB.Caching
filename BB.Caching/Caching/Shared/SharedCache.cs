@@ -101,7 +101,7 @@ namespace BB.Caching
         /// </returns>
         public ConnectionMultiplexer GetReadConnection(RedisKey key)
         {
-            return this._consistentHashRing.GetNode(key).GetReadConnection();
+            return this._consistentHashRing.GetNode(key).GetReadMultiplexer();
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace BB.Caching
         /// </returns>
         public ConnectionMultiplexer[] GetWriteConnections(RedisKey key)
         {
-            return this._consistentHashRing.GetNode(key).GetWriteConnections();
+            return this._consistentHashRing.GetNode(key).GetWriteMultiplexers();
         }
 
         /// <summary>
@@ -143,7 +143,7 @@ namespace BB.Caching
                 }
             }
 
-            return result.ToDictionary(r => r.Key.GetReadConnection(), r => r.Value.ToArray());
+            return result.ToDictionary(r => r.Key.GetReadMultiplexer(), r => r.Value.ToArray());
         }
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace BB.Caching
                 }
             }
 
-            return result.ToDictionary(r => r.Key.GetWriteConnections(), r => r.Value.ToArray());
+            return result.ToDictionary(r => r.Key.GetWriteMultiplexers(), r => r.Value.ToArray());
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace BB.Caching
         {
             return this._consistentHashRing.GetAvailableNodes()
                 .ElementAt(this._random.Next(0, this._consistentHashRing.GetAvailableNodes().Count))
-                .GetReadConnection();
+                .GetReadMultiplexer();
         }
 
         /// <summary>
@@ -196,7 +196,7 @@ namespace BB.Caching
         public ConnectionMultiplexer[] GetAllReadConnections()
         {
             return this._consistentHashRing.GetAvailableNodes()
-                .Select(n => n.GetReadConnection())
+                .Select(n => n.GetReadMultiplexer())
                 .ToArray();
         }
 
@@ -209,7 +209,7 @@ namespace BB.Caching
         public ConnectionMultiplexer[] GetAllWriteConnections()
         {
             return this._consistentHashRing.GetAvailableNodes()
-                .SelectMany(n => n.GetWriteConnections())
+                .SelectMany(n => n.GetWriteMultiplexers())
                 .Distinct()
                 .ToArray();
         }

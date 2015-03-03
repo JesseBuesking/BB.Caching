@@ -24,16 +24,6 @@ namespace BB.Caching.Redis
         private const int WRITE_WEIGHT = 1;
 
         /// <summary>
-        /// The connections that we can write to. (Master(s))
-        /// </summary>
-        private List<ConnectionMultiplexer> _writeConnections;
-
-        /// <summary>
-        /// The slaves we can read from. (Slave(s))
-        /// </summary>
-        private List<ConnectionMultiplexer> _readConnections;
-
-        /// <summary>
         /// The pool of read connections to select from.
         /// <remarks>
         /// Will include both read and write connections, and will round-robin on the available connections.
@@ -55,16 +45,40 @@ namespace BB.Caching.Redis
         public ConnectionGroup(string name)
         {
             this.Name = name;
+            this.ReadConnections = new List<string>();
+            this.WriteConnections = new List<string>();
+            this.ReadMultiplexers = new List<ConnectionMultiplexer>();
+            this.WriteMultiplexers = new List<ConnectionMultiplexer>();
         }
 
         /// <summary>
         /// The name of this redis connection wrapper.
         /// </summary>
-        private string Name
+        public string Name
         {
             get;
-            set;
+            private set;
         }
+
+        /// <summary>
+        /// The multiplexers that we can write to. (Master(s))
+        /// </summary>
+        public List<ConnectionMultiplexer> WriteMultiplexers { get; private set; }
+
+        /// <summary>
+        /// The connections that we can write to. (Master(s))
+        /// </summary>
+        public List<string> WriteConnections { get; private set; }
+
+        /// <summary>
+        /// The slave multiplexers we can read from. (Slave(s))
+        /// </summary>
+        public List<ConnectionMultiplexer> ReadMultiplexers { get; private set; }
+
+        /// <summary>
+        /// The slave connections we can read from. (Slave(s))
+        /// </summary>
+        public List<string> ReadConnections { get; private set; }
 
         /// <summary>
         /// Adds a write connection.
@@ -72,15 +86,17 @@ namespace BB.Caching.Redis
         /// <param name="connection">
         /// The connection.
         /// </param>
-        public void AddWriteConnection(ConnectionMultiplexer connection)
+        /// <param name="establishConnection">
+        /// Talks with the redis instance defined in the connection string to establish a connection.
+        /// </param>
+        public void AddWriteConnection(string connection, bool establishConnection = true)
         {
-            if (null == this._writeConnections)
+            this.WriteConnections.Add(connection);
+
+            if (establishConnection)
             {
-                this._writeConnections = new List<ConnectionMultiplexer> { connection };
-            }
-            else
-            {
-                this._writeConnections.Add(connection);
+                var multiplexer = ConnectionMultiplexer.Connect(connection);
+                this.WriteMultiplexers.Add(multiplexer);
             }
 
             this.UpdateReadPool();
@@ -92,15 +108,17 @@ namespace BB.Caching.Redis
         /// <param name="connection">
         /// The connection.
         /// </param>
-        public void AddReadConnection(ConnectionMultiplexer connection)
+        /// <param name="establishConnection">
+        /// Talks with the redis instance defined in the connection string to establish a connection.
+        /// </param>
+        public void AddReadConnection(string connection, bool establishConnection = true)
         {
-            if (null == this._readConnections)
+            this.ReadConnections.Add(connection);
+
+            if (establishConnection)
             {
-                this._readConnections = new List<ConnectionMultiplexer> { connection };
-            }
-            else
-            {
-                this._readConnections.Add(connection);
+                var multiplexer = ConnectionMultiplexer.Connect(connection);
+                this.ReadMultiplexers.Add(multiplexer);
             }
 
             this.UpdateReadPool();
@@ -112,7 +130,7 @@ namespace BB.Caching.Redis
         /// <returns>
         /// The read <see cref="ConnectionMultiplexer"/>.
         /// </returns>
-        public ConnectionMultiplexer GetReadConnection()
+        public ConnectionMultiplexer GetReadMultiplexer()
         {
             this._readPoolIndex = (this._readPoolIndex + 1) % this._readPool.Count;
             return this._readPool[this._readPoolIndex];
@@ -122,14 +140,11 @@ namespace BB.Caching.Redis
         /// Retrieves the available write connections.
         /// </summary>
         /// <returns>
-        /// The array of write <see>
-        ///         <cref>ConnectionMultiplexer[]</cref>
-        ///     </see>
-        ///     .
+        /// The array of write <see><cref>ConnectionMultiplexer[]</cref></see>.
         /// </returns>
-        public ConnectionMultiplexer[] GetWriteConnections()
+        public ConnectionMultiplexer[] GetWriteMultiplexers()
         {
-            return this._writeConnections.ToArray();
+            return this.WriteMultiplexers.ToArray();
         }
 
         /// <summary>
@@ -149,8 +164,8 @@ namespace BB.Caching.Redis
         /// </summary>
         private void UpdateReadPool()
         {
-            int writeCount = null == this._writeConnections ? 0 : this._writeConnections.Count;
-            int readCount = null == this._readConnections ? 0 : this._readConnections.Count;
+            int writeCount = this.WriteMultiplexers.Count;
+            int readCount = this.ReadMultiplexers.Count;
 
             this._readPool = new List<ConnectionMultiplexer>((writeCount * WRITE_WEIGHT) + (readCount * READ_WEIGHT));
 
@@ -159,19 +174,19 @@ namespace BB.Caching.Redis
 
             while (readIndex < readCount || writeIndex < writeCount)
             {
-                if (null != this._readConnections)
+                if (readCount > 0)
                 {
                     for (int i = 0; i < READ_WEIGHT; i++)
                     {
-                        this._readPool.Add(this._readConnections[readIndex]);
+                        this._readPool.Add(this.ReadMultiplexers[readIndex]);
                     }
                 }
 
-                if (null != this._writeConnections)
+                if (writeCount > 0)
                 {
                     for (int i = 0; i < WRITE_WEIGHT; i++)
                     {
-                        this._readPool.Add(this._writeConnections[writeIndex]);
+                        this._readPool.Add(this.WriteMultiplexers[writeIndex]);
                     }
                 }
 
