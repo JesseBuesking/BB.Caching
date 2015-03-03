@@ -5,7 +5,6 @@
     using System.Threading;
 
     using BB.Caching.Redis;
-    using BB.Caching.Tests.Caching;
 
     using Xunit;
 
@@ -13,13 +12,7 @@
     {
         public PubSubTestsFixture()
         {
-            try
-            {
-                Cache.Prepare();
-            }
-            catch (PubSub.ChannelAlreadySubscribedException)
-            {
-            }
+            Cache.Prepare();
         }
 
         public void Dispose()
@@ -37,14 +30,7 @@
         public void SubscriptionIsCalled()
         {
             bool on = false;
-            PubSub.SubscribeAsync(
-                "mychannel",
-                "a",
-                async _ =>
-                {
-                    on = true;
-                    await Cache.Config.GetAsync<ConfigTests.ConfigDummy>("a");
-                });
+            PubSub.SubscribeAsync("mychannel", "a", _ => { on = true; });
             PubSub.PublishAsync("mychannel", "a", "test");
 
             for (int i = 0; i < 100 && !on; i++)

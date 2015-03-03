@@ -3,7 +3,6 @@
     using System;
     using System.Diagnostics.CodeAnalysis;
 
-    using BB.Caching.Redis;
     using BB.Caching.Serialization;
 
     using ProtoBuf;
@@ -14,13 +13,7 @@
     {
         public ProtoBufSerializerTestsFixture()
         {
-            try
-            {
-                Cache.Prepare();
-            }
-            catch (PubSub.ChannelAlreadySubscribedException)
-            {
-            }
+            Cache.Prepare();
         }
 
         public void Dispose()

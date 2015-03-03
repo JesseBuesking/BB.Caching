@@ -59,7 +59,6 @@
   <ItemGroup>
     <Compile Include="CacheAggregate.cs" />
     <Compile Include="Caching\Cache.cs" />
-    <Compile Include="Caching\Config.cs" />
     <Compile Include="Caching\Core.cs" />
     <Compile Include="Caching\MemoryValue.cs" />
     <Compile Include="Caching\Memory\Store.cs" />

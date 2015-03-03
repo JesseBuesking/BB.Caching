@@ -11,13 +11,7 @@
     {
         public StatisticTestsFixture()
         {
-            try
-            {
-                Cache.Prepare();
-            }
-            catch (PubSub.ChannelAlreadySubscribedException)
-            {
-            }
+            Cache.Prepare();
         }
 
         public void Dispose()

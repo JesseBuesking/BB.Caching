@@ -13,11 +13,8 @@ namespace BB.Caching
         /// </summary>
         public static void Prepare()
         {
-            // may have side-effects if called twice
-            Cache.Config.SetupSubscriptions();
-            Cache.SubscribeCacheDeleteChannel();
-
             // free of side-effects
+            Cache.SubscribeCacheDeleteChannel();
             RateLimiter.ScriptLoad();
             Statistics.ScriptLoad();
         }

@@ -6,8 +6,6 @@
     using System.Linq;
     using System.Threading.Tasks;
 
-    using BB.Caching.Redis;
-
     using SimpleSpeedTester.Core;
     using SimpleSpeedTester.Core.OutcomeFilters;
     using SimpleSpeedTester.Interfaces;
@@ -24,13 +22,7 @@
         public void AllPerformanceTests()
         {
             // warmup
-            try
-            {
-                Cache.Prepare();
-            }
-            catch (PubSub.ChannelAlreadySubscribedException)
-            {
-            }
+            Cache.Prepare();
 
             Cache.Shared.Keys.ExistsAsync("warmup");
 

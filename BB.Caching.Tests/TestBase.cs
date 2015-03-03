@@ -22,18 +22,6 @@
             }
 
             PubSub.Configure(ConnectionMultiplexer.Connect(string.Format("{0}:{1}", this.TestIp, this.TestPort1)));
-
-            try
-            {
-                SharedCache.Instance.SetPubSubRedisConnection();
-            }
-            catch (Exception ex)
-            {
-                if (!ex.ToString().Contains("subscription to channel cache/invalidate already exists"))
-                {
-                    throw;
-                }
-            }
         }
 
         private string TestIp

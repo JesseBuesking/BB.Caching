@@ -4,7 +4,6 @@
     using System.Threading;
 
     using BB.Caching.Caching;
-    using BB.Caching.Redis;
 
     using Xunit;
 
@@ -1601,18 +1600,45 @@
             Assert.Equal(null, red.Value);
         }
 
+        [Fact]
+        public void BroadcastDelete()
+        {
+            Assert.False(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.False(Cache.Exists(KEY, Cache.Store.Redis));
+
+            Cache.Set(KEY, VALUE, Cache.Store.MemoryAndRedis);
+
+            Assert.True(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.True(Cache.Exists(KEY, Cache.Store.Redis));
+
+            Cache.BroadcastDelete(KEY);
+
+            Assert.False(Cache.Exists(KEY, Cache.Store.Memory));
+            Assert.False(Cache.Exists(KEY, Cache.Store.Redis));
+        }
+
+        [Fact]
+        public void BroadcastDeleteAsync()
+        {
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+
+            Cache.SetAsync(KEY, VALUE, Cache.Store.MemoryAndRedis).Wait();
+
+            Assert.True(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.True(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+
+            Cache.BroadcastDeleteAsync(KEY).Wait();
+
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
+            Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
+        }
+
         public class CoreTestsFixture : IDisposable
         {
             public CoreTestsFixture()
             {
-                try
-                {
-                    Cache.Prepare();
-                }
-                catch (PubSub.ChannelAlreadySubscribedException)
-                {
-                }
-
+                Cache.Prepare();
                 Cache.Memory.Strings.Delete(KEY);
                 Cache.Shared.Keys.Delete(KEY);
             }

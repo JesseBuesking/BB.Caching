@@ -16,9 +16,15 @@ namespace BB.Caching
     public static partial class Cache
     {
         /// <summary>
-        /// The channel used to publish and subscribe to configuration removal notifications.
+        /// The channel used to publish and subscribe to key deletion notifications.
         /// </summary>
         private const string CACHE_DELETE_CHANNEL = "cache/delete";
+
+        /// <summary>
+        /// Tracks whether we've already subscribed to the delete channel. This allows us to safely call the method
+        /// multiple times without worrying about subscribing multiple times.
+        /// </summary>
+        private static bool _subscribedToDeleteChannel;
 
         /// <summary>
         /// Where the data should be stored.
@@ -46,6 +52,12 @@ namespace BB.Caching
         /// </summary>
         public static void SubscribeCacheDeleteChannel()
         {
+            if (_subscribedToDeleteChannel)
+            {
+                return;
+            }
+
+            _subscribedToDeleteChannel = true;
             PubSub.SubscribeAsync(Cache.CACHE_DELETE_CHANNEL, Cache.Memory.Strings.Delete);
         }
 
@@ -113,9 +125,13 @@ namespace BB.Caching
 
                 case Store.MemoryAndRedis:
                 {
-                    await PubSub.PublishAsync(Cache.CACHE_DELETE_CHANNEL, key);
-                    await Cache.Shared.Keys.DeleteAsync(key);
+                    await Cache.BroadcastDeleteAsync(key);
                     break;
+                }
+
+                default:
+                {
+                    throw new Exception("Invalid case statement reached.");
                 }
             }
         }
@@ -1453,7 +1469,9 @@ namespace BB.Caching
                     if (sliding.Exists)
                     {
                         // found it? return the value
-                        Cache.Shared.Strings.Set(key, compress);
+#pragma warning disable 4014
+                        Cache.Shared.Strings.SetAsync(key, compress);
+#pragma warning restore 4014
                         return sliding;
                     }
                     else
@@ -1479,6 +1497,43 @@ namespace BB.Caching
                     throw new Exception("Invalid case statement reached.");
                 }
             }
+        }
+
+        /// <summary>
+        /// Broadcasts to delete the key from all caches.
+        /// </summary>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        public static void BroadcastDelete(string key)
+        {
+            // delete from memory
+            PubSub.Publish(Cache.CACHE_DELETE_CHANNEL, key);
+
+            // delete from redis
+            Cache.Shared.Keys.Delete(key);
+        }
+
+        /// <summary>
+        /// Broadcasts to delete the key from all caches.
+        /// </summary>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/> (void).
+        /// </returns>
+        public static async Task BroadcastDeleteAsync(string key)
+        {
+            var tasks = new Task[2];
+
+            // delete from memory
+            tasks[0] = PubSub.PublishAsync(Cache.CACHE_DELETE_CHANNEL, key);
+
+            // delete from redis
+            tasks[1] = Cache.Shared.Keys.DeleteAsync(key);
+
+            await Task.WhenAll(tasks);
         }
     }
 }

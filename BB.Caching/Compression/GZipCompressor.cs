@@ -44,15 +44,13 @@
         /// </returns>
         public byte[] Compress(byte[] value)
         {
-            using (MemoryStream ms = new MemoryStream())
+            MemoryStream ms = new MemoryStream();
+            using (GZipStream gs = new GZipStream(ms, CompressionMode.Compress))
             {
-                using (GZipStream gs = new GZipStream(ms, CompressionMode.Compress))
-                {
-                    gs.Write(value, 0, value.Length);
-                }
-
-                return ms.ToArray();
+                gs.Write(value, 0, value.Length);
             }
+            
+            return ms.ToArray();
         }
 
         /// <summary>
@@ -66,15 +64,13 @@
         /// </returns>
         public async Task<byte[]> CompressAsync(byte[] value)
         {
-            using (MemoryStream ms = new MemoryStream())
+            MemoryStream ms = new MemoryStream();
+            using (GZipStream gs = new GZipStream(ms, CompressionMode.Compress))
             {
-                using (GZipStream gs = new GZipStream(ms, CompressionMode.Compress))
-                {
-                    await gs.WriteAsync(value, 0, value.Length);
-                }
-
-                return ms.ToArray();
+                await gs.WriteAsync(value, 0, value.Length);
             }
+
+            return ms.ToArray();
         }
 
         /// <summary>

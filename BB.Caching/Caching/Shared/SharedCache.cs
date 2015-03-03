@@ -16,16 +16,6 @@ namespace BB.Caching
     public class SharedCache
     {
         /// <summary>
-        /// The channel used to publish and subscribe to cache invalidation requests.
-        /// </summary>
-        internal const string CACHE_INVALIDATION_CHANNEL = "cache/invalidate";
-
-        /// <summary>
-        /// The channel used to publish and subscribe to multiple cache invalidation requests.
-        /// </summary>
-        internal const string CACHE_MULTIPLE_INVALIDATION_CHANNEL = "cache/m-invalidate";
-
-        /// <summary>
         /// Contains all the keys that have already been invalidated.
         /// <para>
         /// Since the server that calls for cache invalidation immediately removes the object from it's own cache,
@@ -33,6 +23,7 @@ namespace BB.Caching
         /// value without having to worry about it getting removed when the pub-sub callback to remove the key is
         /// called)
         /// </para>
+        /// TODO not used; find a tool that'll find this out on it's own and run on the solution
         /// </summary>
         internal readonly HashSet<string> AlreadyInvalidated = new HashSet<string>();
 
@@ -97,15 +88,6 @@ namespace BB.Caching
         public void RemoveRedisConnectionGroup(ConnectionGroup connectionGroup)
         {
             this._consistentHashRing.Remove(connectionGroup);
-        }
-
-        /// <summary>
-        /// Setups up the pub-sub subscriptions used by the cache.
-        /// </summary>
-        public void SetPubSubRedisConnection()
-        {
-            this.SetupCacheInvalidationSubscription();
-            this.SetupMultipleCacheInvalidationsSubscription();
         }
 
         /// <summary>
@@ -230,51 +212,6 @@ namespace BB.Caching
                 .SelectMany(n => n.GetWriteConnections())
                 .Distinct()
                 .ToArray();
-        }
-
-        /// <summary>
-        /// Sets up the cache-invalidation pub-sub subscription.
-        /// </summary>
-        private void SetupCacheInvalidationSubscription()
-        {
-            PubSub.SubscribeAsync(
-                SharedCache.CACHE_INVALIDATION_CHANNEL,
-                data =>
-                {
-                    if (this.AlreadyInvalidated.Contains(data))
-                    {
-                        this.AlreadyInvalidated.Remove(data);
-                    }
-                    else
-                    {
-                        Cache.Memory.Strings.Delete(data);
-                    }
-                });
-        }
-
-        /// <summary>
-        /// Sets up the multiple-cache-invalidations pub-sub subscription.
-        /// </summary>
-        private void SetupMultipleCacheInvalidationsSubscription()
-        {
-            PubSub.SubscribeAsync(
-                SharedCache.CACHE_MULTIPLE_INVALIDATION_CHANNEL,
-                data =>
-                {
-                    string[] keys = data.Split(new[] { PubSub.MULTIPLE_MESSAGE_SEPARATOR }, StringSplitOptions.None);
-
-                    foreach (string key in keys)
-                    {
-                        if (this.AlreadyInvalidated.Contains(key))
-                        {
-                            this.AlreadyInvalidated.Remove(key);
-                        }
-                        else
-                        {
-                            Cache.Memory.Strings.Delete(key);
-                        }
-                    }
-                });
         }
     }
 }

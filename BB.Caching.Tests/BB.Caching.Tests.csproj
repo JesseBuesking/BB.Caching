@@ -55,9 +55,7 @@
       <HintPath>..\packages\StackExchange.Redis.1.0.394\lib\net45\StackExchange.Redis.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
     <Reference Include="System.Runtime.Caching" />
-    <Reference Include="System.XML" />
     <Reference Include="xunit, Version=1.9.2.1705, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\xunit.1.9.2\lib\net20\xunit.dll</HintPath>
@@ -75,7 +73,6 @@
     <Compile Include="Caching\CoreTests.cs" />
     <Compile Include="PerformanceTests.cs" />
     <Compile Include="Redis\BloomFilterTests.cs" />
-    <Compile Include="Caching\ConfigTests.cs" />
     <Compile Include="Caching\Memory\StringsTests.cs" />
     <Compile Include="Redis\PubSubTests.cs" />
     <Compile Include="Redis\RateLimiterTests.cs" />

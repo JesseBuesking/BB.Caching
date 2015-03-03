@@ -5,8 +5,6 @@
     using System.Linq;
     using System.Threading;
 
-    using BB.Caching.Caching;
-
     using StackExchange.Redis;
 
     using Xunit;
@@ -344,90 +342,6 @@
             Cache.Shared.Strings.SetAsync(this.Key, this.Value).Wait();
             string result = Cache.Shared.Keys.DebugObjectAsync(this.Key).Result;
             Assert.True(result.Contains("encoding:int serializedlength:2"));
-        }
-
-        [Fact]
-        public void Invalidate()
-        {
-            Cache.Memory.Strings.Set(this.Key, (string)this.Value);
-
-            MemoryValue<string> value = Cache.Memory.Strings.Get<string>(this.Key);
-            Assert.True(value.Exists);
-            Assert.Equal((string)this.Value, value.Value);
-
-            long receivedBy = Cache.Shared.Keys.Invalidate(this.Key);
-            Assert.Equal(1, receivedBy);
-
-            value = Cache.Memory.Strings.Get<string>(this.Key);
-            Assert.False(value.Exists);
-        }
-
-        [Fact]
-        public void InvalidateAsync()
-        {
-            Cache.Memory.Strings.SetAsync(this.Key, (string)this.Value).Wait();
-
-            MemoryValue<string> value = Cache.Memory.Strings.GetAsync<string>(this.Key).Result;
-            Assert.True(value.Exists);
-            Assert.Equal((string)this.Value, value.Value);
-
-            long receivedBy = Cache.Shared.Keys.InvalidateAsync(this.Key).Result;
-            Assert.Equal(1, receivedBy);
-
-            value = Cache.Memory.Strings.GetAsync<string>(this.Key).Result;
-            Assert.False(value.Exists);
-        }
-
-        [Fact]
-        public void InvalidateMultiple()
-        {
-            foreach (var kvp in this._keyValuePairs)
-            {
-                Cache.Memory.Strings.Set(kvp.Key, kvp.Value);
-            }
-
-            MemoryValue<string> value;
-            foreach (var kvp in this._keyValuePairs)
-            {
-                value = Cache.Memory.Strings.Get<string>(kvp.Key);
-                Assert.True(value.Exists);
-                Assert.Equal(kvp.Value, value.Value);
-            }
-
-            long receivedBy = Cache.Shared.Keys.Invalidate(this._keyValuePairs.Keys.ToArray());
-            Assert.Equal(1, receivedBy);
-
-            foreach (var kvp in this._keyValuePairs)
-            {
-                value = Cache.Memory.Strings.Get<string>(kvp.Key);
-                Assert.False(value.Exists);
-            }
-        }
-
-        [Fact]
-        public void InvalidateMultipleAsync()
-        {
-            foreach (var kvp in this._keyValuePairs)
-            {
-                Cache.Memory.Strings.SetAsync(kvp.Key, kvp.Value).Wait();
-            }
-
-            MemoryValue<string> value;
-            foreach (var kvp in this._keyValuePairs)
-            {
-                value = Cache.Memory.Strings.GetAsync<string>(kvp.Key).Result;
-                Assert.True(value.Exists);
-                Assert.Equal(kvp.Value, value.Value);
-            }
-
-            long receivedBy = Cache.Shared.Keys.InvalidateAsync(this._keyValuePairs.Keys.ToArray()).Result;
-            Assert.Equal(1, receivedBy);
-
-            foreach (var kvp in this._keyValuePairs)
-            {
-                value = Cache.Memory.Strings.GetAsync<string>(kvp.Key).Result;
-                Assert.False(value.Exists);
-            }
         }
 
         public void SetFixture(DefaultTestFixture data)

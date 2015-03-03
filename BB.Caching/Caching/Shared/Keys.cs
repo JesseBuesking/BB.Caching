@@ -5,8 +5,6 @@ namespace BB.Caching
     using System.Linq;
     using System.Threading.Tasks;
 
-    using BB.Caching.Redis;
-
     using StackExchange.Redis;
 
     /// <summary>
@@ -479,80 +477,6 @@ namespace BB.Caching
                     return SharedCache.Instance.GetReadConnection(key)
                         .GetDatabase(SharedCache.Instance.Db)
                         .DebugObjectAsync(key);
-                }
-
-                /// <summary>
-                /// Invalidates the object stored at the key's location in Cache.Memory.Strings.
-                /// </summary>
-                /// <param name="key">
-                /// The key.
-                /// </param>
-                /// <returns>
-                /// The number of clients that received the message.
-                /// </returns>
-                public static long Invalidate(string key)
-                {
-                    Cache.Memory.Strings.Delete(key);
-                    SharedCache.Instance.AlreadyInvalidated.Add(key);
-                    return PubSub.Publish(SharedCache.CACHE_INVALIDATION_CHANNEL, key);
-                }
-
-                /// <summary>
-                /// Invalidates the object stored at the key's location in Cache.Memory.Strings.
-                /// </summary>
-                /// <param name="key">
-                /// The key.
-                /// </param>
-                /// <returns>
-                /// The number of clients that received the message.
-                /// </returns>
-                public static Task<long> InvalidateAsync(string key)
-                {
-                    Cache.Memory.Strings.Delete(key);
-                    SharedCache.Instance.AlreadyInvalidated.Add(key);
-                    return PubSub.PublishAsync(SharedCache.CACHE_INVALIDATION_CHANNEL, key);
-                }
-
-                /// <summary>
-                /// Invalidates the objects stored at the keys located in Cache.Memory.Strings.
-                /// </summary>
-                /// <param name="keys">
-                /// The keys.
-                /// </param>
-                /// <returns>
-                /// The number of clients that received the message.
-                /// </returns>
-                public static long Invalidate(string[] keys)
-                {
-                    foreach (string key in keys)
-                    {
-                        Cache.Memory.Strings.Delete(key);
-                        SharedCache.Instance.AlreadyInvalidated.Add(key);
-                    }
-
-                    string multipleKeys = string.Join(PubSub.MULTIPLE_MESSAGE_SEPARATOR, keys);
-                    return PubSub.Publish(SharedCache.CACHE_MULTIPLE_INVALIDATION_CHANNEL, multipleKeys);
-                }
-
-                /// <summary>
-                /// Invalidates the objects stored at the keys located in Cache.Memory.Strings.
-                /// </summary>
-                /// <param name="keys">
-                /// The keys.
-                /// </param>
-                /// <returns>
-                /// The number of clients that received the message.
-                /// </returns>
-                public static Task<long> InvalidateAsync(string[] keys)
-                {
-                    foreach (string key in keys)
-                    {
-                        Cache.Memory.Strings.Delete(key);
-                        SharedCache.Instance.AlreadyInvalidated.Add(key);
-                    }
-
-                    string multipleKeys = string.Join(PubSub.MULTIPLE_MESSAGE_SEPARATOR, keys);
-                    return PubSub.PublishAsync(SharedCache.CACHE_MULTIPLE_INVALIDATION_CHANNEL, multipleKeys);
                 }
             }
         }

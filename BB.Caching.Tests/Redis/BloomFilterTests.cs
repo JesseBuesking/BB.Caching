@@ -85,7 +85,7 @@
             return ((float)falsePositiveCount) / bloomFilter.Options.NumberOfItems;
         }
 
-        public class BloomFilterFixture : IDisposable
+        public sealed class BloomFilterFixture : IDisposable
         {
             public BloomFilterFixture()
             {
