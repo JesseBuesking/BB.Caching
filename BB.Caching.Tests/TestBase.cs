@@ -22,6 +22,7 @@
             }
 
             PubSub.Configure(ConnectionMultiplexer.Connect(string.Format("{0}:{1}", this.TestIp, this.TestPort1)));
+            Cache.Prepare();
         }
 
         private string TestIp

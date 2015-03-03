@@ -1,29 +1,12 @@
 ﻿namespace BB.Caching.Tests.Redis
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
 
     using BB.Caching.Redis;
 
     using Xunit;
 
-    public class StatisticTestsFixture : IDisposable
-    {
-        public StatisticTestsFixture()
-        {
-            Cache.Prepare();
-        }
-
-        public void Dispose()
-        {
-        }
-    }
-
-    [SuppressMessage(
-        "StyleCop.CSharp.MaintainabilityRules",
-        "SA1402:FileMayOnlyContainASingleClass",
-        Justification = "Reviewed. Suppression is OK here.")]
-    public class StatisticTests : IUseFixture<DefaultTestFixture>, IUseFixture<StatisticTestsFixture>, IDisposable
+    public class StatisticTests : IUseFixture<DefaultTestFixture>, IDisposable
     {
         private const string KEY = "StatisticTests.Key";
 
@@ -66,10 +49,6 @@
         }
 
         public void SetFixture(DefaultTestFixture data)
-        {
-        }
-
-        public void SetFixture(StatisticTestsFixture data)
         {
         }
     }

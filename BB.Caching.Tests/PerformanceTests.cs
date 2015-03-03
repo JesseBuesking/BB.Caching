@@ -22,8 +22,6 @@
         public void AllPerformanceTests()
         {
             // warmup
-            Cache.Prepare();
-
             Cache.Shared.Keys.ExistsAsync("warmup");
 
             Console.WriteLine(Shared.Keys.All());

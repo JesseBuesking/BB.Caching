@@ -7,7 +7,7 @@
 
     using Xunit;
 
-    public class CoreTests : IUseFixture<DefaultTestFixture>, IUseFixture<CoreTests.CoreTestsFixture>, IDisposable
+    public class CoreTests : IUseFixture<DefaultTestFixture>, IDisposable
     {
         private const string KEY = "CoreTests.Key";
 
@@ -921,10 +921,6 @@
         {
         }
 
-        public void SetFixture(CoreTestsFixture data)
-        {
-        }
-
         [Fact]
         public void GetSetMemory()
         {
@@ -1632,22 +1628,6 @@
 
             Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Memory).Result);
             Assert.False(Cache.ExistsAsync(KEY, Cache.Store.Redis).Result);
-        }
-
-        public class CoreTestsFixture : IDisposable
-        {
-            public CoreTestsFixture()
-            {
-                Cache.Prepare();
-                Cache.Memory.Strings.Delete(KEY);
-                Cache.Shared.Keys.Delete(KEY);
-            }
-
-            public void Dispose()
-            {
-                Cache.Memory.Strings.Delete(KEY);
-                Cache.Shared.Keys.Delete(KEY);
-            }
         }
     }
 }

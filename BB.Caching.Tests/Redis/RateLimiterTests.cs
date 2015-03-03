@@ -1,7 +1,6 @@
 ﻿namespace BB.Caching.Tests.Redis
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Text;
     using System.Threading;
@@ -13,23 +12,7 @@
 
     using Xunit;
 
-    public class RateLimiterTestsFixture : IDisposable
-    {
-        public RateLimiterTestsFixture()
-        {
-            Cache.Prepare();
-        }
-
-        public void Dispose()
-        {
-        }
-    }
-
-    [SuppressMessage(
-        "StyleCop.CSharp.MaintainabilityRules",
-        "SA1402:FileMayOnlyContainASingleClass",
-        Justification = "Reviewed. Suppression is OK here.")]
-    public class RateLimiterTests : IUseFixture<DefaultTestFixture>, IUseFixture<RateLimiterTestsFixture>, IDisposable
+    public class RateLimiterTests : IUseFixture<DefaultTestFixture>, IDisposable
     {
         private const string KEY = "key1";
 
@@ -160,10 +143,6 @@
         }
 
         public void SetFixture(DefaultTestFixture data)
-        {
-        }
-
-        public void SetFixture(RateLimiterTestsFixture data)
         {
         }
     }

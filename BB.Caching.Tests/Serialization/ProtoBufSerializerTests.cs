@@ -9,23 +9,7 @@
 
     using Xunit;
 
-    public class ProtoBufSerializerTestsFixture : IDisposable
-    {
-        public ProtoBufSerializerTestsFixture()
-        {
-            Cache.Prepare();
-        }
-
-        public void Dispose()
-        {
-        }
-    }
-
-    [SuppressMessage(
-        "StyleCop.CSharp.MaintainabilityRules",
-        "SA1402:FileMayOnlyContainASingleClass",
-        Justification = "Reviewed. Suppression is OK here.")]
-    public class ProtoBufSerializerTests : IUseFixture<DefaultTestFixture>, IUseFixture<ProtoBufSerializerTestsFixture>
+    public class ProtoBufSerializerTests : IUseFixture<DefaultTestFixture>
     {
         public enum TestEnum
         {
@@ -72,10 +56,6 @@
         }
 
         public void SetFixture(DefaultTestFixture data)
-        {
-        }
-
-        public void SetFixture(ProtoBufSerializerTestsFixture data)
         {
         }
 
