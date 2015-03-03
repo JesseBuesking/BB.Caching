@@ -6,7 +6,7 @@
 
     using StackExchange.Redis;
 
-    public class DefaultTestFixture : IDisposable
+    public sealed class DefaultTestFixture : IDisposable
     {
         public DefaultTestFixture()
         {
@@ -40,7 +40,7 @@
             get { return 6380; }
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
         }
     }

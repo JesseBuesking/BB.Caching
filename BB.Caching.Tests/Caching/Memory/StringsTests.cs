@@ -8,7 +8,7 @@ namespace BB.Caching.Tests.Caching.Memory
 
     using Xunit;
 
-    public class StringsTests : IDisposable
+    public sealed class StringsTests : IDisposable
     {
         private const string KEY = "Memory.StringsTests.Key";
 

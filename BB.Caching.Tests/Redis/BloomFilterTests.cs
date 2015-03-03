@@ -8,11 +8,21 @@
 
     using Xunit;
 
-    public class BloomFilterTests : IUseFixture<DefaultTestFixture>, IUseFixture<BloomFilterTests.BloomFilterFixture>
+    public sealed class BloomFilterTests : IUseFixture<DefaultTestFixture>
     {
         private const string KEY = "BloomFilterTests.Key";
 
         private const float FALSE_POSITIVE_PERCENTAGE = 0.001f;
+
+        public BloomFilterTests()
+        {
+            Cache.Shared.Keys.Delete(KEY);
+        }
+
+        public void Dispose()
+        {
+            Cache.Shared.Keys.Delete(KEY);
+        }
 
         [Fact]
         public void Add()
@@ -44,10 +54,6 @@
         }
 
         public void SetFixture(DefaultTestFixture data)
-        {
-        }
-
-        public void SetFixture(BloomFilterFixture data)
         {
         }
 
@@ -83,19 +89,6 @@
             int falsePositiveCount = values.Sum(value => bloomFilter.IsSetAsync(key, value).Result ? 1 : 0);
 
             return ((float)falsePositiveCount) / bloomFilter.Options.NumberOfItems;
-        }
-
-        public sealed class BloomFilterFixture : IDisposable
-        {
-            public BloomFilterFixture()
-            {
-                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
-            }
-
-            public void Dispose()
-            {
-                Cache.Shared.Keys.DeleteAsync(KEY).Wait();
-            }
         }
     }
 }

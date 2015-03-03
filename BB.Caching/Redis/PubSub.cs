@@ -144,6 +144,7 @@
         /// <summary>
         /// Exception when a channel is already subscribed.
         /// </summary>
+        [Serializable]
         public class ChannelAlreadySubscribedException : Exception
         {
             /// <summary>

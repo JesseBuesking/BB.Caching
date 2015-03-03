@@ -81,17 +81,15 @@
                 throw new ArgumentException(string.Format("Requested resource {0} was not found", luaResource));
             }
 
-            using (var resourceStream = assembly.GetManifestResourceStream(luaResource))
+            var resourceStream = assembly.GetManifestResourceStream(luaResource);
+            if (null == resourceStream)
             {
-                if (null == resourceStream)
-                {
-                    throw new ArgumentException(string.Format("Unable to get resource stream for {0}", luaResource));
-                }
+                throw new ArgumentException(string.Format("Unable to get resource stream for {0}", luaResource));
+            }
 
-                using (var stream = new StreamReader(resourceStream))
-                {
-                    return stream.ReadToEnd();
-                }
+            using (var stream = new StreamReader(resourceStream))
+            {
+                return stream.ReadToEnd();
             }
         }
     }

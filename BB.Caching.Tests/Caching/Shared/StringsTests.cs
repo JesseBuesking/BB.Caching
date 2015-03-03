@@ -12,7 +12,7 @@
 
     using Xunit;
 
-    public class StringsTests : IUseFixture<DefaultTestFixture>, IDisposable
+    public sealed class StringsTests : IUseFixture<DefaultTestFixture>, IDisposable
     {
         private readonly Dictionary<string, string> _keyValuePairs = new Dictionary<string, string>
             {

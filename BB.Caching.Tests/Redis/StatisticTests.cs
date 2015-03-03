@@ -6,7 +6,7 @@
 
     using Xunit;
 
-    public class StatisticTests : IUseFixture<DefaultTestFixture>, IDisposable
+    public sealed class StatisticTests : IUseFixture<DefaultTestFixture>, IDisposable
     {
         private const string KEY = "StatisticTests.Key";
 

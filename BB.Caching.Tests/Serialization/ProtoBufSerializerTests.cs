@@ -1,7 +1,6 @@
 ﻿namespace BB.Caching.Tests.Serialization
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
 
     using BB.Caching.Serialization;
 

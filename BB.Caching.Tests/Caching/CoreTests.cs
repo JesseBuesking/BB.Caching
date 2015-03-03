@@ -7,7 +7,7 @@
 
     using Xunit;
 
-    public class CoreTests : IUseFixture<DefaultTestFixture>, IDisposable
+    public sealed class CoreTests : IUseFixture<DefaultTestFixture>, IDisposable
     {
         private const string KEY = "CoreTests.Key";
 

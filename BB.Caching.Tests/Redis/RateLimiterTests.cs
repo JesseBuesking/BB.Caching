@@ -12,7 +12,7 @@
 
     using Xunit;
 
-    public class RateLimiterTests : IUseFixture<DefaultTestFixture>, IDisposable
+    public sealed class RateLimiterTests : IUseFixture<DefaultTestFixture>, IDisposable
     {
         private const string KEY = "key1";
 

@@ -9,7 +9,7 @@
 
     using Xunit;
 
-    public class KeysTests : IUseFixture<DefaultTestFixture>, IDisposable
+    public sealed class KeysTests : IUseFixture<DefaultTestFixture>, IDisposable
     {
         private readonly Dictionary<string, string> _keyValuePairs = new Dictionary<string, string>
             {

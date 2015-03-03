@@ -114,21 +114,19 @@
         /// </returns>
         public byte[] Decompress(byte[] value)
         {
-            using (MemoryStream ms = new MemoryStream(value))
+            MemoryStream ms = new MemoryStream(value);
+            using (GZipStream gs = new GZipStream(ms, CompressionMode.Decompress))
             {
-                using (GZipStream gs = new GZipStream(ms, CompressionMode.Decompress))
+                using (MemoryStream fin = new MemoryStream())
                 {
-                    using (MemoryStream fin = new MemoryStream())
+                    byte[] buffer = new byte[1024];
+                    int numberRead;
+                    while ((numberRead = gs.Read(buffer, 0, buffer.Length)) > 0)
                     {
-                        byte[] buffer = new byte[1024];
-                        int numberRead;
-                        while ((numberRead = gs.Read(buffer, 0, buffer.Length)) > 0)
-                        {
-                            fin.Write(buffer, 0, numberRead);
-                        }
-
-                        return fin.ToArray();
+                        fin.Write(buffer, 0, numberRead);
                     }
+
+                    return fin.ToArray();
                 }
             }
         }
