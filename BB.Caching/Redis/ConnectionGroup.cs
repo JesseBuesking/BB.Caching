@@ -52,13 +52,9 @@ namespace BB.Caching.Redis
         /// <param name="name">
         /// The name.
         /// </param>
-        /// <param name="defaultWriteConnection">
-        /// The default write connection.
-        /// </param>
-        public ConnectionGroup(string name, ConnectionMultiplexer defaultWriteConnection)
+        public ConnectionGroup(string name)
         {
             this.Name = name;
-            this.AddWriteConnection(defaultWriteConnection);
         }
 
         /// <summary>

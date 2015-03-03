@@ -10,15 +10,21 @@
     {
         public DefaultTestFixture()
         {
-            SharedCache.Instance.AddRedisConnectionGroup(new ConnectionGroup(
-                "node-0",
-                ConnectionMultiplexer.Connect(string.Format("{0}:{1},allowAdmin=True", this.TestIp, this.TestPort1))));
+            var connectionGroup1 = new ConnectionGroup("node-0");
+
+            connectionGroup1.AddWriteConnection(
+                ConnectionMultiplexer.Connect(string.Format("{0}:{1},allowAdmin=True", this.TestIp, this.TestPort1)));
+
+            SharedCache.Instance.AddRedisConnectionGroup(connectionGroup1);
 
             if (0 != this.TestPort2)
             {
-                SharedCache.Instance.AddRedisConnectionGroup(new ConnectionGroup(
-                    "node-1",
-                    ConnectionMultiplexer.Connect(string.Format("{0}:{1}", this.TestIp, this.TestPort1))));
+                var connectionGroup2 = new ConnectionGroup("node-1");
+
+                connectionGroup2.AddWriteConnection(
+                    ConnectionMultiplexer.Connect(string.Format("{0}:{1}", this.TestIp, this.TestPort1)));
+
+                SharedCache.Instance.AddRedisConnectionGroup(connectionGroup2);
             }
 
             PubSub.Configure(ConnectionMultiplexer.Connect(string.Format("{0}:{1}", this.TestIp, this.TestPort1)));
