@@ -21,7 +21,7 @@ In your startup process:
 
 1. Define your cache settings either [programmatically or using an app config file](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/Redis/ConnectionGroupTests.cs):
     - if you're using [a config file](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/readandwrite.config), call ``Cache.LoadFromConfig(...)``
-    - if you're defining the setup programmatically, see [this example](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/Redis/ConnectionGroupTests.cs#L50-L61)
+    - if you're defining the setup programmatically, see [this example](https://github.com/JesseBuesking/BB.Caching/blob/2fb3571f7f6882fd0062220dfafbefd1a24686ab/BB.Caching.Tests/Redis/ConnectionGroupTests.cs#L48-L58)
 2. Then prepare the cache by calling ``Cache.Prepare()``.
 3. Start using the cache!
 
