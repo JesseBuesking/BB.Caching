@@ -3,7 +3,7 @@ BB.Caching
 
 BB.Caching is a library for (ASP) .NET developers with the goal of making caching as simple as possible. With out-of-the-box support for [Redis](http://redis.io) [on top of StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis), you can quickly get scalable, distributed caching up and running with minimal configuration overhead.
 
-Note: This code is not production ready, but has a lot of [tests](https://github.com/JesseBuesking/BB.Caching/tree/master/BB.Caching.Tests) that cover many cases.
+_Note: This code is not production ready, but has a lot of [tests](https://github.com/JesseBuesking/BB.Caching/tree/master/BB.Caching.Tests) that cover many cases._
 
 What can it be used for?
 ------------------------
@@ -48,9 +48,9 @@ _Note: each method has an ``Async`` counterpart_
 
 Features
 --------
-1. A simple-to-use caching interface, with method calls located under [``Cache.MethodName``](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching/Caching/Core.cs).
+1. A simple-to-use caching interface, with method calls located under [``Cache.``](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching/Caching/Core.cs).
     - NOTE: The methods will serialize and compress objects using [protobuf](https://code.google.com/p/protobuf-net/) and gzip. Complex objects are assumed to be protobuf compatible.
-2. More advanced caching and redis use defined under [``Cache.Shared.RedisType``](https://github.com/JesseBuesking/BB.Caching/tree/master/BB.Caching/Caching/Shared). These methods utilize the internal consistent hashing logic to distribute your keys across one or more redis nodes.
+2. More advanced caching and redis use defined under [``Cache.Shared.``](https://github.com/JesseBuesking/BB.Caching/tree/master/BB.Caching/Caching/Shared). These methods utilize the internal consistent hashing logic to distribute your keys across one or more redis nodes.
 3. Uses [consistent hashing](http://en.wikipedia.org/wiki/Consistent_hashing) to distribute keys across one or more redis nodes to support easier horizontal scaling.
 4. A shared ``Statistics`` implementation to track simple statistics like count, min, max, mean, variance, and standard deviation.
 5. [Rate limiting](http://en.wikipedia.org/wiki/Rate_limiting) capabilities.
@@ -75,7 +75,7 @@ Benchmarks
 ----------
 Machine: i7 950 @ 3.07GHz running two instances of redis on windows over ports 6379 and 6380.
 
-_Note: consistent hashing adds some minor overhead
+_Note: consistent hashing adds some minor overhead_
 
 ```
 Shared Keys
