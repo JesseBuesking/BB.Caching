@@ -55,12 +55,9 @@
             RedisKey[] keyArgs = { key };
             RedisValue[] valueArgs = { value };
 
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            foreach (var connection in connections)
-            {
-                connection.GetDatabase(SharedCache.Instance.Db)
-                    .ScriptEvaluate(Statistics.SetStatisticHash, keyArgs, valueArgs);
-            }
+            SharedCache.Instance.GetWriteConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .ScriptEvaluate(Statistics.SetStatisticHash, keyArgs, valueArgs);
         }
 
         /// <summary>
@@ -75,17 +72,14 @@
         /// <returns>
         /// The <see cref="Task"/>.
         /// </returns>
-        public static async Task SetStatisticAsync(string key, double value)
+        public static Task SetStatisticAsync(string key, double value)
         {
             RedisKey[] keyArgs = { key };
             RedisValue[] valueArgs = { value };
 
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            foreach (var connection in connections)
-            {
-                await connection.GetDatabase(SharedCache.Instance.Db)
-                    .ScriptEvaluateAsync(Statistics.SetStatisticHash, keyArgs, valueArgs);
-            }
+            return SharedCache.Instance.GetWriteConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .ScriptEvaluateAsync(Statistics.SetStatisticHash, keyArgs, valueArgs);
         }
 
         /// <summary>
@@ -102,13 +96,9 @@
             RedisKey[] keyArgs = { key };
             RedisValue[] valueArgs = new RedisValue[0];
 
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            RedisResult result = null;
-            foreach (var connection in connections)
-            {
-                result = connection.GetDatabase(SharedCache.Instance.Db)
-                    .ScriptEvaluate(Statistics.GetStatisticHash, keyArgs, valueArgs);
-            }
+            RedisResult result = SharedCache.Instance.GetWriteConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .ScriptEvaluate(Statistics.GetStatisticHash, keyArgs, valueArgs);
 
             if (null == result)
             {
@@ -139,18 +129,9 @@
             RedisKey[] keyArgs = { key };
             RedisValue[] valueArgs = new RedisValue[0];
 
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            RedisResult result = null;
-            foreach (var connection in connections)
-            {
-                var task = await connection.GetDatabase(SharedCache.Instance.Db)
-                    .ScriptEvaluateAsync(Statistics.GetStatisticHash, keyArgs, valueArgs);
-
-                if (null == result)
-                {
-                    result = task;
-                }
-            }
+            RedisResult result = await SharedCache.Instance.GetWriteConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .ScriptEvaluateAsync(Statistics.GetStatisticHash, keyArgs, valueArgs);
 
             if (null == result)
             {

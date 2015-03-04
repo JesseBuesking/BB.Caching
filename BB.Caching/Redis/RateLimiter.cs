@@ -67,13 +67,9 @@
                     (long)bucketSize.TotalMilliseconds, increment, throttle
             };
 
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            RedisResult result = null;
-            foreach (var connection in connections)
-            {
-                result = connection.GetDatabase(SharedCache.Instance.Db)
-                    .ScriptEvaluate(RateLimiter.RateLimitIncrementHash, keyArgs, valueArgs);
-            }
+            RedisResult result = SharedCache.Instance.GetWriteConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .ScriptEvaluate(RateLimiter.RateLimitIncrementHash, keyArgs, valueArgs);
 
             return result;
         }
@@ -102,13 +98,9 @@
                     (long)bucketSize.TotalMilliseconds, increment, throttle
             };
 
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            RedisResult result = null;
-            foreach (var connection in connections)
-            {
-                result = await connection.GetDatabase(SharedCache.Instance.Db)
-                    .ScriptEvaluateAsync(RateLimiter.RateLimitIncrementHash, keyArgs, valueArgs);
-            }
+            RedisResult result = await SharedCache.Instance.GetWriteConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .ScriptEvaluateAsync(RateLimiter.RateLimitIncrementHash, keyArgs, valueArgs);
 
             return result;
         }

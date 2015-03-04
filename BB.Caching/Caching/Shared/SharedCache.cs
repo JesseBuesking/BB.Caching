@@ -113,9 +113,9 @@ namespace BB.Caching
         /// <returns>
         /// A read-only <see cref="ConnectionMultiplexer"/>.
         /// </returns>
-        public ConnectionMultiplexer[] GetWriteConnections(RedisKey key)
+        public ConnectionMultiplexer GetWriteConnection(RedisKey key)
         {
-            return this._consistentHashRing.GetNode(key).GetWriteMultiplexers();
+            return this._consistentHashRing.GetNode(key).GetWriteMultiplexer();
         }
 
         /// <summary>
@@ -155,7 +155,7 @@ namespace BB.Caching
         /// <returns>
         /// A dictionary of read-write connections for each key.
         /// </returns>
-        public Dictionary<ConnectionMultiplexer[], RedisKey[]> GetWriteConnections(RedisKey[] keys)
+        public Dictionary<ConnectionMultiplexer, RedisKey[]> GetWriteConnection(RedisKey[] keys)
         {
             var result = new Dictionary<ConnectionGroup, List<RedisKey>>();
             foreach (RedisKey key in keys)
@@ -171,7 +171,7 @@ namespace BB.Caching
                 }
             }
 
-            return result.ToDictionary(r => r.Key.GetWriteMultiplexers(), r => r.Value.ToArray());
+            return result.ToDictionary(r => r.Key.GetWriteMultiplexer(), r => r.Value.ToArray());
         }
 
         /// <summary>
@@ -209,7 +209,7 @@ namespace BB.Caching
         public ConnectionMultiplexer[] GetAllWriteConnections()
         {
             return this._consistentHashRing.GetAvailableNodes()
-                .SelectMany(n => n.GetWriteMultiplexers())
+                .Select(n => n.GetWriteMultiplexer())
                 .Distinct()
                 .ToArray();
         }

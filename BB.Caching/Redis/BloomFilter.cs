@@ -176,12 +176,9 @@
             valueArgs[0] = value;
             bits.CopyTo(valueArgs, 1);
 
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            foreach (var connection in connections)
-            {
-                connection.GetDatabase(SharedCache.Instance.Db)
-                    .ScriptEvaluate(BloomFilter.SetMultipleBitsHash, keyArgs, valueArgs);
-            }
+            SharedCache.Instance.GetWriteConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .ScriptEvaluate(BloomFilter.SetMultipleBitsHash, keyArgs, valueArgs);
         }
 
         /// <summary>
@@ -199,19 +196,16 @@
         /// <returns>
         /// The <see cref="Task"/>.
         /// </returns>
-        private static async Task SetBitsAsync(string key, RedisValue[] bits, bool value)
+        private static Task SetBitsAsync(string key, RedisValue[] bits, bool value)
         {
             RedisKey[] keyArgs = { key };
             RedisValue[] valueArgs = new RedisValue[bits.Length + 1];
             valueArgs[0] = value;
             bits.CopyTo(valueArgs, 1);
 
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            foreach (var connection in connections)
-            {
-                await connection.GetDatabase(SharedCache.Instance.Db)
-                    .ScriptEvaluateAsync(BloomFilter.SetMultipleBitsHash, keyArgs, valueArgs);
-            }
+            return SharedCache.Instance.GetWriteConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .ScriptEvaluateAsync(BloomFilter.SetMultipleBitsHash, keyArgs, valueArgs);
         }
 
         /// <summary>
@@ -232,14 +226,9 @@
             RedisValue[] valueArgs = new RedisValue[bits.Length];
             bits.CopyTo(valueArgs, 0);
 
-            RedisResult result = null;
-
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            foreach (var connection in connections)
-            {
-                result = connection.GetDatabase(SharedCache.Instance.Db)
-                    .ScriptEvaluate(BloomFilter.AllBitsSetHash, keyArgs, valueArgs);
-            }
+            RedisResult result = SharedCache.Instance.GetWriteConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .ScriptEvaluate(BloomFilter.AllBitsSetHash, keyArgs, valueArgs);
 
             return null != result && !result.IsNull && 1L == (long)result;
         }
@@ -262,14 +251,9 @@
             RedisValue[] valueArgs = new RedisValue[bits.Length];
             bits.CopyTo(valueArgs, 0);
 
-            Task<RedisResult> result = null;
-
-            var connections = SharedCache.Instance.GetWriteConnections(key);
-            foreach (var connection in connections)
-            {
-                result = connection.GetDatabase(SharedCache.Instance.Db)
-                    .ScriptEvaluateAsync(BloomFilter.AllBitsSetHash, keyArgs, valueArgs);
-            }
+            Task<RedisResult> result = SharedCache.Instance.GetWriteConnection(key)
+                .GetDatabase(SharedCache.Instance.Db)
+                .ScriptEvaluateAsync(BloomFilter.AllBitsSetHash, keyArgs, valueArgs);
 
             if (null == result)
             {

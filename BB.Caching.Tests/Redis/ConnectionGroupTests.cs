@@ -22,10 +22,9 @@
                 connectionGroup.AddWriteConnection(connectionString, false);
 
                 Assert.Equal("node-0", connectionGroup.Name);
-                Assert.Equal(1, connectionGroup.WriteConnections.Count);
                 Assert.Equal(0, connectionGroup.ReadConnections.Count);
 
-                Assert.Equal(connectionString, connectionGroup.WriteConnections[0]);
+                Assert.Equal(connectionString, connectionGroup.WriteConnection);
             }
 
             [Fact]
@@ -37,7 +36,7 @@
                 connectionGroup.AddReadConnection(connectionString, false);
 
                 Assert.Equal("node-0", connectionGroup.Name);
-                Assert.Equal(0, connectionGroup.WriteConnections.Count);
+                Assert.Equal(null, connectionGroup.WriteConnection);
                 Assert.Equal(1, connectionGroup.ReadConnections.Count);
 
                 Assert.Equal(connectionString, connectionGroup.ReadConnections[0]);
@@ -53,11 +52,10 @@
                 connectionGroup.AddWriteConnection(connectionString, false);
 
                 Assert.Equal("node-0", connectionGroup.Name);
-                Assert.Equal(1, connectionGroup.WriteConnections.Count);
                 Assert.Equal(1, connectionGroup.ReadConnections.Count);
 
                 Assert.Equal(connectionString, connectionGroup.ReadConnections[0]);
-                Assert.Equal(connectionString, connectionGroup.WriteConnections[0]);
+                Assert.Equal(connectionString, connectionGroup.WriteConnection);
             }
         }
 
@@ -79,10 +77,9 @@
                 var connectionGroup = connectionGroups.First();
 
                 Assert.Equal("node-0", connectionGroup.Name);
-                Assert.Equal(1, connectionGroup.WriteConnections.Count);
                 Assert.Equal(0, connectionGroup.ReadConnections.Count);
 
-                Assert.Equal(connectionString, connectionGroup.WriteConnections[0]);
+                Assert.Equal(connectionString, connectionGroup.WriteConnection);
             }
 
             [Fact]
@@ -101,7 +98,7 @@
                 var connectionGroup = connectionGroups.First();
 
                 Assert.Equal("node-0", connectionGroup.Name);
-                Assert.Equal(0, connectionGroup.WriteConnections.Count);
+                Assert.Equal(null, connectionGroup.WriteConnection);
                 Assert.Equal(1, connectionGroup.ReadConnections.Count);
 
                 Assert.Equal(connectionString, connectionGroup.ReadConnections[0]);
@@ -123,11 +120,10 @@
                 var connectionGroup = connectionGroups.First();
 
                 Assert.Equal("node-0", connectionGroup.Name);
-                Assert.Equal(1, connectionGroup.WriteConnections.Count);
                 Assert.Equal(1, connectionGroup.ReadConnections.Count);
 
                 Assert.Equal(connectionString, connectionGroup.ReadConnections[0]);
-                Assert.Equal(connectionString, connectionGroup.WriteConnections[0]);
+                Assert.Equal(connectionString, connectionGroup.WriteConnection);
             }
         }
     }

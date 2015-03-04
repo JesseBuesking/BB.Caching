@@ -40,13 +40,9 @@ namespace BB.Caching
                 /// </returns>
                 public static bool Delete(RedisKey key, RedisValue field)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    bool result = false;
-                    foreach (var connection in connections)
-                    {
-                        result = result || connection.GetDatabase(SharedCache.Instance.Db)
-                            .HashDelete(key, field);
-                    }
+                    bool result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashDelete(key, field);
 
                     return result;
                 }
@@ -69,13 +65,9 @@ namespace BB.Caching
                 /// </returns>
                 public static Task<bool> DeleteAsync(RedisKey key, RedisValue field)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<bool> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection.GetDatabase(SharedCache.Instance.Db)
-                            .HashDeleteAsync(key, field);
-                    }
+                    Task<bool> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashDeleteAsync(key, field);
 
                     return result;
                 }
@@ -98,13 +90,9 @@ namespace BB.Caching
                 /// </returns>
                 public static long Delete(RedisKey key, RedisValue[] fields)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    long result = 0;
-                    foreach (var connection in connections)
-                    {
-                        result += connection.GetDatabase(SharedCache.Instance.Db)
-                            .HashDelete(key, fields);
-                    }
+                    long result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashDelete(key, fields);
 
                     return result;
                 }
@@ -127,13 +115,9 @@ namespace BB.Caching
                 /// </returns>
                 public static Task<long> DeleteAsync(RedisKey key, RedisValue[] fields)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<long> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection.GetDatabase(SharedCache.Instance.Db)
-                            .HashDeleteAsync(key, fields);
-                    }
+                    Task<long> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashDeleteAsync(key, fields);
 
                     return result;
                 }
@@ -155,13 +139,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static bool Exists(RedisKey key, RedisValue field)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    bool result = false;
-                    foreach (var connection in connections)
-                    {
-                        result = result || connection.GetDatabase(SharedCache.Instance.Db)
-                            .HashExists(key, field);
-                    }
+                    bool result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashExists(key, field);
 
                     return result;
                 }
@@ -183,13 +163,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<bool> ExistsAsync(RedisKey key, RedisValue field)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<bool> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection.GetDatabase(SharedCache.Instance.Db)
-                            .HashExistsAsync(key, field);
-                    }
+                    Task<bool> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashExistsAsync(key, field);
 
                     return result;
                 }
@@ -359,14 +335,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static long Increment(RedisKey key, RedisValue field, int value = 1)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    long result = 0;
-                    foreach (var connection in connections)
-                    {
-                        result += connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashIncrement(key, field, value);
-                    }
+                    long result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashIncrement(key, field, value);
 
                     return result;
                 }
@@ -396,14 +367,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<long> IncrementAsync(RedisKey key, RedisValue field, int value = 1)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<long> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashIncrementAsync(key, field, value);
-                    }
+                    Task<long> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashIncrementAsync(key, field, value);
 
                     return result;
                 }
@@ -433,14 +399,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static double Increment(RedisKey key, RedisValue field, double value)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    double result = 0.0d;
-                    foreach (var connection in connections)
-                    {
-                        result += connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashIncrement(key, field, value);
-                    }
+                    double result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashIncrement(key, field, value);
 
                     return result;
                 }
@@ -470,14 +431,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<double> IncrementAsync(RedisKey key, RedisValue field, double value)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<double> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashIncrementAsync(key, field, value);
-                    }
+                    Task<double> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashIncrementAsync(key, field, value);
 
                     return result;
                 }
@@ -507,14 +463,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static long Decrement(RedisKey key, RedisValue field, int value = 1)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    long result = 0;
-                    foreach (var connection in connections)
-                    {
-                        result += connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashDecrement(key, field, value);
-                    }
+                    long result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashDecrement(key, field, value);
 
                     return result;
                 }
@@ -544,14 +495,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<long> DecrementAsync(RedisKey key, RedisValue field, int value = 1)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<long> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashDecrementAsync(key, field, value);
-                    }
+                    Task<long> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashDecrementAsync(key, field, value);
 
                     return result;
                 }
@@ -581,14 +527,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static double Decrement(RedisKey key, RedisValue field, double value)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    double result = 0.0d;
-                    foreach (var connection in connections)
-                    {
-                        result += connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashDecrement(key, field, value);
-                    }
+                    double result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashDecrement(key, field, value);
 
                     return result;
                 }
@@ -618,14 +559,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<double> DecrementAsync(RedisKey key, RedisValue field, double value)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<double> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashDecrementAsync(key, field, value);
-                    }
+                    Task<double> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashDecrementAsync(key, field, value);
 
                     return result;
                 }
@@ -644,14 +580,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static RedisValue[] GetKeys(RedisKey key)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    RedisValue[] result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashKeys(key);
-                    }
+                    RedisValue[] result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashKeys(key);
 
                     return result;
                 }
@@ -670,14 +601,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<RedisValue[]> GetKeysAsync(RedisKey key)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<RedisValue[]> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashKeysAsync(key);
-                    }
+                    Task<RedisValue[]> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashKeysAsync(key);
 
                     return result;
                 }
@@ -696,14 +622,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static RedisValue[] GetValues(RedisKey key)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    RedisValue[] result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashValues(key);
-                    }
+                    RedisValue[] result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashValues(key);
 
                     return result;
                 }
@@ -722,14 +643,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<RedisValue[]> GetValuesAsync(RedisKey key)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<RedisValue[]> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashValuesAsync(key);
-                    }
+                    Task<RedisValue[]> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashValuesAsync(key);
 
                     return result;
                 }
@@ -794,14 +710,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static bool Set(RedisKey key, RedisValue field, RedisValue value)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    bool result = false;
-                    foreach (var connection in connections)
-                    {
-                        result = result || connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashSet(key, field, value);
-                    }
+                    bool result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashSet(key, field, value);
 
                     return result;
                 }
@@ -828,14 +739,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<bool> SetAsync(RedisKey key, RedisValue field, RedisValue value)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<bool> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashSetAsync(key, field, value);
-                    }
+                    Task<bool> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashSetAsync(key, field, value);
 
                     return result;
                 }
@@ -855,13 +761,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static void Set(RedisKey key, HashEntry[] values)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    foreach (var connection in connections)
-                    {
-                        connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashSet(key, values);
-                    }
+                    SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashSet(key, values);
                 }
 
                 /// <summary>
@@ -883,15 +785,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task SetAsync(RedisKey key, HashEntry[] values)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task result = null;
-
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashSetAsync(key, values);
-                    }
+                    Task result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashSetAsync(key, values);
 
                     return result;
                 }
@@ -918,14 +814,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static bool SetIfNotExists(RedisKey key, RedisValue field, RedisValue value)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    bool result = false;
-                    foreach (var connection in connections)
-                    {
-                        result = result || connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashSet(key, field, value, When.NotExists);
-                    }
+                    bool result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashSet(key, field, value, When.NotExists);
 
                     return result;
                 }
@@ -952,14 +843,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<bool> SetIfNotExistsAsync(RedisKey key, RedisValue field, RedisValue value)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<bool> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .HashSetAsync(key, field, value, When.NotExists);
-                    }
+                    Task<bool> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .HashSetAsync(key, field, value, When.NotExists);
 
                     return result;
                 }

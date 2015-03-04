@@ -2,6 +2,7 @@
 namespace BB.Caching
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -39,14 +40,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static bool Delete(RedisKey key)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    bool result = false;
-                    foreach (var connection in connections)
-                    {
-                        result = result || connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .KeyDelete(key);
-                    }
+                    bool result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyDelete(key);
 
                     return result;
                 }
@@ -65,14 +61,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<bool> DeleteAsync(RedisKey key)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<bool> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .KeyDeleteAsync(key);
-                    }
+                    Task<bool> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyDeleteAsync(key);
 
                     return result;
                 }
@@ -91,16 +82,13 @@ namespace BB.Caching
                 /// </remarks>
                 public static long Delete(RedisKey[] keys)
                 {
-                    var dictionary = SharedCache.Instance.GetWriteConnections(keys);
+                    var dictionary = SharedCache.Instance.GetWriteConnection(keys);
                     long removed = 0;
-                    for (int i = 0; i < dictionary.Count; i++)
+                    foreach (KeyValuePair<ConnectionMultiplexer, RedisKey[]> kvp in dictionary)
                     {
-                        foreach (var connection in dictionary.ElementAt(i).Key)
-                        {
-                            removed += connection
-                                .GetDatabase(SharedCache.Instance.Db)
-                                .KeyDelete(dictionary.ElementAt(i).Value);
-                        }
+                        removed += kvp.Key
+                            .GetDatabase(SharedCache.Instance.Db)
+                            .KeyDelete(kvp.Value);
                     }
 
                     return removed;
@@ -120,16 +108,13 @@ namespace BB.Caching
                 /// </remarks>
                 public static async Task<long> DeleteAsync(RedisKey[] keys)
                 {
-                    var dictionary = SharedCache.Instance.GetWriteConnections(keys);
+                    var dictionary = SharedCache.Instance.GetWriteConnection(keys);
                     var tasks = new Task<long>[dictionary.Count];
                     for (int i = 0; i < dictionary.Count; i++)
                     {
-                        foreach (var connection in dictionary.ElementAt(i).Key)
-                        {
-                            tasks[i] = connection
-                                .GetDatabase(SharedCache.Instance.Db)
-                                .KeyDeleteAsync(dictionary.ElementAt(i).Value);
-                        }
+                        tasks[i] = dictionary.ElementAt(i).Key
+                            .GetDatabase(SharedCache.Instance.Db)
+                            .KeyDeleteAsync(dictionary.ElementAt(i).Value);
                     }
 
                     var results = await Task.WhenAll(tasks);
@@ -199,14 +184,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static bool Expire(string key, TimeSpan expiry)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    bool result = false;
-                    foreach (var connection in connections)
-                    {
-                        result = result || connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .KeyExpire(key, expiry);
-                    }
+                    bool result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyExpire(key, expiry);
 
                     return result;
                 }
@@ -236,14 +216,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<bool> ExpireAsync(string key, TimeSpan expiry)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<bool> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .KeyExpireAsync(key, expiry);
-                    }
+                    Task<bool> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyExpireAsync(key, expiry);
 
                     return result;
                 }
@@ -265,14 +240,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static bool Persist(string key)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    bool result = false;
-                    foreach (var connection in connections)
-                    {
-                        result = result || connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .KeyPersist(key);
-                    }
+                    bool result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyPersist(key);
 
                     return result;
                 }
@@ -294,14 +264,9 @@ namespace BB.Caching
                 /// </remarks>
                 public static Task<bool> PersistAsync(string key)
                 {
-                    var connections = SharedCache.Instance.GetWriteConnections(key);
-                    Task<bool> result = null;
-                    foreach (var connection in connections)
-                    {
-                        result = connection
-                            .GetDatabase(SharedCache.Instance.Db)
-                            .KeyPersistAsync(key);
-                    }
+                    Task<bool> result = SharedCache.Instance.GetWriteConnection(key)
+                        .GetDatabase(SharedCache.Instance.Db)
+                        .KeyPersistAsync(key);
 
                     return result;
                 }

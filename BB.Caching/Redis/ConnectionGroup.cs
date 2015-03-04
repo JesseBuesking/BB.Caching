@@ -1,5 +1,6 @@
 namespace BB.Caching.Redis
 {
+    using System;
     using System.Collections.Generic;
 
     using StackExchange.Redis;
@@ -46,9 +47,9 @@ namespace BB.Caching.Redis
         {
             this.Name = name;
             this.ReadConnections = new List<string>();
-            this.WriteConnections = new List<string>();
+            this.WriteConnection = null;
             this.ReadMultiplexers = new List<ConnectionMultiplexer>();
-            this.WriteMultiplexers = new List<ConnectionMultiplexer>();
+            this.WriteMultiplexer = null;
         }
 
         /// <summary>
@@ -63,12 +64,12 @@ namespace BB.Caching.Redis
         /// <summary>
         /// The multiplexers that we can write to. (Master(s))
         /// </summary>
-        public List<ConnectionMultiplexer> WriteMultiplexers { get; private set; }
+        public ConnectionMultiplexer WriteMultiplexer { get; private set; }
 
         /// <summary>
         /// The connections that we can write to. (Master(s))
         /// </summary>
-        public List<string> WriteConnections { get; private set; }
+        public string WriteConnection { get; private set; }
 
         /// <summary>
         /// The slave multiplexers we can read from. (Slave(s))
@@ -91,12 +92,18 @@ namespace BB.Caching.Redis
         /// </param>
         public void AddWriteConnection(string connection, bool establishConnection = true)
         {
-            this.WriteConnections.Add(connection);
+            if (this.WriteConnection != null)
+            {
+                throw new Exception(
+                    string.Format("can only have one write connection per connection group\n\t'{0}'", connection));
+            }
+
+            this.WriteConnection = connection;
 
             if (establishConnection)
             {
                 var multiplexer = ConnectionMultiplexer.Connect(connection);
-                this.WriteMultiplexers.Add(multiplexer);
+                this.WriteMultiplexer = multiplexer;
             }
 
             this.UpdateReadPool();
@@ -142,9 +149,9 @@ namespace BB.Caching.Redis
         /// <returns>
         /// The array of write <see><cref>ConnectionMultiplexer[]</cref></see>.
         /// </returns>
-        public ConnectionMultiplexer[] GetWriteMultiplexers()
+        public ConnectionMultiplexer GetWriteMultiplexer()
         {
-            return this.WriteMultiplexers.ToArray();
+            return this.WriteMultiplexer;
         }
 
         /// <summary>
@@ -164,7 +171,7 @@ namespace BB.Caching.Redis
         /// </summary>
         private void UpdateReadPool()
         {
-            int writeCount = this.WriteMultiplexers.Count;
+            int writeCount = this.WriteMultiplexer == null ? 0 : 1;
             int readCount = this.ReadMultiplexers.Count;
 
             this._readPool = new List<ConnectionMultiplexer>((writeCount * WRITE_WEIGHT) + (readCount * READ_WEIGHT));
@@ -186,7 +193,7 @@ namespace BB.Caching.Redis
                 {
                     for (int i = 0; i < WRITE_WEIGHT; i++)
                     {
-                        this._readPool.Add(this.WriteMultiplexers[writeIndex]);
+                        this._readPool.Add(this.WriteMultiplexer);
                     }
                 }
 
