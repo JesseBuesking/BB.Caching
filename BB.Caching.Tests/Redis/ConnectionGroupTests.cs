@@ -80,6 +80,7 @@
                 Assert.Equal(0, connectionGroup.ReadConnections.Count);
 
                 Assert.Equal(connectionString, connectionGroup.WriteConnection);
+                Assert.False(connectionGroup.IsAnalytics);
             }
 
             [Fact]
@@ -102,6 +103,7 @@
                 Assert.Equal(1, connectionGroup.ReadConnections.Count);
 
                 Assert.Equal(connectionString, connectionGroup.ReadConnections[0]);
+                Assert.False(connectionGroup.IsAnalytics);
             }
 
             [Fact]
@@ -124,6 +126,30 @@
 
                 Assert.Equal(connectionString, connectionGroup.ReadConnections[0]);
                 Assert.Equal(connectionString, connectionGroup.WriteConnection);
+                Assert.False(connectionGroup.IsAnalytics);
+            }
+
+            [Fact]
+            public void Analytics()
+            {
+                var filename = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "analytics.config");
+                var fileMap = new ConfigurationFileMap(filename);
+                var configuration = ConfigurationManager.OpenMappedMachineConfiguration(fileMap);
+                var section = configuration.Sections.Get("BB.Caching");
+                var connectionGroups = Cache.LoadFromConfig(section, false);
+
+                var connectionString = string.Format("{0}:{1},allowAdmin=True", "12.34.56.78", "1234");
+
+                Assert.Equal(1, connectionGroups.Count);
+
+                var connectionGroup = connectionGroups.First();
+
+                Assert.Equal("node-0", connectionGroup.Name);
+                Assert.Equal(1, connectionGroup.ReadConnections.Count);
+
+                Assert.Equal(connectionString, connectionGroup.ReadConnections[0]);
+                Assert.Equal(connectionString, connectionGroup.WriteConnection);
+                Assert.True(connectionGroup.IsAnalytics);
             }
         }
     }

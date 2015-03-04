@@ -43,14 +43,23 @@ namespace BB.Caching.Redis
         /// <param name="name">
         /// The name.
         /// </param>
-        public ConnectionGroup(string name)
+        /// <param name="analytics">
+        /// True if this connection group is used for bitwise analytics.
+        /// </param>
+        public ConnectionGroup(string name, bool analytics = false)
         {
             this.Name = name;
             this.ReadConnections = new List<string>();
             this.WriteConnection = null;
             this.ReadMultiplexers = new List<ConnectionMultiplexer>();
             this.WriteMultiplexer = null;
+            this.IsAnalytics = analytics;
         }
+
+        /// <summary>
+        /// This connection group is used for bitwise analytics.
+        /// </summary>
+        public bool IsAnalytics { get; private set; }
 
         /// <summary>
         /// The name of this redis connection wrapper.

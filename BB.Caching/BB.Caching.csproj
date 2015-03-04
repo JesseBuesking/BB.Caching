@@ -76,6 +76,7 @@
     <Compile Include="Hashing\Core.cs" />
     <Compile Include="Hashing\Murmur3.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Redis\BitwiseAnalytics.cs" />
     <Compile Include="Redis\BloomFilter.cs" />
     <Compile Include="Redis\Lua\ScriptLoader.cs" />
     <Compile Include="Redis\PubSub.cs" />

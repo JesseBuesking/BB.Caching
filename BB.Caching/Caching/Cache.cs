@@ -62,7 +62,8 @@ namespace BB.Caching
             foreach (GroupElement group in customSection.ConnectionGroups)
             {
                 string name = group.Name;
-                var connectionGroup = new ConnectionGroup(name);
+                var connectionGroup = new ConnectionGroup(name, group.IsAnalytics);
+
                 connectionGroups.Add(connectionGroup);
 
                 foreach (ConnectionElement connection in group.ConnectionCollections)
@@ -95,7 +96,14 @@ namespace BB.Caching
             // load each ConnectionGroup for use
             foreach (var group in connectionGroups)
             {
-                SharedCache.Instance.AddRedisConnectionGroup(group);
+                if (group.IsAnalytics)
+                {
+                    SharedCache.Instance.SetAnalyticsConnectionGroup(group);
+                }
+                else
+                {
+                    SharedCache.Instance.AddRedisConnectionGroup(group);
+                }
             }
 
             return connectionGroups;

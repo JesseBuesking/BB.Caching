@@ -105,6 +105,20 @@
                 return (string)base["name"];
             }
         }
+
+        /// <summary>
+        /// Whether the connection group should be assigned to the analytics connection group. If it is, then it won't
+        /// be used as a general-purpose connection group for caching. If you want both, have two connection groups
+        /// with the same connections, one with the analytics property and one without.
+        /// </summary>
+        [ConfigurationProperty("analytics")]
+        public bool IsAnalytics
+        {
+            get
+            {
+                return (bool)base["analytics"];
+            }
+        }
     }
 
     /// <summary>

@@ -49,7 +49,9 @@
 
             Console.WriteLine("Target false positive percentage: {0:#0.#%}", FALSE_POSITIVE_PERCENTAGE);
             Console.WriteLine(
-                "Actual: {0:#0.###%}, or 1 in {1:#,###.#}", falsePositivePercentage, 1 / falsePositivePercentage);
+                "Actual: {0:#0.###%}, or 1 in {1:#,###.#}",
+                falsePositivePercentage,
+                1 / falsePositivePercentage);
             Assert.True(FALSE_POSITIVE_PERCENTAGE * 2 >= falsePositivePercentage);
         }
 
@@ -70,7 +72,7 @@
                     s = (char)((z % 26) + 65) + s;
                     z = z / 26;
                 }
-// ReSharper disable once UnusedVariable
+                // ReSharper disable once UnusedVariable
                 bloomFilter.AddAsync(key, s).Wait();
 
                 ++i;

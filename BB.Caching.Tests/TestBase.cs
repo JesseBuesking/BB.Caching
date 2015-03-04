@@ -15,6 +15,7 @@
             connectionGroup1.AddWriteConnection(string.Format("{0}:{1},allowAdmin=True", this.TestIp, this.TestPort1));
 
             SharedCache.Instance.AddRedisConnectionGroup(connectionGroup1);
+            SharedCache.Instance.SetAnalyticsConnectionGroup(connectionGroup1);
 
             if (0 != this.TestPort2)
             {

@@ -73,6 +73,7 @@
   <ItemGroup>
     <Compile Include="Caching\CoreTests.cs" />
     <Compile Include="PerformanceTests.cs" />
+    <Compile Include="Redis\BitwiseAnalyticsTests.cs" />
     <Compile Include="Redis\BloomFilterTests.cs" />
     <Compile Include="Caching\Memory\StringsTests.cs" />
     <Compile Include="Redis\ConnectionGroupTests.cs" />
@@ -100,6 +101,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="readandwrite.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="analytics.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

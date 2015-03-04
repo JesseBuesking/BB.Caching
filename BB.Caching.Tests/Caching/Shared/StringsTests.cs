@@ -753,20 +753,6 @@
             Assert.Equal(3, Cache.Shared.Strings.CountSetBitsAsync(this.Key).Result);
         }
 
-        //                [Fact]
-        //                public void BitwiseAnd()
-        //                {
-        //                    string firstKey = Keys.ElementAt(1);
-        //                    string secondKey = Keys.ElementAt(2);
-        //                    string thirdKey = Keys.ElementAt(3);
-        //
-        //                    Cache.Shared.Strings.SetBitAsync(firstKey, 3, true);
-        //                    Cache.Shared.Strings.SetBitAsync(secondKey, 4, true);
-        //                    Cache.Shared.Strings.BitwiseAnd(thirdKey, new [] {firstKey, secondKey});
-        //
-        //                    Assert.Equal(0, Cache.Shared.Strings.CountSetBitsAsync(thirdKey).Result);
-        //                }
-
         [Fact]
         public void TakeLock()
         {

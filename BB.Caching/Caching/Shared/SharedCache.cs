@@ -45,6 +45,12 @@ namespace BB.Caching
             new Hashing.ConsistentHashRing<ConnectionGroup>();
 
         /// <summary>
+        /// The connection group used by the analytics methods. The analytics methods are built atop redis' bitwise
+        /// operations, so they need to be performed against the same box in order to get good performance.
+        /// </summary>
+        private ConnectionGroup _analyticsConnectionGroup;
+
+        /// <summary>
         /// Prevents a default instance of the <see cref="SharedCache"/> class from being created.
         /// </summary>
         private SharedCache()
@@ -91,6 +97,17 @@ namespace BB.Caching
         }
 
         /// <summary>
+        /// Sets the <paramref name="connectionGroup"/> used by the analytics methods.
+        /// </summary>
+        /// <param name="connectionGroup">
+        /// The connection group.
+        /// </param>
+        public void SetAnalyticsConnectionGroup(ConnectionGroup connectionGroup)
+        {
+            this._analyticsConnectionGroup = connectionGroup;
+        }
+
+        /// <summary>
         /// Gets a read-only connection.
         /// </summary>
         /// <param name="key">
@@ -105,17 +122,39 @@ namespace BB.Caching
         }
 
         /// <summary>
-        /// Gets all read-write connections for the key supplied.
+        /// Gets the read-write connection for the key supplied.
         /// </summary>
         /// <param name="key">
         /// The key.
         /// </param>
         /// <returns>
-        /// A read-only <see cref="ConnectionMultiplexer"/>.
+        /// A read-write <see cref="ConnectionMultiplexer"/>.
         /// </returns>
         public ConnectionMultiplexer GetWriteConnection(RedisKey key)
         {
             return this._consistentHashRing.GetNode(key).GetWriteMultiplexer();
+        }
+
+        /// <summary>
+        /// Gets a read-only connection used by analytics methods.
+        /// </summary>
+        /// <returns>
+        /// A read-only <see cref="ConnectionMultiplexer"/>.
+        /// </returns>
+        public ConnectionMultiplexer GetAnalyticsReadConnection()
+        {
+            return this._analyticsConnectionGroup.GetReadMultiplexer();
+        }
+
+        /// <summary>
+        /// Gets the read-write connection used by analytics methods.
+        /// </summary>
+        /// <returns>
+        /// A read-write <see cref="ConnectionMultiplexer"/>.
+        /// </returns>
+        public ConnectionMultiplexer GetAnalyticsWriteConnection()
+        {
+            return this._analyticsConnectionGroup.GetWriteMultiplexer();
         }
 
         /// <summary>
