@@ -1,32 +1,61 @@
 BB.Caching
 ==========
 
-BB.Caching is a library for (ASP).NET developers with the goal of making caching as simple as possible. With out-of-the-box support for [Redis](http://redis.io) [on top of booksleeve-net](https://code.google.com/p/booksleeve/), you can be up and running with a fast, distributed cache in less time than it would take for you to write everything from scratch. (I'm purposely setting your expectations as low as possible so that when everything _just works_ you'll end up happier :D)
+BB.Caching is a library for (ASP) .NET developers with the goal of making caching as simple as possible. With out-of-the-box support for [Redis](http://redis.io) [on top of StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis), you can quickly get scalable, distributed caching up and running with minimal configuration overhead.
 
-Note: This code is not production ready, but has a lot of [tests](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/CacheTests.cs) that cover many cases.
+Note: This code is not production ready, but has a lot of [tests](https://github.com/JesseBuesking/BB.Caching/tree/master/BB.Caching.Tests) that cover many cases.
 
 What can it be used for?
 ------------------------
 1. Smart caching (in-memory and/or distributed)
 2. Rate limiting
 3. Bloom filters
-4. Tracking statistics across servers
 
 Documentation
 -------------
 Check out the [tests](https://github.com/JesseBuesking/BB.Caching/tree/master/BB.Caching.Tests).
 
+Get Started
+-----------
+In your startup process:
+
+1. Define your cache settings either [programmatically or using an app config file](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/Redis/ConnectionGroupTests.cs):
+    - if you're using [a config file](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/readandwrite.config), call ``Cache.LoadFromConfig(...)``
+    - if you're defining the setup programmatically, see [this example](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/Redis/ConnectionGroupTests.cs#L50-L61)
+2. Then prepare the cache by calling ``Cache.Prepare()``.
+3. Start using the cache!
+
+[Examples](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/Caching/CoreTests.cs)
+--------
+```
+// set a value both in local memory and on redis to make it available to other
+// servers
+Cache.Set("my-key", "some value", Cache.Store.MemoryAndRedis);
+
+// set a value both in local memory and on redis, giving it an expiration
+Cache.Set("my-key", 1234, TimeSpan.FromSeconds(30), Cache.Store.MemoryAndRedis);
+
+// retrieve the data for ``"my-key"``. if the key isn't found in local memory,
+// it'll look the key up in redis, and if it's found it'll store it in local
+// memory for next time and return the value
+Cache.Get<string>("my-key", Cache.Store.MemoryAndRedis);
+
+// deletes the key from redis and all other servers
+Cache.BroadcastDelete("my-key");
+```
+
+_Note: each method has an ``Async`` counterpart_
+
 Features
 --------
-1. An in-memory L1 cache (```Cache.Memory.TryGetString...```) and redis-based L2 cache utilizing [booksleeve-net](https://code.google.com/p/booksleeve/) (```Cache.Shared.Strings.GetString...```).
-2. Support for serialization and/or smart compression (gzip or raw depending on compression size) of data being cached, [similar to what is used by StackOverflow (or at least similar to what is stated in this answer)](http://meta.stackoverflow.com/a/69172). (See ```Cache.Memory.SetCompress...``` and ```Cache.Memory.SetCompact...```).
-3. Automatic protobufing of objects when serialization is requested. (Note: protobuf indices are automatically stored in Redis and synchronized across servers, but **use at your own risk**!; aka this is a fragile approach that might not work in your case) (See ```ProtoBufSerializer.Instance.Serialize...```)
-4. Uses [consistent hashing](http://en.wikipedia.org/wiki/Consistent_hashing) for redis instances that are added (to support easier horizontal scaling).
-5. Special configuration store for automatic syncing of settings across servers (See ```Cache.Config...```)
-6. A shared ```Statistics``` object that tracks basic statistics for an object (count, min, max, mean, variance, standard deviation). (See ```Cache.Stats...```).
-7. [Rate limiting](http://en.wikipedia.org/wiki/Rate_limiting) capabilities. (See ```Cache.RateLimiter...```)
-8. [Bloom filter](http://en.wikipedia.org/wiki/Bloom_filter) support. (See ```Cache.BloomFilter...```)
-9. Consistent hashing & bloom filter both rely on [Murmur hashing](https://github.com/JesseBuesking/murmurhash-net).
+1. A simple-to-use caching interface, with method calls located under [``Cache.MethodName``](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching/Caching/Core.cs).
+    - NOTE: The methods will serialize and compress objects using [protobuf](https://code.google.com/p/protobuf-net/) and gzip. Complex objects are assumed to be protobuf compatible.
+2. More advanced caching and redis use defined under [``Cache.Shared.RedisType``](https://github.com/JesseBuesking/BB.Caching/tree/master/BB.Caching/Caching/Shared). These methods utilize the internal consistent hashing logic to distribute your keys across one or more redis nodes.
+3. Uses [consistent hashing](http://en.wikipedia.org/wiki/Consistent_hashing) to distribute keys across one or more redis nodes to support easier horizontal scaling.
+4. A shared ``Statistics`` implementation to track simple statistics like count, min, max, mean, variance, and standard deviation.
+5. [Rate limiting](http://en.wikipedia.org/wiki/Rate_limiting) capabilities.
+6. [Bloom filter](http://en.wikipedia.org/wiki/Bloom_filter) support.
+7. Consistent hashing & bloom filter both rely on [Murmur hashing](https://github.com/darrenkopp/murmurhash-net).
 
 Missing
 -------
@@ -44,12 +73,128 @@ Feel free to [request features, report any bugs/issues you find](https://github.
 
 Benchmarks
 ----------
-Machine: i7 950 @ 3.07GHz (with redis in an Ubuntu Server 12.04 vm in virtual box on the same machine)
+Machine: i7 950 @ 3.07GHz running two instances of redis on windows over ports 6379 and 6380.
 
-(Keep in mind that there is overhead with the consistent hashing logic; without it I see _~50k simple string gets/s_)
+_Note: consistent hashing adds some minor overhead
 
-- ~40k simple string gets/s
-- ~10k rate limit requests/s
-- ~9k bloom filter sets/s
-- ~23k bloom filter gets/s
-- ~10k statistics updates/s
+```
+Shared Keys
+  'ExistsAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0079] ms
+    Per Second        [126,806]
+    Stdev Per Second  [+/-520]
+  'ExpireAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0086] ms
+    Per Second        [115,962]
+    Stdev Per Second  [+/-2,567]
+  'DeleteAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0083] ms
+    Per Second        [120,730]
+    Stdev Per Second  [+/-980]
+  'PersistAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0083] ms
+    Per Second        [119,973]
+    Stdev Per Second  [+/-1,076]
+Shared Strings
+  'GetExpireAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0159] ms
+    Per Second        [62,706]
+    Stdev Per Second  [+/-3,846]
+  'SetAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0081] ms
+    Per Second        [123,364]
+    Stdev Per Second  [+/-2,258]
+  'GetAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0075] ms
+    Per Second        [133,256]
+    Stdev Per Second  [+/-323]
+Shared Hashes
+  'SetAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0084] ms
+    Per Second        [118,385]
+    Stdev Per Second  [+/-1,357]
+  'GetAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0082] ms
+    Per Second        [122,089]
+    Stdev Per Second  [+/-779]
+Bloom Filter
+  'GetAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0215] ms
+    Per Second        [46,563]
+    Stdev Per Second  [+/-3,779]
+  'SetAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0214] ms
+    Per Second        [46,753]
+    Stdev Per Second  [+/-2,360]
+RateLimiter
+  'IncrementAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0127] ms
+    Per Second        [78,600]
+    Stdev Per Second  [+/-2,337]
+Statistics
+  'SetAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0133] ms
+    Per Second        [75,228]
+    Stdev Per Second  [+/-2,150]
+  'GetAsync' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0127] ms
+    Per Second        [78,780]
+    Stdev Per Second  [+/-2,398]
+ConsistentHashRing
+  'GetNode' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0056] ms
+    Per Second        [177,961]
+    Stdev Per Second  [+/-435]
+Murmur3
+  'HashSpeed' results summary:
+    Successes         [10000]
+    Failures          [0] 
+    Average Exec Time [0.0029] ms
+    Per Second        [347,367]
+    Stdev Per Second  [+/-397]
+
+Memory Speed: (operations per second)
+  Set:
+    Raw: 500,000.0
+    Serialized: 361,445.78 (72.29)%
+    Serialized + Compressed: 36,275.7 (7.26)%
+  Get:
+    Raw: 10,000,000.0
+    Serialized: 1,153,846.15 (11.54)%
+    Serialized + Compressed: 909,090.91 (9.09)%
+
+Memory Size:
+  Raw: 19,670.8KB
+  Serialized: 10,025.1KB (50.96%)
+  Serialized + Compressed: 1,851.3KB (9.41%)
+```
