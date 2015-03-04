@@ -75,7 +75,9 @@ Benchmarks
 ----------
 Machine: i7 950 @ 3.07GHz running two instances of redis on windows over ports 6379 and 6380.
 
-_Note: consistent hashing adds some minor overhead_
+_Notes:_
+- _consistent hashing adds some minor overhead_
+- _the logic to time things kills the pipelining benefits provided by ``StackExchange.Redis``. I see throughput increase between a 6-8x across all the methods when it's actively pipelining requests_
 
 ```
 Shared Keys
