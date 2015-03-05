@@ -1,7 +1,8 @@
-﻿namespace BB.Caching.Redis
+﻿namespace BB.Caching.Redis.Analytics
 {
     using System;
     using System.Globalization;
+    using System.Linq;
     using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
 
@@ -22,83 +23,6 @@
     public static class BitwiseAnalytics
     {
         /// <summary>
-        /// The precision with which to store the data.
-        /// </summary>
-        public enum TimePrecision
-        {
-            /// <summary>
-            /// Accurate up to 15 minutes.
-            /// </summary>
-            FifteenMinutes,
-
-            /// <summary>
-            /// Accurate up to 1 hour.
-            /// </summary>
-            OneHour,
-
-            /// <summary>
-            /// Accurate up to 1 day.
-            /// </summary>
-            OneDay,
-
-            /// <summary>
-            /// Accurate up to 1 month.
-            /// </summary>
-            OneMonth
-        }
-
-        /// <summary>
-        /// The time interval in which the data is returned.
-        /// </summary>
-        public enum TimeInterval
-        {
-            /// <summary>
-            /// Data is grouped into 15 minute intervals.
-            /// </summary>
-            FifteenMinutes,
-
-            /// <summary>
-            /// Data is grouped into 30 minute intervals.
-            /// </summary>
-            ThirtyMinutes,
-
-            /// <summary>
-            /// Data is grouped into 1 hour intervals.
-            /// </summary>
-            OneHour,
-
-            /// <summary>
-            /// Data is grouped into 6 hour intervals.
-            /// </summary>
-            SixHours,
-
-            /// <summary>
-            /// Data is grouped into 1 day intervals.
-            /// </summary>
-            OneDay,
-
-            /// <summary>
-            /// Data is grouped into 1 month intervals.
-            /// </summary>
-            OneMonth,
-
-            /// <summary>
-            /// Data is grouped into 1 week intervals.
-            /// </summary>
-            Week,
-
-            /// <summary>
-            /// Data is grouped into 1 quarter intervals.
-            /// </summary>
-            Quarter,
-
-            /// <summary>
-            /// Data is grouped into 1 year intervals.
-            /// </summary>
-            Year
-        }
-
-        /// <summary>
         /// Tracks an event.
         /// </summary>
         /// <param name="category">
@@ -113,33 +37,45 @@
         /// <param name="precision">
         /// The precision that this event should be tracked at.
         /// </param>
+        /// <param name="now">
+        /// The now.
+        /// </param>
         public static void TrackEvent(
-            string category, string action, long eventId, TimePrecision precision = TimePrecision.OneDay)
+            string category,
+            string action,
+            long eventId,
+            TimePrecision precision = TimePrecision.OneDay,
+            DateTime now = default(DateTime))
         {
+            if (now == default(DateTime))
+            {
+                now = DateTime.UtcNow;
+            }
+
             string time;
             switch (precision)
             {
                 case TimePrecision.FifteenMinutes:
                 {
-                    time = DateTimeUtil.FifteenMinutes(DateTime.UtcNow);
+                    time = DateTimeUtil.FifteenMinutes(now);
                     break;
                 }
 
                 case TimePrecision.OneHour:
                 {
-                    time = DateTimeUtil.OneHour(DateTime.UtcNow);
+                    time = DateTimeUtil.OneHour(now);
                     break;
                 }
 
                 case TimePrecision.OneDay:
                 {
-                    time = DateTimeUtil.OneDay(DateTime.UtcNow);
+                    time = DateTimeUtil.OneDay(now);
                     break;
                 }
 
                 case TimePrecision.OneMonth:
                 {
-                    time = DateTimeUtil.OneMonth(DateTime.UtcNow);
+                    time = DateTimeUtil.OneMonth(now);
                     break;
                 }
 
@@ -149,11 +85,268 @@
                 }
             }
 
-            RedisKey key = string.Format("{0}:{1}:{2}", category, action, time);
+            RedisKey key = EventKey(category, action, time);
 
             SharedCache.Instance.GetAnalyticsWriteConnection()
                 .GetDatabase(SharedCache.Instance.Db)
                 .StringSetBit(key, eventId, true);
+        }
+
+        /// <summary>
+        /// Gets the count of active bits at the key supplied.
+        /// </summary>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <returns>
+        /// A long representing the count of bits that are set.
+        /// </returns>
+        public static long Count(RedisKey key)
+        {
+            return Count(SharedCache.Instance.GetAnalyticsReadConnection().GetDatabase(SharedCache.Instance.Db), key);
+        }
+
+        /// <summary>
+        /// Gets the count of active bits at the key supplied.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <returns>
+        /// A long representing the count of bits that are set.
+        /// </returns>
+        public static long Count(IDatabase database, RedisKey key)
+        {
+            return database.StringBitCount(key, 0, -1);
+        }
+
+        /// <summary>
+        /// Determines if the key exists.
+        /// </summary>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <returns>
+        /// True if the key exists.
+        /// </returns>
+        public static bool Exists(RedisKey key)
+        {
+            return Exists(SharedCache.Instance.GetAnalyticsReadConnection().GetDatabase(SharedCache.Instance.Db), key);
+        }
+
+        /// <summary>
+        /// Determines if the key exists.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <returns>
+        /// True if the key exists.
+        /// </returns>
+        public static bool Exists(IDatabase database, RedisKey key)
+        {
+            return database.KeyExists(key);
+        }
+
+        /// <summary>
+        /// Gets the key for the 15 minute interval covered by the DateTime supplied.
+        /// </summary>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// The key for the 15 minute interval.
+        /// </returns>
+        public static RedisKey GetFifteenMinutes(string category, string action, DateTime dateTime)
+        {
+            // get the key
+            string fifteenMinutes = BitwiseAnalytics.DateTimeUtil.FifteenMinutes(dateTime);
+            RedisKey key = EventKey(category, action, fifteenMinutes);
+            return key;
+        }
+
+        /// <summary>
+        /// Gets the key for the hour covered by the DateTime supplied, creating the data at the key if necessary.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// The key for the hour.
+        /// </returns>
+        public static RedisKey GetHour(IDatabase database, string category, string action, DateTime dateTime)
+        {
+            // get the key
+            string hour = BitwiseAnalytics.DateTimeUtil.OneHour(dateTime);
+            RedisKey key = EventKey(category, action, hour);
+
+            // return it if there's already data for this hour
+            bool hourExists = BitwiseAnalytics.Exists(database, key);
+            if (hourExists)
+            {
+                return key;
+            }
+
+            // no data for the hour, so we need to create it from the 15 minute intervals
+            string[] fifteenMinutesInHour = BitwiseAnalytics.DateTimeUtil.FifteenMinutesInHour(dateTime);
+            BitwiseAnalytics.BitwiseOr(
+                database,
+                key,
+                fifteenMinutesInHour.Select(x => EventKey(category, action, x)).ToArray());
+
+            return key;
+        }
+
+        /// <summary>
+        /// Gets the key for the day covered by the DateTime supplied, creating the data at the key if necessary.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// The key for the day.
+        /// </returns>
+        public static RedisKey GetDay(IDatabase database, string category, string action, DateTime dateTime)
+        {
+            // get the key
+            string day = BitwiseAnalytics.DateTimeUtil.OneDay(dateTime);
+            RedisKey key = EventKey(category, action, day);
+
+            // return it if there's already data for this day
+            bool dayExists = BitwiseAnalytics.Exists(database, key);
+            if (dayExists)
+            {
+                return key;
+            }
+
+            // no data for the day, so we need to create it from the hours
+            string[] hoursInDay = BitwiseAnalytics.DateTimeUtil.HoursInDay(dateTime);
+
+            // make sure each hour exists
+            foreach (string hour in hoursInDay)
+            {
+                GetHour(database, category, action, DateTime.ParseExact(hour, "yyyyMMddHH", CultureInfo.InvariantCulture));
+            }
+
+            // combine the hours to form one day
+            BitwiseAnalytics.BitwiseOr(
+                database,
+                key,
+                hoursInDay.Select(x => EventKey(category, action, x)).ToArray());
+
+            return key;
+        }
+
+        /// <summary>
+        /// Gets the key for the month covered by the DateTime supplied, creating the data at the key if necessary.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// The key for the month.
+        /// </returns>
+        public static RedisKey GetMonth(IDatabase database, string category, string action, DateTime dateTime)
+        {
+            // get the key
+            string month = BitwiseAnalytics.DateTimeUtil.OneMonth(dateTime);
+            RedisKey key = EventKey(category, action, month);
+
+            // return it if there's already data for this month
+            bool monthExists = BitwiseAnalytics.Exists(database, key);
+            if (monthExists)
+            {
+                return month;
+            }
+
+            // no data for the month, so we need to create it from the days
+            string[] daysInMonth = BitwiseAnalytics.DateTimeUtil.DaysInMonth(dateTime);
+
+            // make sure each day exists
+            foreach (string day in daysInMonth)
+            {
+                GetDay(database, category, action, DateTime.ParseExact(day, "yyyyMMdd", CultureInfo.InvariantCulture));
+            }
+
+            // combine the days to form one month
+            BitwiseAnalytics.BitwiseOr(
+                database,
+                key,
+                daysInMonth.Select(x => EventKey(category, action, x)).ToArray());
+
+            return key;
+        }
+
+        /// <summary>
+        /// The delete.
+        /// </summary>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// True if there was a key that was deleted.
+        /// </returns>
+        public static bool Delete(string category, string action, string dateTime)
+        {
+            RedisKey key = EventKey(category, action, dateTime);
+            return SharedCache.Instance.GetAnalyticsWriteConnection()
+                .GetDatabase(SharedCache.Instance.Db)
+                .KeyDelete(key);
         }
 
         /// <summary>
@@ -389,6 +582,28 @@
         }
 
         /// <summary>
+        /// The event key.
+        /// </summary>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime as a formatted string.
+        /// </param>
+        /// <returns>
+        /// The <see cref="RedisKey"/>.
+        /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static RedisKey EventKey(string category, string action, string dateTime)
+        {
+            RedisKey key = string.Format("{0}:{1}:{2}", category, action, dateTime);
+            return key;
+        }
+
+        /// <summary>
         /// Utility methods for datetime string formatting.
         /// </summary>
         internal static class DateTimeUtil
@@ -411,6 +626,28 @@
             }
 
             /// <summary>
+            /// Gets all 15 minute intervals in the hour as yyyyMMddHHmm.
+            /// </summary>
+            /// <param name="dateTime">
+            /// The DateTime.
+            /// </param>
+            /// <returns>
+            /// A <see><cref>string[]</cref></see> containing all the 15 minute intervals in the hour.
+            /// </returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static string[] FifteenMinutesInHour(DateTime dateTime)
+            {
+                DateTime tmp = dateTime.AddMinutes(-dateTime.Minute);
+                return new[]
+                   {
+                       string.Format("{0:yyyyMMddHHmm}", tmp),
+                       string.Format("{0:yyyyMMddHHmm}", tmp.AddMinutes(15)),
+                       string.Format("{0:yyyyMMddHHmm}", tmp.AddMinutes(30)),
+                       string.Format("{0:yyyyMMddHHmm}", tmp.AddMinutes(45))
+                   };
+            }
+
+            /// <summary>
             /// Returns the datetime supplied at the hour interval as yyyyMMddhh.
             /// </summary>
             /// <param name="dateTime">
@@ -427,6 +664,48 @@
             }
 
             /// <summary>
+            /// Gets all 1 hour intervals in the day as yyyyMMddHH.
+            /// </summary>
+            /// <param name="dateTime">
+            /// The DateTime.
+            /// </param>
+            /// <returns>
+            /// A <see><cref>string[]</cref></see> containing all the 15 minute intervals in the hour.
+            /// </returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static string[] HoursInDay(DateTime dateTime)
+            {
+                DateTime tmp = dateTime.AddHours(-dateTime.Hour);
+                return new[]
+                   {
+                       string.Format("{0:yyyyMMddHH}", tmp),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(1)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(2)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(3)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(4)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(5)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(6)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(7)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(8)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(9)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(10)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(11)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(12)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(13)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(14)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(15)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(16)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(17)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(18)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(19)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(20)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(21)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(22)),
+                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(23))
+                   };
+            }
+
+            /// <summary>
             /// Returns the datetime supplied at the day interval as yyyyMMdd.
             /// </summary>
             /// <param name="dateTime">
@@ -440,6 +719,27 @@
             {
                 string formatted = string.Format("{0:yyyyMMdd}", dateTime);
                 return formatted;
+            }
+
+            /// <summary>
+            /// Gets all 1 day intervals in the month as yyyyMMdd.
+            /// </summary>
+            /// <param name="dateTime">
+            /// The DateTime.
+            /// </param>
+            /// <returns>
+            /// A <see><cref>string[]</cref></see> containing all the 15 minute intervals in the hour.
+            /// </returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static string[] DaysInMonth(DateTime dateTime)
+            {
+                return Enumerable.Range(1, DateTime.DaysInMonth(dateTime.Year, dateTime.Month))
+                    .Select(day => string.Format(
+                        "{0}{1}{2}",
+                        dateTime.Year.ToString("D4"),
+                        dateTime.Month.ToString("D2"),
+                        day.ToString("D2")))
+                    .ToArray();
             }
 
             /// <summary>
