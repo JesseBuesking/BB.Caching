@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Runtime.CompilerServices;
 
     using BB.Caching.Redis.Analytics;
 
@@ -35,31 +34,38 @@
         public void Cleanup()
         {
             Cache.Shared.Keys.Delete(_Keys.ToArray());
-            for (int day = 0; day < 30; ++day)
+            for (int month = 1; month <= 3; ++month)
             {
-                var dayDt = this._now.AddDays(-this._now.Day).AddDays(day);
+                var monthDt = this._now.AddMonths(month - 1);
 
-                for (int hour = 0; hour < 24; ++hour)
+                for (int day = 0; day < 30; ++day)
                 {
-                    var hourDt = dayDt.AddHours(hour);
+                    var dayDt = monthDt.AddDays(-monthDt.Day).AddDays(day);
 
-                    // delete hour
-                    BitwiseAnalytics.Delete("video", "watch", BitwiseAnalytics.DateTimeUtil.OneHour(hourDt));
-
-                    for (int fifteen = 0; fifteen < 4; ++fifteen)
+                    for (int hour = 0; hour < 24; ++hour)
                     {
-                        // delete fifteen
-                        BitwiseAnalytics.Delete(
-                            "video",
-                            "watch",
-                            BitwiseAnalytics.DateTimeUtil.FifteenMinutes(hourDt.AddMinutes(15 * fifteen)));
+                        var hourDt = dayDt.AddHours(hour);
+
+                        // delete hour
+                        BitwiseAnalytics.Delete("video", "watch", BitwiseAnalytics.DateTimeUtil.OneHour(hourDt));
+
+                        for (int fifteen = 0; fifteen < 4; ++fifteen)
+                        {
+                            // delete fifteen
+                            BitwiseAnalytics.Delete(
+                                "video",
+                                "watch",
+                                BitwiseAnalytics.DateTimeUtil.FifteenMinutes(hourDt.AddMinutes(15 * fifteen)));
+                        }
                     }
+
+                    BitwiseAnalytics.Delete("video", "watch", BitwiseAnalytics.DateTimeUtil.OneDay(dayDt));
                 }
 
-                BitwiseAnalytics.Delete("video", "watch", BitwiseAnalytics.DateTimeUtil.OneDay(dayDt));
+                BitwiseAnalytics.Delete("video", "watch", BitwiseAnalytics.DateTimeUtil.OneMonth(monthDt));
             }
 
-            BitwiseAnalytics.Delete("video", "watch", BitwiseAnalytics.DateTimeUtil.OneMonth(this._now));
+            BitwiseAnalytics.Delete("video", "watch", BitwiseAnalytics.DateTimeUtil.QuarterNumber(this._now));
         }
 
         public IDatabase GetConnection()
@@ -134,6 +140,27 @@
         }
 
         [Fact]
+        public void GetWeek()
+        {
+            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
+
+            // week is 2nd to the 8th, so we use the 2nd, 5th, and 9th
+            foreach (int i in new[] { 1, 4, 8 })
+            {
+                BitwiseAnalytics.TrackEvent(
+                    "video", "watch", i, TimePrecision.FifteenMinutes, this._now.AddDays(i));
+            }
+
+            // adding 2 days to make sure we're in the right week
+            long oneWeek = BitwiseAnalytics.Count(
+                database,
+                BitwiseAnalytics.GetWeek(database, "video", "watch", this._now.AddDays(2)));
+
+            // only 2 days should count, since one date is in the following week
+            Assert.Equal(2, oneWeek);
+        }
+
+        [Fact]
         public void GetMonth()
         {
             var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
@@ -148,6 +175,26 @@
                 BitwiseAnalytics.GetMonth(database, "video", "watch", this._now));
 
             Assert.Equal(3, oneMonth);
+        }
+
+        [Fact]
+        public void GetQuarter()
+        {
+            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
+
+            // week is 2nd to the 8th, so we use the 2nd, 5th, and 9th
+            foreach (int i in new[] { 1, 2, 4 })
+            {
+                BitwiseAnalytics.TrackEvent(
+                    "video", "watch", i, TimePrecision.FifteenMinutes, this._now.AddMonths(i - 1));
+            }
+
+            long oneQuarter = BitwiseAnalytics.Count(
+                database,
+                BitwiseAnalytics.GetQuarter(database, "video", "watch", this._now));
+
+            // only 2 months should count, since one date is in the following quarter
+            Assert.Equal(2, oneQuarter);
         }
 
         [Fact]
@@ -362,6 +409,21 @@
             }
 
             [Fact]
+            public void DaysInWeek()
+            {
+                DateTime dateTime = new DateTime(2015, 03, 03);
+                string[] actual = BitwiseAnalytics.DateTimeUtil.DaysInWeek(dateTime);
+                
+                Assert.Equal("20150301", actual[0]);
+                Assert.Equal("20150302", actual[1]);
+                Assert.Equal("20150303", actual[2]);
+                Assert.Equal("20150304", actual[3]);
+                Assert.Equal("20150305", actual[4]);
+                Assert.Equal("20150306", actual[5]);
+                Assert.Equal("20150307", actual[6]);
+            }
+
+            [Fact]
             public void Quarter1()
             {
                 for (int i = 0; i < 3; ++i)
@@ -406,6 +468,21 @@
                     string actual = BitwiseAnalytics.DateTimeUtil.QuarterNumber(dateTime);
 
                     Assert.Equal("2000Q4", actual);
+                }
+            }
+
+            [Fact]
+            public void MonthsInQuarter()
+            {
+                for (int i = 0; i < 4; ++i)
+                {
+                    int month = (i * 3) + 1;
+                    DateTime dateTime = new DateTime(2000, month, 1);
+                    string[] actual = BitwiseAnalytics.DateTimeUtil.MonthsInQuarter(dateTime);
+
+                    Assert.Equal(string.Format("2000{0}", month.ToString("D2")), actual[0]);
+                    Assert.Equal(string.Format("2000{0}", (month + 1).ToString("D2")), actual[1]);
+                    Assert.Equal(string.Format("2000{0}", (month + 2).ToString("D2")), actual[2]);
                 }
             }
         }

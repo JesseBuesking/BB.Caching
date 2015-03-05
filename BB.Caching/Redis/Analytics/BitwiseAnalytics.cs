@@ -276,6 +276,67 @@
         }
 
         /// <summary>
+        /// The get week.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <param name="weekFirstDay">
+        /// The first day to start each week. Defaults to Sunday which is used in the US, CA, and JP. You can
+        /// change it to Monday to get weekly aggregates which are accurate for other countries, but it'll double
+        /// the weekly data stored.
+        /// </param>
+        /// <returns>
+        /// The key for the day.
+        /// </returns>
+        public static RedisKey GetWeek(
+            IDatabase database,
+            string category,
+            string action,
+            DateTime dateTime,
+            DayOfWeek weekFirstDay = DayOfWeek.Sunday)
+        {
+            // get the key
+            string week = BitwiseAnalytics.DateTimeUtil.WeekNumber(dateTime, weekFirstDay);
+            RedisKey key = EventKey(category, action, week);
+
+            // return it if there's already data for this day
+            bool weekExists = BitwiseAnalytics.Exists(database, key);
+            if (weekExists)
+            {
+                return key;
+            }
+
+            // no data for the week, so we need to create it from the days
+            string[] daysInWeek = BitwiseAnalytics.DateTimeUtil.DaysInWeek(dateTime, weekFirstDay);
+
+            // make sure each day exists
+            foreach (string day in daysInWeek)
+            {
+                GetDay(database, category, action, DateTime.ParseExact(day, "yyyyMMdd", CultureInfo.InvariantCulture));
+            }
+
+            // combine the days to form one week
+            BitwiseAnalytics.BitwiseOr(
+                database,
+                key,
+                daysInWeek.Select(x => EventKey(category, action, x)).ToArray());
+
+            return key;
+        }
+
+        /// <summary>
         /// Gets the key for the month covered by the DateTime supplied, creating the data at the key if necessary.
         /// </summary>
         /// <param name="database">
@@ -322,6 +383,58 @@
                 database,
                 key,
                 daysInMonth.Select(x => EventKey(category, action, x)).ToArray());
+
+            return key;
+        }
+
+        /// <summary>
+        /// Gets the keys for the months in the quarter covered by the DateTime supplied, creating the data at the key
+        /// if necessary.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// The key for the quarter.
+        /// </returns>
+        public static RedisKey GetQuarter(IDatabase database, string category, string action, DateTime dateTime)
+        {
+            // get the key
+            string quarter = BitwiseAnalytics.DateTimeUtil.QuarterNumber(dateTime);
+            RedisKey key = EventKey(category, action, quarter);
+
+            // return it if there's already data for this quarter
+            bool quarterExists = BitwiseAnalytics.Exists(database, key);
+            if (quarterExists)
+            {
+                return key;
+            }
+
+            // no data for the month, so we need to create it from the days
+            string[] monthsInQuarter = BitwiseAnalytics.DateTimeUtil.MonthsInQuarter(dateTime);
+
+            // make sure each day exists
+            foreach (string month in monthsInQuarter)
+            {
+                GetMonth(database, category, action, DateTime.ParseExact(month, "yyyyMM", CultureInfo.InvariantCulture));
+            }
+
+            // combine the days to form one month
+            BitwiseAnalytics.BitwiseOr(
+                database,
+                key,
+                monthsInQuarter.Select(x => EventKey(category, action, x)).ToArray());
 
             return key;
         }
@@ -728,7 +841,7 @@
             /// The DateTime.
             /// </param>
             /// <returns>
-            /// A <see><cref>string[]</cref></see> containing all the 15 minute intervals in the hour.
+            /// A <see><cref>string[]</cref></see> containing all the days in the month.
             /// </returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static string[] DaysInMonth(DateTime dateTime)
@@ -800,6 +913,42 @@
             }
 
             /// <summary>
+            /// Gets all 1 day intervals in the week as yyyyMMdd.
+            /// </summary>
+            /// <param name="dateTime">
+            /// The DateTime.
+            /// </param>
+            /// <param name="weekFirstDay">
+            /// The first day to start each week. Defaults to Sunday which is used in the US, CA, and JP. You can
+            /// change it to Monday to get weekly aggregates which are accurate for other countries, but it'll double
+            /// the weekly data stored.
+            /// </param>
+            /// <returns>
+            /// A <see><cref>string[]</cref></see> containing all the days in the week.
+            /// </returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static string[] DaysInWeek(DateTime dateTime, DayOfWeek weekFirstDay = DayOfWeek.Sunday)
+            {
+                int difference = dateTime.DayOfWeek - weekFirstDay;
+                if (difference < 0)
+                {
+                    difference += 7;
+                }
+
+                var tmp = dateTime.AddDays(-difference);
+                return new[]
+                {
+                    string.Format("{0:yyyyMMdd}", tmp),
+                    string.Format("{0:yyyyMMdd}", tmp.AddDays(1)),
+                    string.Format("{0:yyyyMMdd}", tmp.AddDays(2)),
+                    string.Format("{0:yyyyMMdd}", tmp.AddDays(3)),
+                    string.Format("{0:yyyyMMdd}", tmp.AddDays(4)),
+                    string.Format("{0:yyyyMMdd}", tmp.AddDays(5)),
+                    string.Format("{0:yyyyMMdd}", tmp.AddDays(6))
+                };
+            }
+
+            /// <summary>
             /// Returns the datetime supplied as the quarter number as yyyyQ#.
             /// </summary>
             /// <param name="dateTime">
@@ -814,6 +963,30 @@
                 int quarter = (dateTime.Month + 2) / 3;
                 string formatted = string.Format("{0:yyyy}Q{1}", dateTime, quarter);
                 return formatted;
+            }
+
+            /// <summary>
+            /// Gets all months in the quarter as yyyyMM.
+            /// </summary>
+            /// <param name="dateTime">
+            /// The DateTime.
+            /// </param>
+            /// <returns>
+            /// The formatted <see cref="string"/>.
+            /// </returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static string[] MonthsInQuarter(DateTime dateTime)
+            {
+                int quarter = (dateTime.Month + 2) / 3;
+                DateTime tmp = dateTime.AddMonths(-(dateTime.Month - 1));
+                tmp = tmp.AddMonths((3 * quarter) - 3);
+
+                return new[]
+                {
+                    string.Format("{0:yyyyMM}", tmp),
+                    string.Format("{0:yyyyMM}", tmp.AddMonths(1)),
+                    string.Format("{0:yyyyMM}", tmp.AddMonths(2))
+                };
             }
         }
     }
