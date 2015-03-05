@@ -440,6 +440,45 @@
         }
 
         /// <summary>
+        /// Gets the fewest number of keys required to cover the date range supplied.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="from">
+        /// The starting DateTime, inclusive.
+        /// </param>
+        /// <param name="to">
+        /// The ending DateTime, exclusive.
+        /// </param>
+        /// <param name="timeInterval">
+        /// The accuracy at which we want the data. For example, setting this to TimeInterval.OneDay means there won't
+        /// be any keys at the fifteen minute or one hour levels, so if the <paramref name="from"/> DateTime is for the
+        /// middle of a day, it'll include the entire day.
+        /// </param>
+        /// <returns>
+        /// The smallest set of <see><cref>RedisKey[]</cref></see> that cover the range supplied.
+        /// </returns>
+        public static RedisKey[] GetMinKeysForRange(
+            IDatabase database,
+            string category,
+            string action,
+            DateTime from,
+            DateTime to,
+            TimeInterval timeInterval = TimeInterval.FifteenMinutes)
+        {
+            throw new NotImplementedException();
+        }
+        
+        /// <summary>
         /// The delete.
         /// </summary>
         /// <param name="category">

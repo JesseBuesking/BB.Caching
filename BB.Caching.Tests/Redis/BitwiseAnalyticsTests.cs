@@ -10,7 +10,7 @@
 
     using Xunit;
 
-    public sealed class BitwiseAnalyticsTests : IUseFixture<DefaultTestFixture>, IDisposable
+    public sealed class BitwiseAnalyticsTests : IUseFixture<DefaultTestFixture>
     {
         private static readonly List<RedisKey> _Keys = new List<RedisKey>
         {
@@ -22,11 +22,6 @@
         private DateTime _now = new DateTime(2000, 1, 1);
 
         public BitwiseAnalyticsTests()
-        {
-            this.Cleanup();
-        }
-
-        public void Dispose()
         {
             this.Cleanup();
         }

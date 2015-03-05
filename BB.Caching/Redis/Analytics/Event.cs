@@ -1,8 +1,6 @@
 ﻿namespace BB.Caching.Redis.Analytics
 {
     using System;
-    using System.Diagnostics;
-    using System.Linq;
 
     using StackExchange.Redis;
 
@@ -14,22 +12,29 @@
         /// <summary>
         /// Typically the object that was interacted with (e.g. button)
         /// </summary>
-        private string _category;
+        private readonly string _category;
 
         /// <summary>
         /// The type of interaction (e.g. click)
         /// </summary>
-        private string _action;
+        private readonly string _action;
 
         /// <summary>
         /// The inclusive start of the period that we're interested in.
         /// </summary>
-        private DateTime _from;
+        private readonly DateTime _from;
 
         /// <summary>
         /// The exclusive end of the period that we're interested in.
         /// </summary>
-        private DateTime _to;
+        private readonly DateTime _to;
+
+        /// <summary>
+        /// The accuracy at which we want the data. For example, setting this to TimeInterval.OneDay means there won't
+        /// be any keys at the fifteen minute or one hour levels, so if the _from DateTime is for the middle of a day,
+        /// it'll include the entire day.
+        /// </summary>
+        private readonly TimeInterval _timeInterval;
 
         /// <summary>
         /// The redis keys.
@@ -51,13 +56,24 @@
         /// <param name="to">
         /// The exclusive end of the period that we're interested in.
         /// </param>
-        public Event(string category, string action, DateTime from, DateTime to)
+        /// <param name="timeInterval">
+        /// The accuracy at which we want the data. For example, setting this to TimeInterval.OneDay means there won't
+        /// be any keys at the fifteen minute or one hour levels, so if the <paramref name="from"/> DateTime is for the
+        /// middle of a day, it'll include the entire day.
+        /// </param>
+        public Event(
+            string category,
+            string action,
+            DateTime from,
+            DateTime to,
+            TimeInterval timeInterval = TimeInterval.FifteenMinutes)
         {
             this._category = category;
             this._action = action;
             this._from = from;
             this._to = to;
             this._redisKeys = null;
+            this._timeInterval = timeInterval;
         }
 
         /// <summary>
@@ -67,26 +83,21 @@
         {
             get
             {
+                // ReSharper disable once ConvertIfStatementToNullCoalescingExpression
                 if (this._redisKeys == null)
                 {
-                    // perform logic to get all redis keys involved in this event
+                    this._redisKeys = BitwiseAnalytics.GetMinKeysForRange(
+                        SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db),
+                        this._category,
+                        this._action,
+                        this._from,
+                        this._to,
+                        this._timeInterval);
                 }
 
                 return this._redisKeys;
             }
         }
-
-//        public static void Blah(DateTime from, DateTime to)
-//        {
-//            if (from > to)
-//            {
-//                throw new Exception(string.Format(
-//                    "expecting from to be <= to\n\tfrom: {0}\n\tto: {1}", from , to));
-//            }
-//
-//            TimeSpan difference = to - from;
-//            if difference
-//        }
 
         /// <summary>
         /// Logic to convert this Event instance into a string.

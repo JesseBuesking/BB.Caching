@@ -11,19 +11,9 @@
         FifteenMinutes,
 
         /// <summary>
-        /// Data is grouped into 30 minute intervals.
-        /// </summary>
-        ThirtyMinutes,
-
-        /// <summary>
         /// Data is grouped into 1 hour intervals.
         /// </summary>
         OneHour,
-
-        /// <summary>
-        /// Data is grouped into 6 hour intervals.
-        /// </summary>
-        SixHours,
 
         /// <summary>
         /// Data is grouped into 1 day intervals.
