@@ -1,5 +1,6 @@
 ﻿namespace BB.Caching.Tests.Redis
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -132,6 +133,129 @@
 
         public void SetFixture(DefaultTestFixture data)
         {
+        }
+
+        public class DateTimteUtilTests
+        {
+            [Fact]
+            public void FifteenMinutesMiddleOfInterval()
+            {
+                DateTime dateTime = new DateTime(2000, 1, 1, 12, 7, 0);
+                string actual = BitwiseAnalytics.DateTimeUtil.FifteenMinutes(dateTime);
+                
+                Assert.Equal("200001011200", actual);
+            }
+
+            [Fact]
+            public void FifteenMinutesStartOfInterval()
+            {
+                DateTime dateTime = new DateTime(2000, 1, 1, 12, 0, 0);
+                string actual = BitwiseAnalytics.DateTimeUtil.FifteenMinutes(dateTime);
+                
+                Assert.Equal("200001011200", actual);
+            }
+
+            [Fact]
+            public void FifteenMinutesEndOfInterval()
+            {
+                DateTime dateTime = new DateTime(2000, 1, 1, 12, 14, 0);
+                string actual = BitwiseAnalytics.DateTimeUtil.FifteenMinutes(dateTime);
+                
+                Assert.Equal("200001011200", actual);
+            }
+
+            [Fact]
+            public void OneHour()
+            {
+                DateTime dateTime = new DateTime(2000, 1, 1, 13, 16, 0);
+                string actual = BitwiseAnalytics.DateTimeUtil.OneHour(dateTime);
+                
+                Assert.Equal("2000010113", actual);
+            }
+
+            [Fact]
+            public void OneDay()
+            {
+                DateTime dateTime = new DateTime(2000, 1, 1, 13, 16, 0);
+                string actual = BitwiseAnalytics.DateTimeUtil.OneDay(dateTime);
+                
+                Assert.Equal("20000101", actual);
+            }
+
+            [Fact]
+            public void OneMonth()
+            {
+                DateTime dateTime = new DateTime(2000, 1, 1, 13, 16, 0);
+                string actual = BitwiseAnalytics.DateTimeUtil.OneMonth(dateTime);
+                
+                Assert.Equal("200001", actual);
+            }
+
+            [Fact]
+            public void WeekNumberSingleDigit()
+            {
+                DateTime dateTime = new DateTime(2000, 1, 1);
+                string actual = BitwiseAnalytics.DateTimeUtil.WeekNumber(dateTime);
+                
+                Assert.Equal("2000W001", actual);
+            }
+
+            [Fact]
+            public void WeekNumberDoubleDigit()
+            {
+                DateTime dateTime = new DateTime(2000, 12, 30);
+                string actual = BitwiseAnalytics.DateTimeUtil.WeekNumber(dateTime);
+                
+                Assert.Equal("2000W053", actual);
+            }
+
+            [Fact]
+            public void Quarter1()
+            {
+                for (int i = 0; i < 3; ++i)
+                {
+                    DateTime dateTime = new DateTime(2000, i + 1, 1);
+                    string actual = BitwiseAnalytics.DateTimeUtil.QuarterNumber(dateTime);
+
+                    Assert.Equal("2000Q1", actual);
+                }
+            }
+
+            [Fact]
+            public void Quarter2()
+            {
+                for (int i = 0; i < 3; ++i)
+                {
+                    DateTime dateTime = new DateTime(2000, i + 4, 1);
+                    string actual = BitwiseAnalytics.DateTimeUtil.QuarterNumber(dateTime);
+
+                    Assert.Equal("2000Q2", actual);
+                }
+            }
+
+            [Fact]
+            public void Quarter3()
+            {
+                for (int i = 0; i < 3; ++i)
+                {
+                    DateTime dateTime = new DateTime(2000, i + 7, 1);
+                    string actual = BitwiseAnalytics.DateTimeUtil.QuarterNumber(dateTime);
+
+                    Assert.Equal("2000Q3", actual);
+                }
+            }
+
+            [Fact]
+            public void Quarter4()
+            {
+                for (int i = 0; i < 3; ++i)
+                {
+                    DateTime dateTime = new DateTime(2000, i + 10, 1);
+                    string actual = BitwiseAnalytics.DateTimeUtil.QuarterNumber(dateTime);
+
+                    Assert.Equal("2000Q4", actual);
+                }
+            }
         }
     }
 }
