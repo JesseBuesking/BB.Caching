@@ -791,12 +791,12 @@
             {
                 DateTime tmp = dateTime.AddMinutes(-dateTime.Minute);
                 return new[]
-                   {
-                       string.Format("{0:yyyyMMddHHmm}", tmp),
-                       string.Format("{0:yyyyMMddHHmm}", tmp.AddMinutes(15)),
-                       string.Format("{0:yyyyMMddHHmm}", tmp.AddMinutes(30)),
-                       string.Format("{0:yyyyMMddHHmm}", tmp.AddMinutes(45))
-                   };
+                           {
+                               string.Format("{0:yyyyMMddHHmm}", tmp),
+                               string.Format("{0:yyyyMMddHHmm}", tmp.AddMinutes(15)),
+                               string.Format("{0:yyyyMMddHHmm}", tmp.AddMinutes(30)),
+                               string.Format("{0:yyyyMMddHHmm}", tmp.AddMinutes(45))
+                           };
             }
 
             /// <summary>
@@ -829,32 +829,32 @@
             {
                 DateTime tmp = dateTime.AddHours(-dateTime.Hour);
                 return new[]
-                   {
-                       string.Format("{0:yyyyMMddHH}", tmp),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(1)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(2)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(3)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(4)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(5)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(6)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(7)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(8)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(9)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(10)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(11)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(12)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(13)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(14)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(15)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(16)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(17)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(18)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(19)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(20)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(21)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(22)),
-                       string.Format("{0:yyyyMMddHH}", tmp.AddHours(23))
-                   };
+                           {
+                               string.Format("{0:yyyyMMddHH}", tmp),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(1)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(2)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(3)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(4)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(5)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(6)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(7)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(8)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(9)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(10)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(11)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(12)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(13)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(14)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(15)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(16)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(17)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(18)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(19)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(20)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(21)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(22)),
+                               string.Format("{0:yyyyMMddHH}", tmp.AddHours(23))
+                           };
             }
 
             /// <summary>
@@ -885,13 +885,16 @@
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static string[] DaysInMonth(DateTime dateTime)
             {
-                return Enumerable.Range(1, DateTime.DaysInMonth(dateTime.Year, dateTime.Month))
-                    .Select(day => string.Format(
-                        "{0}{1}{2}",
-                        dateTime.Year.ToString("D4"),
-                        dateTime.Month.ToString("D2"),
-                        day.ToString("D2")))
-                    .ToArray();
+                return
+                    Enumerable.Range(1, DateTime.DaysInMonth(dateTime.Year, dateTime.Month))
+                        .Select(
+                            day =>
+                            string.Format(
+                                "{0}{1}{2}",
+                                dateTime.Year.ToString("D4"),
+                                dateTime.Month.ToString("D2"),
+                                day.ToString("D2")))
+                        .ToArray();
             }
 
             /// <summary>
@@ -976,15 +979,15 @@
 
                 var tmp = dateTime.AddDays(-difference);
                 return new[]
-                {
-                    string.Format("{0:yyyyMMdd}", tmp),
-                    string.Format("{0:yyyyMMdd}", tmp.AddDays(1)),
-                    string.Format("{0:yyyyMMdd}", tmp.AddDays(2)),
-                    string.Format("{0:yyyyMMdd}", tmp.AddDays(3)),
-                    string.Format("{0:yyyyMMdd}", tmp.AddDays(4)),
-                    string.Format("{0:yyyyMMdd}", tmp.AddDays(5)),
-                    string.Format("{0:yyyyMMdd}", tmp.AddDays(6))
-                };
+                           {
+                               string.Format("{0:yyyyMMdd}", tmp),
+                               string.Format("{0:yyyyMMdd}", tmp.AddDays(1)),
+                               string.Format("{0:yyyyMMdd}", tmp.AddDays(2)),
+                               string.Format("{0:yyyyMMdd}", tmp.AddDays(3)),
+                               string.Format("{0:yyyyMMdd}", tmp.AddDays(4)),
+                               string.Format("{0:yyyyMMdd}", tmp.AddDays(5)),
+                               string.Format("{0:yyyyMMdd}", tmp.AddDays(6))
+                           };
             }
 
             /// <summary>
@@ -1021,11 +1024,17 @@
                 tmp = tmp.AddMonths((3 * quarter) - 3);
 
                 return new[]
-                {
-                    string.Format("{0:yyyyMM}", tmp),
-                    string.Format("{0:yyyyMM}", tmp.AddMonths(1)),
-                    string.Format("{0:yyyyMM}", tmp.AddMonths(2))
-                };
+                           {
+                               string.Format("{0:yyyyMM}", tmp),
+                               string.Format("{0:yyyyMM}", tmp.AddMonths(1)),
+                               string.Format("{0:yyyyMM}", tmp.AddMonths(2))
+                           };
+            }
+
+            public static string[] MinKeysForRange(
+                DateTime start, DateTime end, TimeInterval timeInterval = TimeInterval.FifteenMinutes)
+            {
+                throw new NotImplementedException();
             }
         }
     }

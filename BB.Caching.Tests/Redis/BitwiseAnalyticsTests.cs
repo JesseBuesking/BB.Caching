@@ -480,6 +480,348 @@
                     Assert.Equal(string.Format("2000{0}", (month + 2).ToString("D2")), actual[2]);
                 }
             }
+
+            public class MinKeysForRange
+            {
+                public class FifteenMinuteIntervals
+                {
+                    [Fact]
+                    public void SingleFifteenMinuteBlock()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 0, 1, 0));
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal("200001010000", keys[0]);
+                    }
+
+                    [Fact]
+                    public void BackToBackFifteenMinuteBlocks()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 0, 16, 0));
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("200001010000", keys[0]);
+                        Assert.Equal("200001010015", keys[1]);
+                    }
+
+                    [Fact]
+                    public void FifteenMinuteBlocksAtBothEndRequiringFullHour()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 1, 0, 0));
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal("2000010100", keys[0]);
+                    }
+
+                    [Fact]
+                    public void OneHourPlusAnotherFifteenMinutes()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 1, 1, 0));
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("2000010100", keys[0]);
+                        Assert.Equal("200001010100", keys[1]);
+                    }
+
+                    [Fact]
+                    public void ThreeFullHours()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 2, 59, 0));
+
+                        Assert.Equal(3, keys.Length);
+                        Assert.Equal("2000010100", keys[0]);
+                        Assert.Equal("2000010101", keys[1]);
+                        Assert.Equal("2000010102", keys[2]);
+                    }
+
+                    [Fact]
+                    public void OneFullDay()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 2, 0, 0, 0));
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal("20000101", keys[0]);
+                    }
+
+                    [Fact]
+                    public void OneFullDayPlusFifteenMinutes()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 2, 0, 1, 0));
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("20000101", keys[0]);
+                        Assert.Equal("200001020000", keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneFullMonthPlusFifteenMinutes()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 2, 1, 0, 1, 0));
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("200001", keys[0]);
+                        Assert.Equal("200002010000", keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneFullYearPlusFifteenMinutes()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2001, 1, 1, 0, 1, 0));
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("2000", keys[0]);
+                        Assert.Equal("200101010000", keys[1]);
+                    }
+                }
+
+                public class OneHourIntervals
+                {
+                    [Fact]
+                    public void SingleFifteenMinuteBlock()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 0, 1, 0),
+                            TimeInterval.OneHour);
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal("2000010100", keys[0]);
+                    }
+
+                    [Fact]
+                    public void OneHourPlusOneMinuteRequiresTwoFullHours()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 1, 1, 0),
+                            TimeInterval.OneHour);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("2000010100", keys[0]);
+                        Assert.Equal("2000010101", keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneDayPlusOneMinute()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 2, 0, 1, 0),
+                            TimeInterval.OneHour);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("20000101", keys[0]);
+                        Assert.Equal("2000010200", keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneMonthPlusOneMinute()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 2, 1, 0, 1, 0),
+                            TimeInterval.OneHour);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("200001", keys[0]);
+                        Assert.Equal("2000020100", keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneYearPlusOneMinute()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2001, 1, 1, 0, 1, 0),
+                            TimeInterval.OneHour);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("2000", keys[0]);
+                        Assert.Equal("2001010100", keys[1]);
+                    }
+                }
+
+                public class OneDayIntervals
+                {
+                    [Fact]
+                    public void SingleFifteenMinuteBlock()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 0, 1, 0),
+                            TimeInterval.OneDay);
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal("20000101", keys[0]);
+                    }
+
+                    [Fact]
+                    public void TimeInTwoSeparateHours()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 1, 1, 0),
+                            TimeInterval.OneDay);
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal("20000101", keys[0]);
+                    }
+
+                    [Fact]
+                    public void OneDayAndOneMinute()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 2, 0, 1, 0),
+                            TimeInterval.OneDay);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("20000101", keys[0]);
+                        Assert.Equal("20000102", keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneMonthAndOneMinute()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 2, 1, 0, 1, 0),
+                            TimeInterval.OneDay);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("200001", keys[0]);
+                        Assert.Equal("20000201", keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneYearAndOneMinute()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2001, 1, 1, 0, 1, 0),
+                            TimeInterval.OneDay);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("2000", keys[0]);
+                        Assert.Equal("20010101", keys[1]);
+                    }
+                }
+
+                public class OneMonthIntervals
+                {
+                    [Fact]
+                    public void SingleFifteenMinuteBlock()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 0, 1, 0),
+                            TimeInterval.OneMonth);
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal("200001", keys[0]);
+                    }
+
+                    [Fact]
+                    public void TwoHours()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 1, 1, 1, 0),
+                            TimeInterval.OneMonth);
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal("200001", keys[0]);
+                    }
+
+                    [Fact]
+                    public void TwoDays()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 1, 2, 0, 1, 0),
+                            TimeInterval.OneMonth);
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal("200001", keys[0]);
+                    }
+
+                    [Fact]
+                    public void OneMonthAndOneMinute()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2000, 2, 1, 0, 1, 0),
+                            TimeInterval.OneMonth);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("200001", keys[0]);
+                        Assert.Equal("200002", keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneYearAndOneMinute()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 0, 0),
+                            new DateTime(2001, 1, 1, 0, 1, 0),
+                            TimeInterval.OneMonth);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal("2000", keys[0]);
+                        Assert.Equal("200101", keys[1]);
+                    }
+                }
+
+                public class OneWeekIntervals
+                {
+                    [Fact]
+                    public void SingleFifteenMinuteBlock()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2015, 3, 1, 0, 0, 0),
+                            new DateTime(2015, 3, 1, 0, 1, 0),
+                            TimeInterval.Week);
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal("2015W015", keys[0]);
+                    }
+                }
+
+                public class OneQuarterIntervals
+                {
+                    [Fact]
+                    public void SingleFifteenMinuteBlock()
+                    {
+                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2015, 3, 1, 0, 0, 0),
+                            new DateTime(2015, 3, 1, 0, 1, 0),
+                            TimeInterval.Quarter);
+
+                        Assert.Equal(3, keys.Length);
+                        Assert.Equal("201501", keys[0]);
+                        Assert.Equal("201502", keys[1]);
+                        Assert.Equal("201503", keys[2]);
+                    }
+                }
+            }
         }
     }
 }
