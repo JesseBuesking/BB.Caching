@@ -8,36 +8,31 @@
         /// <summary>
         /// Data is grouped into 15 minute intervals.
         /// </summary>
-        FifteenMinutes,
+        FifteenMinutes = 0,
 
         /// <summary>
         /// Data is grouped into 1 hour intervals.
         /// </summary>
-        OneHour,
+        OneHour = 1,
 
         /// <summary>
         /// Data is grouped into 1 day intervals.
         /// </summary>
-        OneDay,
-
-        /// <summary>
-        /// Data is grouped into 1 month intervals.
-        /// </summary>
-        OneMonth,
+        OneDay = 2,
 
         /// <summary>
         /// Data is grouped into 1 week intervals.
         /// </summary>
-        Week,
+        Week = 3,
+
+        /// <summary>
+        /// Data is grouped into 1 month intervals.
+        /// </summary>
+        OneMonth = 4,
 
         /// <summary>
         /// Data is grouped into 1 quarter intervals.
         /// </summary>
-        Quarter,
-
-        /// <summary>
-        /// Data is grouped into 1 year intervals.
-        /// </summary>
-        Year
+        Quarter = 5
     }
 }

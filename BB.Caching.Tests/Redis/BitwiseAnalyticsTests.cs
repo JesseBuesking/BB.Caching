@@ -483,112 +483,267 @@
 
             public class MinKeysForRange
             {
+                [Fact]
+                public void StartLessThanEnd()
+                {
+                    Assert.Throws(
+                        typeof(Exception),
+                        () =>
+                            {
+                                BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 2), new DateTime(2000, 1, 1));
+                    });
+                }
+
                 public class FifteenMinuteIntervals
                 {
                     [Fact]
                     public void SingleFifteenMinuteBlock()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 0, 1, 0));
 
                         Assert.Equal(1, keys.Length);
-                        Assert.Equal("200001010000", keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.FifteenMinutes, "200001010000"),
+                            keys[0]);
                     }
 
                     [Fact]
                     public void BackToBackFifteenMinuteBlocks()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 0, 16, 0));
 
                         Assert.Equal(2, keys.Length);
-                        Assert.Equal("200001010000", keys[0]);
-                        Assert.Equal("200001010015", keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.FifteenMinutes, "200001010000"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.FifteenMinutes, "200001010015"),
+                            keys[1]);
                     }
 
                     [Fact]
                     public void FifteenMinuteBlocksAtBothEndRequiringFullHour()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 1, 0, 0));
 
                         Assert.Equal(1, keys.Length);
-                        Assert.Equal("2000010100", keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010100"),
+                            keys[0]);
                     }
 
                     [Fact]
                     public void OneHourPlusAnotherFifteenMinutes()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 1, 1, 0));
 
                         Assert.Equal(2, keys.Length);
-                        Assert.Equal("2000010100", keys[0]);
-                        Assert.Equal("200001010100", keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010100"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.FifteenMinutes, "200001010100"),
+                            keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneHourMinusAnotherFifteenMinutes()
+                    {
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 0, 59, 0),
+                            new DateTime(2000, 1, 1, 2, 0, 0));
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.FifteenMinutes, "200001010045"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010101"),
+                            keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneHour()
+                    {
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 1, 0, 0),
+                            new DateTime(2000, 1, 1, 2, 0, 0));
+
+                        Assert.Equal(1, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010101"),
+                            keys[0]);
                     }
 
                     [Fact]
                     public void ThreeFullHours()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 2, 59, 0));
 
                         Assert.Equal(3, keys.Length);
-                        Assert.Equal("2000010100", keys[0]);
-                        Assert.Equal("2000010101", keys[1]);
-                        Assert.Equal("2000010102", keys[2]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010100"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010101"),
+                            keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010102"),
+                            keys[2]);
                     }
 
                     [Fact]
                     public void OneFullDay()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 2, 0, 0, 0));
 
                         Assert.Equal(1, keys.Length);
-                        Assert.Equal("20000101", keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneDay, "20000101"),
+                            keys[0]);
                     }
 
                     [Fact]
                     public void OneFullDayPlusFifteenMinutes()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 2, 0, 1, 0));
 
                         Assert.Equal(2, keys.Length);
-                        Assert.Equal("20000101", keys[0]);
-                        Assert.Equal("200001020000", keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneDay, "20000101"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.FifteenMinutes, "200001020000"),
+                            keys[1]);
                     }
 
                     [Fact]
                     public void OneFullMonthPlusFifteenMinutes()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 2, 1, 0, 1, 0));
 
                         Assert.Equal(2, keys.Length);
-                        Assert.Equal("200001", keys[0]);
-                        Assert.Equal("200002010000", keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.FifteenMinutes, "200002010000"),
+                            keys[1]);
                     }
 
                     [Fact]
                     public void OneFullYearPlusFifteenMinutes()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2001, 1, 1, 0, 1, 0));
 
-                        Assert.Equal(2, keys.Length);
-                        Assert.Equal("2000", keys[0]);
-                        Assert.Equal("200101010000", keys[1]);
+                        Assert.Equal(13, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200002"),
+                            keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200003"),
+                            keys[2]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200004"),
+                            keys[3]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200005"),
+                            keys[4]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200006"),
+                            keys[5]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200007"),
+                            keys[6]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200008"),
+                            keys[7]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200009"),
+                            keys[8]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200010"),
+                            keys[9]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200011"),
+                            keys[10]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200012"),
+                            keys[11]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.FifteenMinutes, "200101010000"),
+                            keys[12]);
+                    }
+
+                    [Fact]
+                    public void OneFullYearMinusFifteenMinutes()
+                    {
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 12, 31, 23, 59, 0),
+                            new DateTime(2002, 1, 1, 0, 0, 0));
+
+                        Assert.Equal(13, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.FifteenMinutes, "200012312345"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200101"),
+                            keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200102"),
+                            keys[2]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200103"),
+                            keys[3]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200104"),
+                            keys[4]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200105"),
+                            keys[5]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200106"),
+                            keys[6]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200107"),
+                            keys[7]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200108"),
+                            keys[8]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200109"),
+                            keys[9]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200110"),
+                            keys[10]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200111"),
+                            keys[11]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200112"),
+                            keys[12]);
                     }
                 }
 
@@ -597,65 +752,133 @@
                     [Fact]
                     public void SingleFifteenMinuteBlock()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 0, 1, 0),
                             TimeInterval.OneHour);
 
                         Assert.Equal(1, keys.Length);
-                        Assert.Equal("2000010100", keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010100"),
+                            keys[0]);
                     }
 
                     [Fact]
                     public void OneHourPlusOneMinuteRequiresTwoFullHours()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 1, 1, 0),
                             TimeInterval.OneHour);
 
                         Assert.Equal(2, keys.Length);
-                        Assert.Equal("2000010100", keys[0]);
-                        Assert.Equal("2000010101", keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010100"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010101"),
+                            keys[1]);
                     }
 
                     [Fact]
                     public void OneDayPlusOneMinute()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 2, 0, 1, 0),
                             TimeInterval.OneHour);
 
                         Assert.Equal(2, keys.Length);
-                        Assert.Equal("20000101", keys[0]);
-                        Assert.Equal("2000010200", keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneDay, "20000101"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010200"),
+                            keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneDayMinusOneMinute()
+                    {
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 23, 59, 0),
+                            new DateTime(2000, 1, 3, 0, 0, 0),
+                            TimeInterval.OneHour);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000010123"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneDay, "20000102"),
+                            keys[1]);
                     }
 
                     [Fact]
                     public void OneMonthPlusOneMinute()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 2, 1, 0, 1, 0),
                             TimeInterval.OneHour);
 
                         Assert.Equal(2, keys.Length);
-                        Assert.Equal("200001", keys[0]);
-                        Assert.Equal("2000020100", keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2000020100"),
+                            keys[1]);
                     }
 
                     [Fact]
                     public void OneYearPlusOneMinute()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2001, 1, 1, 0, 1, 0),
                             TimeInterval.OneHour);
 
-                        Assert.Equal(2, keys.Length);
-                        Assert.Equal("2000", keys[0]);
-                        Assert.Equal("2001010100", keys[1]);
+                        Assert.Equal(13, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200002"),
+                            keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200003"),
+                            keys[2]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200004"),
+                            keys[3]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200005"),
+                            keys[4]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200006"),
+                            keys[5]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200007"),
+                            keys[6]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200008"),
+                            keys[7]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200009"),
+                            keys[8]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200010"),
+                            keys[9]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200011"),
+                            keys[10]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200012"),
+                            keys[11]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneHour, "2001010100"),
+                            keys[12]);
                     }
                 }
 
@@ -664,64 +887,113 @@
                     [Fact]
                     public void SingleFifteenMinuteBlock()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 0, 1, 0),
                             TimeInterval.OneDay);
 
                         Assert.Equal(1, keys.Length);
-                        Assert.Equal("20000101", keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneDay, "20000101"),
+                            keys[0]);
                     }
 
                     [Fact]
                     public void TimeInTwoSeparateHours()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 1, 1, 0),
                             TimeInterval.OneDay);
 
                         Assert.Equal(1, keys.Length);
-                        Assert.Equal("20000101", keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneDay, "20000101"),
+                            keys[0]);
                     }
 
                     [Fact]
                     public void OneDayAndOneMinute()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 2, 0, 1, 0),
                             TimeInterval.OneDay);
 
                         Assert.Equal(2, keys.Length);
-                        Assert.Equal("20000101", keys[0]);
-                        Assert.Equal("20000102", keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneDay, "20000101"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneDay, "20000102"),
+                            keys[1]);
                     }
 
                     [Fact]
                     public void OneMonthAndOneMinute()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 2, 1, 0, 1, 0),
                             TimeInterval.OneDay);
 
                         Assert.Equal(2, keys.Length);
-                        Assert.Equal("200001", keys[0]);
-                        Assert.Equal("20000201", keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneDay, "20000201"),
+                            keys[1]);
                     }
 
                     [Fact]
                     public void OneYearAndOneMinute()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2001, 1, 1, 0, 1, 0),
                             TimeInterval.OneDay);
 
-                        Assert.Equal(2, keys.Length);
-                        Assert.Equal("2000", keys[0]);
-                        Assert.Equal("20010101", keys[1]);
+                        Assert.Equal(13, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200002"),
+                            keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200003"),
+                            keys[2]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200004"),
+                            keys[3]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200005"),
+                            keys[4]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200006"),
+                            keys[5]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200007"),
+                            keys[6]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200008"),
+                            keys[7]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200009"),
+                            keys[8]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200010"),
+                            keys[9]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200011"),
+                            keys[10]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200012"),
+                            keys[11]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneDay, "20010101"),
+                            keys[12]);
                     }
                 }
 
@@ -730,63 +1002,141 @@
                     [Fact]
                     public void SingleFifteenMinuteBlock()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 0, 1, 0),
                             TimeInterval.OneMonth);
 
                         Assert.Equal(1, keys.Length);
-                        Assert.Equal("200001", keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
                     }
 
                     [Fact]
                     public void TwoHours()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 1, 1, 1, 0),
                             TimeInterval.OneMonth);
 
                         Assert.Equal(1, keys.Length);
-                        Assert.Equal("200001", keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
                     }
 
                     [Fact]
                     public void TwoDays()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 1, 2, 0, 1, 0),
                             TimeInterval.OneMonth);
 
                         Assert.Equal(1, keys.Length);
-                        Assert.Equal("200001", keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
                     }
 
                     [Fact]
                     public void OneMonthAndOneMinute()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2000, 2, 1, 0, 1, 0),
                             TimeInterval.OneMonth);
 
                         Assert.Equal(2, keys.Length);
-                        Assert.Equal("200001", keys[0]);
-                        Assert.Equal("200002", keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200002"),
+                            keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneMonthOddChange()
+                    {
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 1, 23, 59, 0),
+                            new DateTime(2000, 2, 3, 0, 0, 0),
+                            TimeInterval.OneMonth);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200002"),
+                            keys[1]);
+                    }
+
+                    [Fact]
+                    public void OneMonthMinusOneMinute()
+                    {
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2000, 1, 31, 23, 59, 0),
+                            new DateTime(2000, 3, 1, 0, 0, 0),
+                            TimeInterval.OneMonth);
+
+                        Assert.Equal(2, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200002"),
+                            keys[1]);
                     }
 
                     [Fact]
                     public void OneYearAndOneMinute()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2000, 1, 1, 0, 0, 0),
                             new DateTime(2001, 1, 1, 0, 1, 0),
                             TimeInterval.OneMonth);
 
-                        Assert.Equal(2, keys.Length);
-                        Assert.Equal("2000", keys[0]);
-                        Assert.Equal("200101", keys[1]);
+                        Assert.Equal(13, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200001"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200002"),
+                            keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200003"),
+                            keys[2]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200004"),
+                            keys[3]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200005"),
+                            keys[4]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200006"),
+                            keys[5]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200007"),
+                            keys[6]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200008"),
+                            keys[7]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200009"),
+                            keys[8]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200010"),
+                            keys[9]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200011"),
+                            keys[10]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "200012"),
+                            keys[11]);
                     }
                 }
 
@@ -795,13 +1145,35 @@
                     [Fact]
                     public void SingleFifteenMinuteBlock()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2015, 3, 1, 0, 0, 0),
                             new DateTime(2015, 3, 1, 0, 1, 0),
                             TimeInterval.Week);
 
                         Assert.Equal(1, keys.Length);
-                        Assert.Equal("2015W015", keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.Week, "2015W010"),
+                            keys[0]);
+                    }
+
+                    [Fact]
+                    public void ThreeWeeks()
+                    {
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2015, 3, 1, 0, 0, 0),
+                            new DateTime(2015, 3, 15, 0, 1, 0),
+                            TimeInterval.Week);
+
+                        Assert.Equal(3, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.Week, "2015W010"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.Week, "2015W011"),
+                            keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.Week, "2015W012"),
+                            keys[2]);
                     }
                 }
 
@@ -810,15 +1182,59 @@
                     [Fact]
                     public void SingleFifteenMinuteBlock()
                     {
-                        string[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
                             new DateTime(2015, 3, 1, 0, 0, 0),
                             new DateTime(2015, 3, 1, 0, 1, 0),
                             TimeInterval.Quarter);
 
                         Assert.Equal(3, keys.Length);
-                        Assert.Equal("201501", keys[0]);
-                        Assert.Equal("201502", keys[1]);
-                        Assert.Equal("201503", keys[2]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201501"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201502"),
+                            keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201503"),
+                            keys[2]);
+                    }
+
+                    [Fact]
+                    public void ThreeQuarters()
+                    {
+                        Tuple<TimeInterval, string>[] keys = BitwiseAnalytics.DateTimeUtil.MinKeysForRange(
+                            new DateTime(2015, 3, 1, 0, 0, 0),
+                            new DateTime(2015, 9, 1, 0, 1, 0),
+                            TimeInterval.Quarter);
+
+                        Assert.Equal(9, keys.Length);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201501"),
+                            keys[0]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201502"),
+                            keys[1]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201503"),
+                            keys[2]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201504"),
+                            keys[3]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201505"),
+                            keys[4]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201506"),
+                            keys[5]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201507"),
+                            keys[6]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201508"),
+                            keys[7]);
+                        Assert.Equal(
+                            new Tuple<TimeInterval, string>(TimeInterval.OneMonth, "201509"),
+                            keys[8]);
                     }
                 }
             }

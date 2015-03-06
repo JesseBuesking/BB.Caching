@@ -1,6 +1,7 @@
 ﻿namespace BB.Caching.Redis.Analytics
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using System.Runtime.CompilerServices;
@@ -1031,10 +1032,226 @@
                            };
             }
 
-            public static string[] MinKeysForRange(
+            /// <summary>
+            /// Finds the minimum subset of keys required to cover the range of time specified by
+            /// <paramref name="start"/> and <paramref name="end"/> using the <see cref="TimeInterval"/> specified.
+            /// </summary>
+            /// <param name="start">
+            /// The start of the time range.
+            /// </param>
+            /// <param name="end">
+            /// The end of the time range.
+            /// </param>
+            /// <param name="timeInterval">
+            /// The time interval.
+            /// </param>
+            /// <returns>
+            /// The minimum subset of keys required.
+            /// </returns>
+            /// <exception cref="Exception">
+            /// This exception should never be triggered unless a new TimeInterval is supported.
+            /// </exception>
+            public static Tuple<TimeInterval, string>[] MinKeysForRange(
                 DateTime start, DateTime end, TimeInterval timeInterval = TimeInterval.FifteenMinutes)
             {
-                throw new NotImplementedException();
+                if (start > end)
+                {
+                    throw new Exception(
+                        string.Format("expecting dateTime < end\n\tstart: {0}\n\tend: {1}", start, end));
+                }
+
+                var result = new List<Tuple<TimeInterval, string>>();
+
+                // round to the closest 15 minute mark
+                start = start.AddMinutes(-(start.Minute % 15));
+                var roundEnd = end.AddMinutes(-(end.Minute % 15));
+
+                while (true)
+                {
+                    TimeSpan difference = end - start;
+
+                    // not super accurate, but a decent approximation
+                    if (difference.TotalDays >= 365)
+                    {
+                        // exactly one entire year
+                        if (start == new DateTime(start.Year, 1, 1) && start.AddYears(1) == roundEnd)
+                        {
+                            for (int month = 0; month < 12; ++month)
+                            {
+                                result.Add(new Tuple<TimeInterval, string>(
+                                    TimeInterval.OneMonth, DateTimeUtil.OneMonth(start.AddMonths(month))));
+                            }
+
+                            start = start.AddYears(1);
+
+                            if (start == end)
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            DateTime cutoff = new DateTime(start.Year + 1, 1, 1);
+                            result.AddRange(MinKeysForRange(start, cutoff, timeInterval));
+                            result.AddRange(MinKeysForRange(cutoff, end, timeInterval));
+                            break;
+                        }
+                    }
+                    else if (timeInterval == TimeInterval.Quarter)
+                    {
+                        while (start <= roundEnd)
+                        {
+                            result.AddRange(DateTimeUtil.MonthsInQuarter(start)
+                                .Select(x => new Tuple<TimeInterval, string>(TimeInterval.OneMonth, x)));
+                            start = start.AddMonths(3);
+                        }
+
+                        break;
+                    }
+                    else if (timeInterval == TimeInterval.OneMonth)
+                    {
+                        while (start <= roundEnd)
+                        {
+                            result.Add(new Tuple<TimeInterval, string>(
+                                TimeInterval.OneMonth, DateTimeUtil.OneMonth(start)));
+                            start = start.AddMonths(1);
+                        }
+
+                        break;
+                    }
+                    else if (difference.TotalDays >= 28)
+                    {
+                        // exactly one entire month
+                        if (start == new DateTime(start.Year, start.Month, 1) && start.AddMonths(1) == roundEnd)
+                        {
+                            result.Add(new Tuple<TimeInterval, string>(
+                                TimeInterval.OneMonth, DateTimeUtil.OneMonth(start)));
+                            start = start.AddMonths(1);
+
+                            if (start == end)
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            DateTime cutoff = new DateTime(start.Year, start.Month + 1, 1);
+                            result.AddRange(MinKeysForRange(start, cutoff, timeInterval));
+                            result.AddRange(MinKeysForRange(cutoff, end, timeInterval));
+                            break;
+                        }
+                    }
+                    else if (timeInterval == TimeInterval.Week)
+                    {
+                        while (start <= roundEnd)
+                        {
+                            result.Add(new Tuple<TimeInterval, string>(
+                                TimeInterval.Week, DateTimeUtil.WeekNumber(start)));
+                            start = start.AddDays(7);
+                        }
+
+                        break;
+                    }
+                    else if (difference.TotalDays >= 1)
+                    {
+                        // exactly one entire day
+                        if (start == new DateTime(start.Year, start.Month, start.Day)
+                            && start.AddDays(1) == roundEnd)
+                        {
+                            result.Add(new Tuple<TimeInterval, string>(
+                                TimeInterval.OneDay, DateTimeUtil.OneDay(start)));
+                            start = start.AddDays(1);
+
+                            if (start == end)
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            DateTime cutoff = new DateTime(start.Year, start.Month, start.Day + 1);
+                            result.AddRange(MinKeysForRange(start, cutoff, timeInterval));
+                            result.AddRange(MinKeysForRange(cutoff, end, timeInterval));
+                            break;
+                        }
+                    }
+                    else if (timeInterval == TimeInterval.OneDay)
+                    {
+                        result.Add(new Tuple<TimeInterval, string>(TimeInterval.OneDay, DateTimeUtil.OneDay(start)));
+                        break;
+                    }
+                    else if (difference.TotalHours >= 1)
+                    {
+                        // exactly one entire hour
+                        if (start == new DateTime(start.Year, start.Month, start.Day, start.Hour, 0, 0)
+                            && start.AddHours(1) == roundEnd)
+                        {
+                            result.Add(new Tuple<TimeInterval, string>(
+                                TimeInterval.OneHour, DateTimeUtil.OneHour(start)));
+                            start = start.AddHours(1);
+
+                            if (start == end)
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            DateTime cutoff = new DateTime(start.Year, start.Month, start.Day, start.Hour + 1, 0, 0);
+                            result.AddRange(MinKeysForRange(start, cutoff, timeInterval));
+                            result.AddRange(MinKeysForRange(cutoff, end, timeInterval));
+                            break;
+                        }
+                    }
+                    else if (timeInterval == TimeInterval.OneHour)
+                    {
+                        result.Add(new Tuple<TimeInterval, string>(TimeInterval.OneHour, DateTimeUtil.OneHour(start)));
+                        break;
+                    }
+                    else if (difference.TotalMinutes >= 15)
+                    {
+                        if (start == new DateTime(start.Year, start.Month, start.Day, start.Hour, 0, 0) && difference.TotalMinutes >= 45)
+                        {
+                            result.Add(new Tuple<TimeInterval, string>(
+                                TimeInterval.OneHour, DateTimeUtil.OneHour(start)));
+                        }
+                        else
+                        {
+                            do
+                            {
+                                result.Add(
+                                    new Tuple<TimeInterval, string>(
+                                        TimeInterval.FifteenMinutes,
+                                        DateTimeUtil.FifteenMinutes(start)));
+                                start = start.AddMinutes(15);
+                            }
+                            while (start < end);
+                        }
+
+                        break;
+                    }
+                    else if (difference.TotalMinutes == 0)
+                    {
+                        break;
+                    }
+                    else if (difference.TotalMinutes < 15)
+                    {
+                        result.Add(new Tuple<TimeInterval, string>(
+                            TimeInterval.FifteenMinutes, DateTimeUtil.FifteenMinutes(start)));
+                        break;
+                    }
+                    else
+                    {
+                        throw new Exception(
+                            string.Format(
+                                "case not handled '{0}'\n\tstart: {1}\n\tend: {2}",
+                                difference,
+                                start,
+                            end));
+                    }
+                }
+
+                return result.ToArray();
             }
         }
     }
