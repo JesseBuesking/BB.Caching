@@ -4,6 +4,7 @@ namespace BB.Caching
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net;
     using System.Threading;
 
     using BB.Caching.Redis;
@@ -251,6 +252,21 @@ namespace BB.Caching
                 .Select(n => n.GetWriteMultiplexer())
                 .Distinct()
                 .ToArray();
+        }
+
+        /// <summary>
+        /// Flushes the database that the connection belongs to.
+        /// </summary>
+        /// <param name="connection">
+        /// The connection.
+        /// </param>
+        public void FlushDatabase(ConnectionMultiplexer connection)
+        {
+            EndPoint[] endPoints = connection.GetEndPoints();
+            foreach (var endPoint in endPoints)
+            {
+                connection.GetServer(endPoint).FlushDatabase(this.Db);
+            }
         }
     }
 }

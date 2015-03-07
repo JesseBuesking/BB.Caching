@@ -5,6 +5,7 @@
     using System.Globalization;
     using System.Linq;
     using System.Runtime.CompilerServices;
+    using System.Security.Cryptography;
     using System.Threading.Tasks;
 
     using StackExchange.Redis;
@@ -476,7 +477,55 @@
             DateTime to,
             TimeInterval timeInterval = TimeInterval.FifteenMinutes)
         {
-            throw new NotImplementedException();
+            Tuple<TimeInterval, string, DateTime>[] requiredKeys = DateTimeUtil.MinKeysForRange(from, to, timeInterval);
+            RedisKey[] keys = new RedisKey[requiredKeys.Length];
+            int keyIndex = 0;
+
+            foreach (var tup in requiredKeys)
+            {
+                switch (tup.Item1)
+                {
+                    case TimeInterval.FifteenMinutes:
+                    {
+                        keys[keyIndex] = GetFifteenMinutes(category, action, tup.Item3);
+                        break;
+                    }
+
+                    case TimeInterval.OneHour:
+                    {
+                        keys[keyIndex] = GetHour(database, category, action, tup.Item3);
+                        break;
+                    }
+
+                    case TimeInterval.OneDay:
+                    {
+                        keys[keyIndex] = GetDay(database, category, action, tup.Item3);
+                        break;
+                    }
+
+                    case TimeInterval.Week:
+                    {
+                        keys[keyIndex] = GetWeek(database, category, action, tup.Item3);
+                        break;
+                    }
+
+                    case TimeInterval.OneMonth:
+                    {
+                        keys[keyIndex] = GetMonth(database, category, action, tup.Item3);
+                        break;
+                    }
+
+                    case TimeInterval.Quarter:
+                    {
+                        keys[keyIndex] = GetQuarter(database, category, action, tup.Item3);
+                        break;
+                    }
+                }
+
+                keyIndex += 1;
+            }
+
+            return keys;
         }
         
         /// <summary>
@@ -523,7 +572,8 @@
         /// <remarks>
         /// http://redis.io/commands/bitop
         /// </remarks>
-        public static long BitwiseAnd(IDatabase database, RedisKey destination, RedisKey[] keys)
+        public static long BitwiseAnd(
+            IDatabase database, RedisKey destination, RedisKey[] keys)
         {
             long result = database
                 .StringBitOperation(Bitwise.And, destination, keys);
@@ -556,6 +606,76 @@
         {
             Task<long> result = database
                 .StringBitOperationAsync(Bitwise.And, destination, keys);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Perform a bitwise AND operation between multiple keys (containing string values) and store the result in the
+        /// destination key.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="destination">
+        /// The destination key where the result should be stored.
+        /// </param>
+        /// <param name="keys">
+        /// The keys where the data to be AND'd are located.
+        /// </param>
+        /// <param name="expire">
+        /// An expiration lifetime.
+        /// </param>
+        /// <returns>
+        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        /// </returns>
+        /// <remarks>
+        /// http://redis.io/commands/bitop
+        /// </remarks>
+        public static long BitwiseAnd(
+            IDatabase database, RedisKey destination, RedisKey[] keys, TimeSpan expire)
+        {
+            long result = database
+                .StringBitOperation(Bitwise.And, destination, keys);
+
+            database.KeyExpire(destination, expire);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Perform a bitwise AND operation between multiple keys (containing string values) and store the result in the
+        /// destination key.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="destination">
+        /// The destination key where the result should be stored.
+        /// </param>
+        /// <param name="keys">
+        /// The keys where the data to be AND'd are located.
+        /// </param>
+        /// <param name="expire">
+        /// An expiration lifetime.
+        /// </param>
+        /// <returns>
+        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        /// </returns>
+        /// <remarks>
+        /// http://redis.io/commands/bitop
+        /// </remarks>
+        public static Task<long> BitwiseAndAsync(
+            IDatabase database, RedisKey destination, RedisKey[] keys, TimeSpan expire)
+        {
+            Task<long> result = database
+                .StringBitOperationAsync(Bitwise.And, destination, keys);
+
+            database.KeyExpireAsync(destination, expire);
 
             return result;
         }
@@ -614,6 +734,74 @@
         {
             Task<long> result = database
                 .StringBitOperationAsync(Bitwise.Or, destination, keys);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Perform a bitwise OR operation between multiple keys (containing string values) and store the result in the
+        /// destination key.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="destination">
+        /// The destination key where the result should be stored.
+        /// </param>
+        /// <param name="keys">
+        /// The keys where the data to be OR'd are located.
+        /// </param>
+        /// <param name="expire">
+        /// An expiration lifetime.
+        /// </param>
+        /// <returns>
+        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        /// </returns>
+        /// <remarks>
+        /// http://redis.io/commands/bitop
+        /// </remarks>
+        public static long BitwiseOr(IDatabase database, RedisKey destination, RedisKey[] keys, TimeSpan expire)
+        {
+            long result = database
+                .StringBitOperation(Bitwise.Or, destination, keys);
+
+            database.KeyExpire(destination, expire);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Perform a bitwise OR operation between multiple keys (containing string values) and store the result in the
+        /// destination key.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="destination">
+        /// The destination key where the result should be stored.
+        /// </param>
+        /// <param name="keys">
+        /// The keys where the data to be OR'd are located.
+        /// </param>
+        /// <param name="expire">
+        /// An expiration lifetime.
+        /// </param>
+        /// <returns>
+        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        /// </returns>
+        /// <remarks>
+        /// http://redis.io/commands/bitop
+        /// </remarks>
+        public static Task<long> BitwiseOrAsync(IDatabase database, RedisKey destination, RedisKey[] keys, TimeSpan expire)
+        {
+            Task<long> result = database
+                .StringBitOperationAsync(Bitwise.Or, destination, keys);
+
+            database.KeyExpireAsync(destination, expire);
 
             return result;
         }
@@ -1051,7 +1239,7 @@
             /// <exception cref="Exception">
             /// This exception should never be triggered unless a new TimeInterval is supported.
             /// </exception>
-            public static Tuple<TimeInterval, string>[] MinKeysForRange(
+            public static Tuple<TimeInterval, string, DateTime>[] MinKeysForRange(
                 DateTime start, DateTime end, TimeInterval timeInterval = TimeInterval.FifteenMinutes)
             {
                 if (start > end)
@@ -1060,7 +1248,7 @@
                         string.Format("expecting dateTime < end\n\tstart: {0}\n\tend: {1}", start, end));
                 }
 
-                var result = new List<Tuple<TimeInterval, string>>();
+                var result = new List<Tuple<TimeInterval, string, DateTime>>();
 
                 // round to the closest 15 minute mark
                 start = start.AddMinutes(-(start.Minute % 15));
@@ -1078,8 +1266,9 @@
                         {
                             for (int month = 0; month < 12; ++month)
                             {
-                                result.Add(new Tuple<TimeInterval, string>(
-                                    TimeInterval.OneMonth, DateTimeUtil.OneMonth(start.AddMonths(month))));
+                                var tmp = start.AddMonths(month);
+                                result.Add(new Tuple<TimeInterval, string, DateTime>(
+                                    TimeInterval.OneMonth, DateTimeUtil.OneMonth(tmp), tmp));
                             }
 
                             start = start.AddYears(1);
@@ -1102,7 +1291,10 @@
                         while (start <= roundEnd)
                         {
                             result.AddRange(DateTimeUtil.MonthsInQuarter(start)
-                                .Select(x => new Tuple<TimeInterval, string>(TimeInterval.OneMonth, x)));
+                                .Select(x => new Tuple<TimeInterval, string, DateTime>(
+                                    TimeInterval.OneMonth,
+                                    x,
+                                    DateTime.ParseExact(x, "yyyyMM", CultureInfo.InvariantCulture))));
                             start = start.AddMonths(3);
                         }
 
@@ -1112,8 +1304,8 @@
                     {
                         while (start <= roundEnd)
                         {
-                            result.Add(new Tuple<TimeInterval, string>(
-                                TimeInterval.OneMonth, DateTimeUtil.OneMonth(start)));
+                            result.Add(new Tuple<TimeInterval, string, DateTime>(
+                                TimeInterval.OneMonth, DateTimeUtil.OneMonth(start), start));
                             start = start.AddMonths(1);
                         }
 
@@ -1124,8 +1316,8 @@
                         // exactly one entire month
                         if (start == new DateTime(start.Year, start.Month, 1) && start.AddMonths(1) == roundEnd)
                         {
-                            result.Add(new Tuple<TimeInterval, string>(
-                                TimeInterval.OneMonth, DateTimeUtil.OneMonth(start)));
+                            result.Add(new Tuple<TimeInterval, string, DateTime>(
+                                TimeInterval.OneMonth, DateTimeUtil.OneMonth(start), start));
                             start = start.AddMonths(1);
 
                             if (start == end)
@@ -1145,8 +1337,8 @@
                     {
                         while (start <= roundEnd)
                         {
-                            result.Add(new Tuple<TimeInterval, string>(
-                                TimeInterval.Week, DateTimeUtil.WeekNumber(start)));
+                            result.Add(new Tuple<TimeInterval, string, DateTime>(
+                                TimeInterval.Week, DateTimeUtil.WeekNumber(start), start));
                             start = start.AddDays(7);
                         }
 
@@ -1158,8 +1350,8 @@
                         if (start == new DateTime(start.Year, start.Month, start.Day)
                             && start.AddDays(1) == roundEnd)
                         {
-                            result.Add(new Tuple<TimeInterval, string>(
-                                TimeInterval.OneDay, DateTimeUtil.OneDay(start)));
+                            result.Add(new Tuple<TimeInterval, string, DateTime>(
+                                TimeInterval.OneDay, DateTimeUtil.OneDay(start), start));
                             start = start.AddDays(1);
 
                             if (start == end)
@@ -1177,7 +1369,8 @@
                     }
                     else if (timeInterval == TimeInterval.OneDay)
                     {
-                        result.Add(new Tuple<TimeInterval, string>(TimeInterval.OneDay, DateTimeUtil.OneDay(start)));
+                        result.Add(new Tuple<TimeInterval, string, DateTime>(
+                            TimeInterval.OneDay, DateTimeUtil.OneDay(start), start));
                         break;
                     }
                     else if (difference.TotalHours >= 1)
@@ -1186,8 +1379,8 @@
                         if (start == new DateTime(start.Year, start.Month, start.Day, start.Hour, 0, 0)
                             && start.AddHours(1) == roundEnd)
                         {
-                            result.Add(new Tuple<TimeInterval, string>(
-                                TimeInterval.OneHour, DateTimeUtil.OneHour(start)));
+                            result.Add(new Tuple<TimeInterval, string, DateTime>(
+                                TimeInterval.OneHour, DateTimeUtil.OneHour(start), start));
                             start = start.AddHours(1);
 
                             if (start == end)
@@ -1205,24 +1398,27 @@
                     }
                     else if (timeInterval == TimeInterval.OneHour)
                     {
-                        result.Add(new Tuple<TimeInterval, string>(TimeInterval.OneHour, DateTimeUtil.OneHour(start)));
+                        result.Add(new Tuple<TimeInterval, string, DateTime>(
+                            TimeInterval.OneHour, DateTimeUtil.OneHour(start), start));
                         break;
                     }
                     else if (difference.TotalMinutes >= 15)
                     {
+                        // one full hour
                         if (start == new DateTime(start.Year, start.Month, start.Day, start.Hour, 0, 0) && difference.TotalMinutes >= 45)
                         {
-                            result.Add(new Tuple<TimeInterval, string>(
-                                TimeInterval.OneHour, DateTimeUtil.OneHour(start)));
+                            result.Add(new Tuple<TimeInterval, string, DateTime>(
+                                TimeInterval.OneHour, DateTimeUtil.OneHour(start), start));
                         }
                         else
                         {
                             do
                             {
                                 result.Add(
-                                    new Tuple<TimeInterval, string>(
+                                    new Tuple<TimeInterval, string, DateTime>(
                                         TimeInterval.FifteenMinutes,
-                                        DateTimeUtil.FifteenMinutes(start)));
+                                        DateTimeUtil.FifteenMinutes(start),
+                                        start));
                                 start = start.AddMinutes(15);
                             }
                             while (start < end);
@@ -1236,8 +1432,8 @@
                     }
                     else if (difference.TotalMinutes < 15)
                     {
-                        result.Add(new Tuple<TimeInterval, string>(
-                            TimeInterval.FifteenMinutes, DateTimeUtil.FifteenMinutes(start)));
+                        result.Add(new Tuple<TimeInterval, string, DateTime>(
+                            TimeInterval.FifteenMinutes, DateTimeUtil.FifteenMinutes(start), start));
                         break;
                     }
                     else
