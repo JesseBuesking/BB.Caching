@@ -64,6 +64,205 @@
         }
 
         [Fact]
+        public void GetCountsFifteen()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 2, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now.AddMinutes(16));
+
+            var counts = BitwiseAnalytics.GetCounts(
+                "video",
+                "watch",
+                this._now,
+                this._now.AddHours(1).AddMinutes(1),
+                TimeInterval.FifteenMinutes);
+
+            Assert.Equal(5, counts.Count);
+            Assert.Equal(3, counts.Select(x => x.Item2).Sum());
+
+            var first = counts.ElementAt(0);
+            var second = counts.ElementAt(1);
+            var third = counts.ElementAt(2);
+            var fourth = counts.ElementAt(3);
+            var fifth = counts.ElementAt(4);
+
+            Assert.Equal(this._now.AddMinutes(-(this._now.Minute % 15)), first.Item1);
+            Assert.Equal(2, first.Item2);
+
+            Assert.Equal(this._now.AddMinutes(-(this._now.Minute % 15)).AddMinutes(15), second.Item1);
+            Assert.Equal(1, second.Item2);
+
+            Assert.Equal(this._now.AddMinutes(-(this._now.Minute % 15)).AddMinutes(30), third.Item1);
+            Assert.Equal(0, third.Item2);
+
+            Assert.Equal(this._now.AddMinutes(-(this._now.Minute % 15)).AddMinutes(45), fourth.Item1);
+            Assert.Equal(0, fourth.Item2);
+
+            Assert.Equal(this._now.AddMinutes(-(this._now.Minute % 15)).AddMinutes(60), fifth.Item1);
+            Assert.Equal(0, fifth.Item2);
+        }
+
+        [Fact]
+        public void GetCountsHour()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now.AddMinutes(61));
+
+            var counts = BitwiseAnalytics.GetCounts(
+                "video",
+                "watch",
+                this._now,
+                this._now.AddHours(1).AddMinutes(15),
+                TimeInterval.OneHour);
+
+            Assert.Equal(2, counts.Count);
+            Assert.Equal(2, counts.Select(x => x.Item2).Sum());
+
+            var first = counts.ElementAt(0);
+            var second = counts.ElementAt(1);
+
+            Assert.Equal(this._now.AddMinutes(-this._now.Minute), first.Item1);
+            Assert.Equal(1, first.Item2);
+
+            Assert.Equal(this._now.AddMinutes(+(60 - this._now.Minute)), second.Item1);
+            Assert.Equal(1, second.Item2);
+        }
+
+        [Fact]
+        public void GetCountsDay()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now.AddHours(25));
+
+            var counts = BitwiseAnalytics.GetCounts(
+                "video",
+                "watch",
+                this._now,
+                this._now.AddDays(1).AddMinutes(1),
+                TimeInterval.OneDay);
+
+            Assert.Equal(2, counts.Count);
+            Assert.Equal(2, counts.Select(x => x.Item2).Sum());
+
+            var first = counts.ElementAt(0);
+            var second = counts.ElementAt(1);
+
+            Assert.Equal(this._now.AddHours(-this._now.Hour), first.Item1);
+            Assert.Equal(1, first.Item2);
+
+            Assert.Equal(this._now.AddHours(-this._now.Hour).AddDays(1), second.Item1);
+            Assert.Equal(1, second.Item2);
+        }
+
+        [Fact]
+        public void GetCountsWeek()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now.AddDays(7));
+
+            var counts = BitwiseAnalytics.GetCounts(
+                "video",
+                "watch",
+                this._now,
+                this._now.AddDays(8),
+                TimeInterval.Week);
+
+            Assert.Equal(2, counts.Count);
+            Assert.Equal(2, counts.Select(x => x.Item2).Sum());
+
+            var first = counts.ElementAt(0);
+            var second = counts.ElementAt(1);
+
+            Assert.Equal(new DateTime(1999, 12, 26), first.Item1);
+            Assert.Equal(1, first.Item2);
+
+            Assert.Equal(new DateTime(2000, 1, 2), second.Item1);
+            Assert.Equal(1, second.Item2);
+        }
+
+        [Fact]
+        public void GetCountsWeekMondayFirst()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now.AddDays(7));
+
+            var counts = BitwiseAnalytics.GetCounts(
+                "video",
+                "watch",
+                this._now,
+                this._now.AddDays(8),
+                TimeInterval.Week,
+                DayOfWeek.Monday);
+
+            Assert.Equal(2, counts.Count);
+            Assert.Equal(2, counts.Select(x => x.Item2).Sum());
+
+            var first = counts.ElementAt(0);
+            var second = counts.ElementAt(1);
+
+            Assert.Equal(new DateTime(1999, 12, 27), first.Item1);
+            Assert.Equal(1, first.Item2);
+
+            Assert.Equal(new DateTime(2000, 1, 3), second.Item1);
+            Assert.Equal(1, second.Item2);
+        }
+
+        [Fact]
+        public void GetCountsMonth()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now.AddMonths(1));
+
+            var counts = BitwiseAnalytics.GetCounts(
+                "video",
+                "watch",
+                this._now,
+                this._now.AddMonths(2),
+                TimeInterval.OneMonth);
+
+            Assert.Equal(2, counts.Count);
+            Assert.Equal(2, counts.Select(x => x.Item2).Sum());
+
+            var first = counts.ElementAt(0);
+            var second = counts.ElementAt(1);
+
+            Assert.Equal(this._now.AddDays(1 - this._now.Day), first.Item1);
+            Assert.Equal(1, first.Item2);
+
+            Assert.Equal(this._now.AddDays(1 - this._now.Day).AddMonths(1), second.Item1);
+            Assert.Equal(1, second.Item2);
+        }
+
+        [Fact]
+        public void GetCountsQuarter()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now.AddMonths(3));
+            BitwiseAnalytics.TrackEvent("video", "watch", 2, TimePrecision.FifteenMinutes, this._now.AddMonths(3).AddMinutes(1));
+
+            var counts = BitwiseAnalytics.GetCounts(
+                "video",
+                "watch",
+                this._now,
+                this._now.AddMonths(4),
+                TimeInterval.Quarter);
+
+            Assert.Equal(2, counts.Count);
+            Assert.Equal(3, counts.Select(x => x.Item2).Sum());
+
+            var first = counts.ElementAt(0);
+            var second = counts.ElementAt(1);
+
+            int nowQuarter = ((this._now.Month + 2) / 3) - 1;
+
+            Assert.Equal(new DateTime(this._now.Year, (nowQuarter * 3) + 1, 1), first.Item1);
+            Assert.Equal(1, first.Item2);
+
+            Assert.Equal(new DateTime(this._now.Year, (nowQuarter * 3) + 1, 1).AddMonths(3), second.Item1);
+            Assert.Equal(2, second.Item2);
+        }
+
+        [Fact]
         public void AndCohort()
         {
             BitwiseAnalytics.TrackEvent("video", "watch", 1);

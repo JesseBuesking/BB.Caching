@@ -5,7 +5,6 @@
     using System.Globalization;
     using System.Linq;
     using System.Runtime.CompilerServices;
-    using System.Security.Cryptography;
     using System.Threading.Tasks;
 
     using StackExchange.Redis;
@@ -134,7 +133,7 @@
 
             return Count(
                 SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db),
-                Ops.Or(new[] { new Event(category, action, start, end, TimeInterval.FifteenMinutes) })) > 0;
+                Ops.Or(new Event(category, action, start, end, TimeInterval.FifteenMinutes))) > 0;
         }
 
         /// <summary>
@@ -498,15 +497,15 @@
         /// <param name="action">
         /// The type of interaction (e.g. click)
         /// </param>
-        /// <param name="from">
+        /// <param name="start">
         /// The starting DateTime, inclusive.
         /// </param>
-        /// <param name="to">
+        /// <param name="end">
         /// The ending DateTime, exclusive.
         /// </param>
         /// <param name="timeInterval">
         /// The accuracy at which we want the data. For example, setting this to TimeInterval.OneDay means there won't
-        /// be any keys at the fifteen minute or one hour levels, so if the <paramref name="from"/> DateTime is for the
+        /// be any keys at the fifteen minute or one hour levels, so if the <paramref name="start"/> DateTime is for the
         /// middle of a day, it'll include the entire day.
         /// </param>
         /// <returns>
@@ -516,11 +515,11 @@
             IDatabase database,
             string category,
             string action,
-            DateTime from,
-            DateTime to,
+            DateTime start,
+            DateTime end,
             TimeInterval timeInterval = TimeInterval.FifteenMinutes)
         {
-            Tuple<TimeInterval, string, DateTime>[] requiredKeys = DateTimeUtil.MinKeysForRange(from, to, timeInterval);
+            Tuple<TimeInterval, string, DateTime>[] requiredKeys = DateTimeUtil.MinKeysForRange(start, end, timeInterval);
             RedisKey[] keys = new RedisKey[requiredKeys.Length];
             int keyIndex = 0;
 
@@ -570,6 +569,122 @@
 
             return keys;
         }
+
+        /// <summary>
+        /// Gets counts by TimeInterval for the date range supplied.
+        /// </summary>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="start">
+        /// The starting DateTime, inclusive.
+        /// </param>
+        /// <param name="end">
+        /// The end.
+        /// </param>
+        /// <param name="timeInterval">
+        /// The time interval.
+        /// </param>
+        /// <param name="firstDayOfWeek">
+        /// The first day of week (only applies when doing TimeInterval.Week groupings).
+        /// </param>
+        /// <returns>
+        /// A list of DateTime:long pairs where the DateTime is the minimum value for the bucket and long is the count.
+        /// </returns>
+        /// <exception cref="Exception">
+        /// This should never occur (unhandled TimeInterval).
+        /// </exception>
+        public static List<Tuple<DateTime, long>> GetCounts(
+            string category,
+            string action,
+            DateTime start,
+            DateTime end,
+            TimeInterval timeInterval = TimeInterval.FifteenMinutes,
+            DayOfWeek firstDayOfWeek = DayOfWeek.Sunday)
+        {
+            var results = new List<Tuple<DateTime, long>>();
+            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
+
+            do
+            {
+                switch (timeInterval)
+                {
+                    case TimeInterval.FifteenMinutes:
+                        {
+                            start = start.AddMinutes(-(start.Minute % 15));
+                            results.Add(new Tuple<DateTime, long>(
+                                start, Count(database, GetFifteenMinutes(category, action, start))));
+                            start = start.AddMinutes(15);
+                            break;
+                        }
+
+                    case TimeInterval.OneHour:
+                        {
+                            start = start.AddMinutes(-start.Minute);
+                            results.Add(new Tuple<DateTime, long>(
+                                start, Count(database, GetHour(database, category, action, start))));
+                            start = start.AddHours(1);
+                            break;
+                        }
+
+                    case TimeInterval.OneDay:
+                        {
+                            start = start.AddHours(-start.Hour);
+                            results.Add(new Tuple<DateTime, long>(
+                                start, Count(database, GetDay(database, category, action, start))));
+                            start = start.AddDays(1);
+                            break;
+                        }
+
+                    case TimeInterval.Week:
+                        {
+                            int startDiff = start.DayOfWeek - firstDayOfWeek;
+                            if (startDiff < 0)
+                            {
+                                startDiff += 7;
+                            }
+
+                            start = start.AddDays(-startDiff);
+
+                            results.Add(new Tuple<DateTime, long>(
+                                start, Count(database, GetWeek(database, category, action, start))));
+                            start = start.AddDays(7);
+                            break;
+                        }
+
+                    case TimeInterval.OneMonth:
+                        {
+                            start = start.AddDays(1 - start.Day);
+                            results.Add(new Tuple<DateTime, long>(
+                                start, Count(database, GetMonth(database, category, action, start))));
+                            start = start.AddMonths(1);
+                            break;
+                        }
+
+                    case TimeInterval.Quarter:
+                        {
+                            int startQuarter = ((start.Month + 2) / 3) - 1;
+                            start = new DateTime(start.Year, (startQuarter * 3) + 1, 1);
+
+                            results.Add(new Tuple<DateTime, long>(
+                                start, Count(database, GetQuarter(database, category, action, start))));
+                            start = start.AddMonths(3);
+                            break;
+                        }
+
+                    default:
+                        {
+                            throw new Exception(string.Format("unexpected time interval {0}", timeInterval));
+                        }
+                }
+            }
+            while (start < end);
+
+            return results;
+        } 
         
         /// <summary>
         /// The delete.
