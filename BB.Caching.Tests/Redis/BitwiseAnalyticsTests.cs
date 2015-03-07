@@ -37,6 +37,33 @@
         }
 
         [Fact]
+        public void HasEventEvents()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes);
+
+            bool actual = BitwiseAnalytics.HasEvent("video", "watch", 1);
+
+            Assert.True(actual);
+        }
+
+        [Fact]
+        public void HasEventAcrossTime()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now.AddDays(2));
+
+            bool actual = BitwiseAnalytics.HasEvent(
+                "video", "watch", 1, this._now, this._now.AddDays(2).AddMinutes(1));
+
+            Assert.True(actual);
+
+            actual = BitwiseAnalytics.HasEvent(
+                "video", "watch", 1, this._now.AddMonths(1), this._now.AddMonths(2));
+
+            Assert.False(actual);
+        }
+
+        [Fact]
         public void AndCohort()
         {
             BitwiseAnalytics.TrackEvent("video", "watch", 1);

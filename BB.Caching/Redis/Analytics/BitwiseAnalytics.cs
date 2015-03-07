@@ -95,6 +95,49 @@
         }
 
         /// <summary>
+        /// Determines if an event occured.
+        /// </summary>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="eventId">
+        /// The id of the thing being interacted with.
+        /// </param>
+        /// <param name="start">
+        /// The start of the period we're interested in, defaulting to now.
+        /// </param>
+        /// <param name="end">
+        /// The end of the period we're interested in, defaulting to now.
+        /// </param>
+        /// <returns>
+        /// The count of events that occurred.
+        /// </returns>
+        public static bool HasEvent(
+            string category,
+            string action,
+            long eventId,
+            DateTime start = default(DateTime),
+            DateTime end = default(DateTime))
+        {
+            if (start == default(DateTime))
+            {
+                start = DateTime.UtcNow;
+            }
+
+            if (end == default(DateTime) || start == end)
+            {
+                end = start.AddMinutes(1);
+            }
+
+            return Count(
+                SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db),
+                Ops.Or(new[] { new Event(category, action, start, end, TimeInterval.FifteenMinutes) })) > 0;
+        }
+
+        /// <summary>
         /// Gets the count of active bits at the key supplied.
         /// </summary>
         /// <param name="key">
