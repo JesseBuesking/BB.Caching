@@ -336,7 +336,7 @@
         /// <param name="dateTime">
         /// The DateTime.
         /// </param>
-        /// <param name="weekFirstDay">
+        /// <param name="firstDayOfWeek">
         /// The first day to start each week. Defaults to Sunday which is used in the US, CA, and JP. You can
         /// change it to Monday to get weekly aggregates which are accurate for other countries, but it'll double
         /// the weekly data stored.
@@ -349,10 +349,10 @@
             string category,
             string action,
             DateTime dateTime,
-            DayOfWeek weekFirstDay = DayOfWeek.Sunday)
+            DayOfWeek firstDayOfWeek = DayOfWeek.Sunday)
         {
             // get the key
-            string week = BitwiseAnalytics.DateTimeUtil.WeekNumber(dateTime, weekFirstDay);
+            string week = BitwiseAnalytics.DateTimeUtil.WeekNumber(dateTime, firstDayOfWeek);
             RedisKey key = EventKey(category, action, week);
 
             // return it if there's already data for this day
@@ -363,7 +363,7 @@
             }
 
             // no data for the week, so we need to create it from the days
-            string[] daysInWeek = BitwiseAnalytics.DateTimeUtil.DaysInWeek(dateTime, weekFirstDay);
+            string[] daysInWeek = BitwiseAnalytics.DateTimeUtil.DaysInWeek(dateTime, firstDayOfWeek);
 
             // make sure each day exists
             foreach (string day in daysInWeek)
@@ -1402,7 +1402,7 @@
             /// <param name="dateTime">
             /// The DateTime.
             /// </param>
-            /// <param name="weekFirstDay">
+            /// <param name="firstDayOfWeek">
             /// The first day to start each week. Defaults to Sunday which is used in the US, CA, and JP. You can
             /// change it to Monday to get weekly aggregates which are accurate for other countries, but it'll double
             /// the weekly data stored.
@@ -1411,27 +1411,27 @@
             /// The formatted <see cref="string"/>.
             /// </returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static string WeekNumber(DateTime dateTime, DayOfWeek weekFirstDay = DayOfWeek.Sunday)
+            public static string WeekNumber(DateTime dateTime, DayOfWeek firstDayOfWeek = DayOfWeek.Sunday)
             {
                 string weekFormat;
-                if (weekFirstDay == DayOfWeek.Sunday)
+                if (firstDayOfWeek == DayOfWeek.Sunday)
                 {
                     weekFormat = "0";
                 }
-                else if (weekFirstDay == DayOfWeek.Monday)
+                else if (firstDayOfWeek == DayOfWeek.Monday)
                 {
                     weekFormat = "1";
                 }
                 else
                 {
-                    throw new Exception(string.Format("invalid weekday supplied {0}", weekFirstDay));
+                    throw new Exception(string.Format("invalid weekday supplied {0}", firstDayOfWeek));
                 }
 
                 // ReSharper disable once PossibleNullReferenceException
                 int weekNumber = DateTimeFormatInfo.CurrentInfo.Calendar.GetWeekOfYear(
                     dateTime,
                     CalendarWeekRule.FirstDay,
-                    weekFirstDay);
+                    firstDayOfWeek);
 
                 string formatted = string.Format("{0:yyyy}W{1}{2}", dateTime, weekFormat, weekNumber.ToString("D2"));
                 return formatted;
@@ -1443,7 +1443,7 @@
             /// <param name="dateTime">
             /// The DateTime.
             /// </param>
-            /// <param name="weekFirstDay">
+            /// <param name="firstDayOfWeek">
             /// The first day to start each week. Defaults to Sunday which is used in the US, CA, and JP. You can
             /// change it to Monday to get weekly aggregates which are accurate for other countries, but it'll double
             /// the weekly data stored.
@@ -1452,9 +1452,9 @@
             /// A <see><cref>string[]</cref></see> containing all the days in the week.
             /// </returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static string[] DaysInWeek(DateTime dateTime, DayOfWeek weekFirstDay = DayOfWeek.Sunday)
+            public static string[] DaysInWeek(DateTime dateTime, DayOfWeek firstDayOfWeek = DayOfWeek.Sunday)
             {
-                int difference = dateTime.DayOfWeek - weekFirstDay;
+                int difference = dateTime.DayOfWeek - firstDayOfWeek;
                 if (difference < 0)
                 {
                     difference += 7;
@@ -1527,6 +1527,11 @@
             /// <param name="timeInterval">
             /// The time interval.
             /// </param>
+            /// <param name="firstDayOfWeek">
+            /// The first day to start each week. Defaults to Sunday which is used in the US, CA, and JP. You can
+            /// change it to Monday to get weekly aggregates which are accurate for other countries, but it'll double
+            /// the weekly data stored.
+            /// </param>
             /// <returns>
             /// The minimum subset of keys required.
             /// </returns>
@@ -1534,7 +1539,10 @@
             /// This exception should never be triggered unless a new TimeInterval is supported.
             /// </exception>
             public static Tuple<TimeInterval, string, DateTime>[] MinKeysForRange(
-                DateTime start, DateTime end, TimeInterval timeInterval = TimeInterval.FifteenMinutes)
+                DateTime start,
+                DateTime end,
+                TimeInterval timeInterval = TimeInterval.FifteenMinutes,
+                DayOfWeek firstDayOfWeek = DayOfWeek.Sunday)
             {
                 if (start > end)
                 {
@@ -1632,7 +1640,7 @@
                         while (start <= roundEnd)
                         {
                             result.Add(new Tuple<TimeInterval, string, DateTime>(
-                                TimeInterval.Week, DateTimeUtil.WeekNumber(start), start));
+                                TimeInterval.Week, DateTimeUtil.WeekNumber(start, firstDayOfWeek), start));
                             start = start.AddDays(7);
                         }
 
