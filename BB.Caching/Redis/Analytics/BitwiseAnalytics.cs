@@ -142,12 +142,17 @@
         /// <param name="key">
         /// The key.
         /// </param>
+        /// <param name="eventId">
+        /// You can optionally supply the id of the thing being interacted with, which will result in a count of either
+        /// 0 or 1.
+        /// </param>
         /// <returns>
         /// A long representing the count of bits that are set.
         /// </returns>
-        public static long Count(RedisKey key)
+        public static long Count(RedisKey key, long eventId = -1)
         {
-            return Count(SharedCache.Instance.GetAnalyticsReadConnection().GetDatabase(SharedCache.Instance.Db), key);
+            return Count(
+                SharedCache.Instance.GetAnalyticsReadConnection().GetDatabase(SharedCache.Instance.Db), key, eventId);
         }
 
         /// <summary>
@@ -161,12 +166,23 @@
         /// <param name="key">
         /// The key.
         /// </param>
+        /// <param name="eventId">
+        /// You can optionally supply the id of the thing being interacted with, which will result in a count of either
+        /// 0 or 1.
+        /// </param>
         /// <returns>
         /// A long representing the count of bits that are set.
         /// </returns>
-        public static long Count(IDatabase database, RedisKey key)
+        public static long Count(IDatabase database, RedisKey key, long eventId = -1)
         {
-            return database.StringBitCount(key, 0, -1);
+            if (eventId < 0)
+            {
+                return database.StringBitCount(key, 0, -1);
+            }
+            else
+            {
+                return database.StringGetBit(key, eventId) ? 1 : 0;
+            }
         }
 
         /// <summary>
@@ -585,6 +601,10 @@
         /// <param name="end">
         /// The end.
         /// </param>
+        /// <param name="eventId">
+        /// You can optionally supply the id of the thing being interacted with, which will result in a count of just
+        /// that event.
+        /// </param>
         /// <param name="timeInterval">
         /// The time interval.
         /// </param>
@@ -602,6 +622,7 @@
             string action,
             DateTime start,
             DateTime end,
+            long eventId = -1,
             TimeInterval timeInterval = TimeInterval.FifteenMinutes,
             DayOfWeek firstDayOfWeek = DayOfWeek.Sunday)
         {
@@ -616,7 +637,7 @@
                         {
                             start = start.AddMinutes(-(start.Minute % 15));
                             results.Add(new Tuple<DateTime, long>(
-                                start, Count(database, GetFifteenMinutes(category, action, start))));
+                                start, Count(database, GetFifteenMinutes(category, action, start), eventId)));
                             start = start.AddMinutes(15);
                             break;
                         }
@@ -625,7 +646,7 @@
                         {
                             start = start.AddMinutes(-start.Minute);
                             results.Add(new Tuple<DateTime, long>(
-                                start, Count(database, GetHour(database, category, action, start))));
+                                start, Count(database, GetHour(database, category, action, start), eventId)));
                             start = start.AddHours(1);
                             break;
                         }
@@ -634,7 +655,7 @@
                         {
                             start = start.AddHours(-start.Hour);
                             results.Add(new Tuple<DateTime, long>(
-                                start, Count(database, GetDay(database, category, action, start))));
+                                start, Count(database, GetDay(database, category, action, start), eventId)));
                             start = start.AddDays(1);
                             break;
                         }
@@ -650,7 +671,7 @@
                             start = start.AddDays(-startDiff);
 
                             results.Add(new Tuple<DateTime, long>(
-                                start, Count(database, GetWeek(database, category, action, start))));
+                                start, Count(database, GetWeek(database, category, action, start), eventId)));
                             start = start.AddDays(7);
                             break;
                         }
@@ -659,7 +680,7 @@
                         {
                             start = start.AddDays(1 - start.Day);
                             results.Add(new Tuple<DateTime, long>(
-                                start, Count(database, GetMonth(database, category, action, start))));
+                                start, Count(database, GetMonth(database, category, action, start), eventId)));
                             start = start.AddMonths(1);
                             break;
                         }
@@ -670,7 +691,7 @@
                             start = new DateTime(start.Year, (startQuarter * 3) + 1, 1);
 
                             results.Add(new Tuple<DateTime, long>(
-                                start, Count(database, GetQuarter(database, category, action, start))));
+                                start, Count(database, GetQuarter(database, category, action, start), eventId)));
                             start = start.AddMonths(3);
                             break;
                         }
