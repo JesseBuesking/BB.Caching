@@ -37,6 +37,33 @@
         }
 
         [Fact]
+        public void EnumerableWorks()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 2, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 3, TimePrecision.FifteenMinutes, this._now.AddMinutes(15));
+            BitwiseAnalytics.TrackEvent("video", "watch", 12, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 77, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 3, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 12, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 77, TimePrecision.FifteenMinutes, this._now);
+
+            var key = Ops.And(
+                new Event("video", "watch", this._now, this._now.AddMinutes(16), TimeInterval.FifteenMinutes),
+                new Event("anything", "purchase", this._now, this._now.AddMinutes(1), TimeInterval.FifteenMinutes));
+
+            var ids = new RedisKeyBitEnumerable(key).ToList();
+
+            Assert.Equal(4, ids.Count);
+
+            Assert.Equal(1, ids.ElementAt(0));
+            Assert.Equal(3, ids.ElementAt(1));
+            Assert.Equal(12, ids.ElementAt(2));
+            Assert.Equal(77, ids.ElementAt(3));
+        }
+
+        [Fact]
         public void HasEventEvents()
         {
             BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes);

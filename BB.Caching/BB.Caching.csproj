@@ -79,6 +79,7 @@
     <Compile Include="Redis\Analytics\BitwiseAnalytics.cs" />
     <Compile Include="Redis\Analytics\Event.cs" />
     <Compile Include="Redis\Analytics\Ops.cs" />
+    <Compile Include="Redis\Analytics\RedisKeyBitEnumerator.cs" />
     <Compile Include="Redis\Analytics\TimeInterval.cs" />
     <Compile Include="Redis\Analytics\TimePrecision.cs" />
     <Compile Include="Redis\BloomFilter.cs" />
