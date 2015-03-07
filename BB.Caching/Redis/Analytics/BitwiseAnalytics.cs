@@ -865,6 +865,74 @@
         }
 
         /// <summary>
+        /// Perform a bitwise XOR operation between multiple keys (containing string values) and store the result in the
+        /// destination key.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="destination">
+        /// The destination key where the result should be stored.
+        /// </param>
+        /// <param name="keys">
+        /// The keys where the data to be XOR'd are located.
+        /// </param>
+        /// <param name="expires">
+        /// An expiration lifetime.
+        /// </param>
+        /// <returns>
+        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        /// </returns>
+        /// <remarks>
+        /// http://redis.io/commands/bitop
+        /// </remarks>
+        public static long BitwiseXOr(IDatabase database, RedisKey destination, RedisKey[] keys, TimeSpan expires)
+        {
+            long result = database
+                .StringBitOperation(Bitwise.Xor, destination, keys);
+
+            database.KeyExpire(destination, expires);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Perform a bitwise XOR operation between multiple keys (containing string values) and store the result in the
+        /// destination key.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="destination">
+        /// The destination key where the result should be stored.
+        /// </param>
+        /// <param name="keys">
+        /// The keys where the data to be XOR'd are located.
+        /// </param>
+        /// <param name="expires">
+        /// An expiration lifetime.
+        /// </param>
+        /// <returns>
+        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        /// </returns>
+        /// <remarks>
+        /// http://redis.io/commands/bitop
+        /// </remarks>
+        public static Task<long> BitwiseXOrAsync(IDatabase database, RedisKey destination, RedisKey[] keys, TimeSpan expires)
+        {
+            Task<long> result = database
+                .StringBitOperationAsync(Bitwise.Xor, destination, keys);
+
+            database.KeyExpireAsync(destination, expires);
+
+            return result;
+        }
+
+        /// <summary>
         /// Perform a bitwise NOT operation on a key (containing a string value) and store the result in the destination
         /// key.
         /// </summary>
@@ -918,6 +986,74 @@
         {
             Task<long> result = database
                 .StringBitOperationAsync(Bitwise.Not, destination, key);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Perform a bitwise NOT operation on a key (containing a string value) and store the result in the destination
+        /// key.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="destination">
+        /// The destination key where the result should be stored.
+        /// </param>
+        /// <param name="key">
+        /// The key where the data to be NOT'd is located.
+        /// </param>
+        /// <param name="expires">
+        /// An expiration lifetime.
+        /// </param>
+        /// <returns>
+        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        /// </returns>
+        /// <remarks>
+        /// http://redis.io/commands/bitop
+        /// </remarks>
+        public static long BitwiseNot(IDatabase database, RedisKey destination, RedisKey key, TimeSpan expires)
+        {
+            long result = database
+                .StringBitOperation(Bitwise.Not, destination, key);
+
+            database.KeyExpire(destination, expires);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Perform a bitwise NOT operation on a key (containing a string value) and store the result in the destination
+        /// key.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="destination">
+        /// The destination key where the result should be stored.
+        /// </param>
+        /// <param name="key">
+        /// The key where the data to be NOT'd is located.
+        /// </param>
+        /// <param name="expires">
+        /// An expiration lifetime.
+        /// </param>
+        /// <returns>
+        /// The size of the string stored in the destination key, that is equal to the size of the longest input string.
+        /// </returns>
+        /// <remarks>
+        /// http://redis.io/commands/bitop
+        /// </remarks>
+        public static Task<long> BitwiseNotAsync(IDatabase database, RedisKey destination, RedisKey key, TimeSpan expires)
+        {
+            Task<long> result = database
+                .StringBitOperationAsync(Bitwise.Not, destination, key);
+
+            database.KeyExpireAsync(destination, expires);
 
             return result;
         }

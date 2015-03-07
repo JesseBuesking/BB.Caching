@@ -102,6 +102,51 @@
         }
 
         [Fact]
+        public void AndCohortAcrossDays()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 2, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 3, TimePrecision.FifteenMinutes, this._now.AddDays(1).AddHours(1));
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 3, TimePrecision.FifteenMinutes, this._now);
+
+            long actual = BitwiseAnalytics.Count(
+                Ops.And(
+                    new Event("video", "watch", this._now, this._now.AddMinutes(1), TimeInterval.OneHour),
+                    new Event("anything", "purchase", this._now, this._now.AddMinutes(1), TimeInterval.OneHour)));
+
+            Assert.Equal(1, actual);
+
+            actual = BitwiseAnalytics.Count(
+                Ops.And(
+                    new Event("video", "watch", this._now, this._now.AddDays(1).AddMinutes(1), TimeInterval.OneHour),
+                    new Event("anything", "purchase", this._now, this._now.AddMinutes(1), TimeInterval.OneHour)));
+
+            Assert.Equal(1, actual);
+
+            actual = BitwiseAnalytics.Count(
+                Ops.And(
+                    new Event("video", "watch", this._now, this._now.AddDays(1).AddHours(1), TimeInterval.OneHour),
+                    new Event("anything", "purchase", this._now, this._now.AddMinutes(1), TimeInterval.OneHour)));
+
+            Assert.Equal(1, actual);
+
+            actual = BitwiseAnalytics.Count(
+                Ops.And(
+                    new Event("video", "watch", this._now, this._now.AddDays(1).AddHours(1).AddMinutes(1), TimeInterval.OneHour),
+                    new Event("anything", "purchase", this._now, this._now.AddMinutes(1), TimeInterval.OneHour)));
+
+            Assert.Equal(2, actual);
+
+            actual = BitwiseAnalytics.Count(
+                Ops.And(
+                    new Event("video", "watch", this._now, this._now.AddMonths(1), TimeInterval.OneHour),
+                    new Event("anything", "purchase", this._now, this._now.AddMinutes(1), TimeInterval.OneHour)));
+
+            Assert.Equal(2, actual);
+        }
+
+        [Fact]
         public void OrCohort()
         {
             BitwiseAnalytics.TrackEvent("video", "watch", 1);
@@ -164,6 +209,38 @@
                     new Event("anything", "purchase", this._now, this._now.AddMinutes(1), TimeInterval.OneHour)));
 
             Assert.Equal(4, actual);
+        }
+
+        [Fact]
+        public void XOrCohort()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1);
+            BitwiseAnalytics.TrackEvent("video", "watch", 2);
+            BitwiseAnalytics.TrackEvent("video", "watch", 3);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 1);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 3);
+
+            long actual = BitwiseAnalytics.Count(
+                Ops.XOr(
+                    new Event("video", "watch", DateTime.UtcNow, DateTime.UtcNow, TimeInterval.OneDay),
+                    new Event("anything", "purchase", DateTime.UtcNow, DateTime.UtcNow, TimeInterval.OneDay)));
+
+            // 2 is the only thing not in both
+            Assert.Equal(1, actual);
+        }
+
+        [Fact]
+        public void NotCohort()
+        {
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 1);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 3);
+
+            long actual = BitwiseAnalytics.Count(
+                Ops.Not(
+                    new Event("anything", "purchase", DateTime.UtcNow, DateTime.UtcNow, TimeInterval.OneDay)));
+
+            // six since a full byte is allocated, and only 2 are being set
+            Assert.Equal(6, actual);
         }
 
         [Fact]

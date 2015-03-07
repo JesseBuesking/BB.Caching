@@ -54,6 +54,48 @@
         }
 
         /// <summary>
+        /// Combines events by finding their logical exclusive OR.
+        /// </summary>
+        /// <param name="events">
+        /// The events to combine.
+        /// </param>
+        /// <returns>
+        /// A <see cref="RedisKey"/> where the results have been stored.
+        /// </returns>
+        public static RedisKey XOr(params Event[] events)
+        {
+            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
+
+            // get the keys for the events (need to group subsets using TemporarilyOrKeys)
+            var keys = events.Select(@event => TemporarilyOrKeys(database, @event.RedisKeys)).ToList();
+
+            RedisKey tmpKey = TempKey(events);
+            BitwiseAnalytics.BitwiseXOr(database, tmpKey, keys.ToArray(), TimeSpan.FromHours(1));
+            return tmpKey;
+        }
+
+        /// <summary>
+        /// Gets the logical negation of an event.
+        /// </summary>
+        /// <param name="event">
+        /// The event to negate.
+        /// </param>
+        /// <returns>
+        /// A <see cref="RedisKey"/> where the results have been stored.
+        /// </returns>
+        public static RedisKey Not(Event @event)
+        {
+            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
+
+            // get the keys for the event (need to group subsets using TemporarilyOrKeys)
+            var key = TemporarilyOrKeys(database, @event.RedisKeys);
+
+            RedisKey tmpKey = TempKey(@event);
+            BitwiseAnalytics.BitwiseNot(database, tmpKey, key, TimeSpan.FromHours(1));
+            return tmpKey;
+        }
+
+        /// <summary>
         /// Logically ORs the keys supplied and returns the location of the value if more than one key is supplied,
         /// otherwise it immediately returns the key.
         /// </summary>
