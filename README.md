@@ -10,6 +10,7 @@ What can it be used for?
 1. Smart caching (in-memory and/or distributed)
 2. Rate limiting
 3. Bloom filters
+4. Simple bitwise analytics
 
 Documentation
 -------------
@@ -20,7 +21,7 @@ Get Started
 In your startup process:
 
 1. Define your cache settings either [programmatically or using an app config file](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/Redis/ConnectionGroupTests.cs):
-    - if you're using [a config file](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/readandwrite.config), call ``Cache.LoadFromConfig(...)``
+    - if you're using [a config file](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/readandwrite.config) ([including analytics tracking](https://github.com/JesseBuesking/BB.Caching/blob/master/BB.Caching.Tests/analytics.config)), call ``Cache.LoadFromConfig(...)``
     - if you're defining the setup programmatically, see [this example](https://github.com/JesseBuesking/BB.Caching/blob/2fb3571f7f6882fd0062220dfafbefd1a24686ab/BB.Caching.Tests/Redis/ConnectionGroupTests.cs#L48-L58)
 2. Then prepare the cache by calling ``Cache.Prepare()``.
 3. Start using the cache!
@@ -42,6 +43,21 @@ Cache.Get<string>("my-key", Cache.Store.MemoryAndRedis);
 
 // deletes the key from redis and all other servers
 Cache.BroadcastDelete("my-key");
+
+// track an event with 15 minute precision
+BitwiseAnalytics.TrackEvent("video", "watch", 1L, TimePrecision.FifteenMinutes);
+
+// get a key containing the users who watched a video and purchased anything in
+// the last 30 minutes...
+RedisKey watchVideoAndPurchase = Ops.And(
+    new Event("video", "watch", now.AddMinutes(-30), now, TimeInterval.FifteenMinutes),
+    new Event("anything", "purchase", now.AddMinutes(-30), now, TimeInterval.FifteenMinutes));
+
+// ... now count the users
+long count = BitwiseAnalytics.Count(watchVideoAndPurchase);
+
+// ... now get the ids of the users
+List<long> ids = new RedisKeyBitEnumerable(watchVideoAndPurchase).ToList();
 ```
 
 _Note: each method has an ``Async`` counterpart_
@@ -56,6 +72,7 @@ Features
 5. [Rate limiting](http://en.wikipedia.org/wiki/Rate_limiting) capabilities.
 6. [Bloom filter](http://en.wikipedia.org/wiki/Bloom_filter) support.
 7. Consistent hashing & bloom filter both rely on [Murmur hashing](https://github.com/darrenkopp/murmurhash-net).
+8. [Simple bitwise analytics](http://blog.getspool.com/2011/11/29/fast-easy-realtime-metrics-using-redis-bitmaps/).
 
 Missing
 -------
