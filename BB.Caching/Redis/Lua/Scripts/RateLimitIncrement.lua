@@ -6,7 +6,7 @@ local incrby = tonumber(ARGV[4])
 local throttle = tonumber(ARGV[5])
 
 local current_bucket = math.floor((time_in_ms % span_ms) / bucket_ms)
-local current_count = 0
+local current_count = incrby
 
 local last_bucket = tonumber(redis.call('HGET', key, 'L'))
 local not_same = last_bucket ~= current_bucket
@@ -37,8 +37,8 @@ if nil ~= last_bucket then
     end
 
     -- stop here if the throttle value will be surpassed on this request
-    if throttle < (current_count + incrby) then
-        return throttle - (current_count + incrby)
+    if throttle < current_count then
+        return throttle - current_count
     end
 end
 
@@ -50,4 +50,4 @@ end
 redis.call('HINCRBY', key, current_bucket, incrby)
 redis.call('PEXPIRE', key, span_ms)
 
-return current_count + incrby
+return throttle - current_count

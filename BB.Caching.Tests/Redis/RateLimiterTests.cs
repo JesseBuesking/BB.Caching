@@ -57,7 +57,11 @@
             TimeSpan bucketSize = TimeSpan.FromSeconds(.1);
 
             RedisResult result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
-            Assert.Equal(2, (long)result);
+            Assert.Equal(8, (long)result);
+
+            Thread.Sleep(100);
+            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
+            Assert.Equal(6, (long)result);
 
             Thread.Sleep(100);
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
@@ -65,20 +69,16 @@
 
             Thread.Sleep(100);
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
-            Assert.Equal(6, (long)result);
-
-            Thread.Sleep(100);
-            result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
-            Assert.Equal(8, (long)result);
+            Assert.Equal(2, (long)result);
 
             Thread.Sleep(100);
 // ReSharper disable RedundantArgumentDefaultValue
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
-            Assert.Equal(7, (long)result);
+            Assert.Equal(3, (long)result);
 
             Thread.Sleep(100);
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
-            Assert.Equal(6, (long)result);
+            Assert.Equal(4, (long)result);
 
             Thread.Sleep(100);
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
@@ -87,7 +87,7 @@
             Thread.Sleep(200);
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
 // ReSharper restore RedundantArgumentDefaultValue
-            Assert.Equal(3, (long)result);
+            Assert.Equal(7, (long)result);
         }
 
         [Fact]
@@ -97,25 +97,25 @@
             TimeSpan bucketSize = TimeSpan.FromSeconds(.05);
 
             RedisResult result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
-            Assert.Equal(2, (long)result);
+            Assert.Equal(8, (long)result);
             Thread.Sleep(100);
 
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
-            Assert.Equal(4, (long)result);
+            Assert.Equal(6, (long)result);
             Thread.Sleep(100);
 
 // ReSharper disable RedundantArgumentDefaultValue
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
-            Assert.Equal(3, (long)result);
+            Assert.Equal(7, (long)result);
             Thread.Sleep(100);
 
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 1).Result;
 // ReSharper restore RedundantArgumentDefaultValue
-            Assert.Equal(2, (long)result);
+            Assert.Equal(8, (long)result);
             Thread.Sleep(100);
 
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 10, 2).Result;
-            Assert.Equal(3, (long)result);
+            Assert.Equal(7, (long)result);
             Thread.Sleep(100);
         }
 
@@ -130,7 +130,7 @@
             Thread.Sleep(100);
 
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 4, 2).Result;
-            Assert.Equal(4, (long)result);
+            Assert.Equal(0, (long)result);
             Thread.Sleep(100);
 
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 4, 3).Result;
@@ -138,7 +138,7 @@
             Thread.Sleep(100);
 
             result = RateLimiter.IncrementAsync(KEY, span, bucketSize, 4, 3).Result;
-            Assert.Equal(3, (long)result);
+            Assert.Equal(1, (long)result);
             Thread.Sleep(100);
         }
 
