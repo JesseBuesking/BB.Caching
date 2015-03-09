@@ -1,6 +1,7 @@
 ﻿namespace BB.Caching.Redis.Analytics
 {
     using System;
+    using System.Threading.Tasks;
 
     using StackExchange.Redis;
 
@@ -77,29 +78,6 @@
         }
 
         /// <summary>
-        /// All of the keys that would be involved in the period of time specified for this event.
-        /// </summary>
-        public RedisKey[] RedisKeys
-        {
-            get
-            {
-                // ReSharper disable once ConvertIfStatementToNullCoalescingExpression
-                if (this._redisKeys == null)
-                {
-                    this._redisKeys = BitwiseAnalytics.GetMinKeysForRange(
-                        SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db),
-                        this._category,
-                        this._action,
-                        this._from,
-                        this._to,
-                        this._timeInterval);
-                }
-
-                return this._redisKeys;
-            }
-        }
-
-        /// <summary>
         /// Logic to convert this Event instance into a string.
         /// </summary>
         /// <param name="event">
@@ -110,7 +88,53 @@
         /// </returns>
         public static implicit operator string(Event @event)
         {
-            return string.Join(string.Empty, @event.RedisKeys);
+            return string.Join(string.Empty, @event.RedisKeys());
+        }
+
+        /// <summary>
+        /// All of the keys that would be involved in the period of time specified for this event.
+        /// </summary>
+        /// <returns>
+        /// A collection of redis keys.
+        /// </returns>
+        public RedisKey[] RedisKeys()
+        {
+            // ReSharper disable once ConvertIfStatementToNullCoalescingExpression
+            if (this._redisKeys == null)
+            {
+                this._redisKeys = BitwiseAnalytics.GetMinKeysForRange(
+                    SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db),
+                    this._category,
+                    this._action,
+                    this._from,
+                    this._to,
+                    this._timeInterval);
+            }
+
+            return this._redisKeys;
+        }
+
+        /// <summary>
+        /// All of the keys that would be involved in the period of time specified for this event.
+        /// </summary>
+        /// <returns>
+        /// A collection of redis keys.
+        /// </returns>
+        public async Task<RedisKey[]> RedisKeysAsync()
+        {
+            // ReSharper disable once ConvertIfStatementToNullCoalescingExpression
+            if (this._redisKeys == null)
+            {
+                this._redisKeys = await BitwiseAnalytics.GetMinKeysForRangeAsync(
+                    SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db),
+                    this._category,
+                    this._action,
+                    this._from,
+                    this._to,
+                    this._timeInterval);
+            }
+
+            return this._redisKeys;
         }
 
         /// <summary>

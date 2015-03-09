@@ -94,6 +94,79 @@
         }
 
         /// <summary>
+        /// Tracks an event.
+        /// </summary>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="eventId">
+        /// The id of the thing being interacted with.
+        /// </param>
+        /// <param name="precision">
+        /// The precision that this event should be tracked at.
+        /// </param>
+        /// <param name="now">
+        /// The now.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/> (void).
+        /// </returns>
+        public static Task TrackEventAsync(
+            string category,
+            string action,
+            long eventId,
+            TimePrecision precision = TimePrecision.OneDay,
+            DateTime now = default(DateTime))
+        {
+            if (now == default(DateTime))
+            {
+                now = DateTime.UtcNow;
+            }
+
+            string time;
+            switch (precision)
+            {
+                case TimePrecision.FifteenMinutes:
+                {
+                    time = DateTimeUtil.FifteenMinutes(now);
+                    break;
+                }
+
+                case TimePrecision.OneHour:
+                {
+                    time = DateTimeUtil.OneHour(now);
+                    break;
+                }
+
+                case TimePrecision.OneDay:
+                {
+                    time = DateTimeUtil.OneDay(now);
+                    break;
+                }
+
+                case TimePrecision.OneMonth:
+                {
+                    time = DateTimeUtil.OneMonth(now);
+                    break;
+                }
+
+                default:
+                {
+                    throw new Exception(string.Format("unsupported precision encountered\n\t{0}", precision));
+                }
+            }
+
+            RedisKey key = EventKey(category, action, time);
+
+            return SharedCache.Instance.GetAnalyticsWriteConnection()
+                .GetDatabase(SharedCache.Instance.Db)
+                .StringSetBitAsync(key, eventId, true);
+        }
+
+        /// <summary>
         /// Determines if an event occured.
         /// </summary>
         /// <param name="category">
@@ -137,6 +210,49 @@
         }
 
         /// <summary>
+        /// Determines if an event occured.
+        /// </summary>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="eventId">
+        /// The id of the thing being interacted with.
+        /// </param>
+        /// <param name="start">
+        /// The start of the period we're interested in, defaulting to now.
+        /// </param>
+        /// <param name="end">
+        /// The end of the period we're interested in, defaulting to now.
+        /// </param>
+        /// <returns>
+        /// The count of events that occurred.
+        /// </returns>
+        public static async Task<bool> HasEventAsync(
+            string category,
+            string action,
+            long eventId,
+            DateTime start = default(DateTime),
+            DateTime end = default(DateTime))
+        {
+            if (start == default(DateTime))
+            {
+                start = DateTime.UtcNow;
+            }
+
+            if (end == default(DateTime) || start == end)
+            {
+                end = start.AddMinutes(1);
+            }
+
+            return await CountAsync(
+                SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db),
+                Ops.Or(new Event(category, action, start, end, TimeInterval.FifteenMinutes))) > 0;
+        }
+
+        /// <summary>
         /// Gets the count of active bits at the key supplied.
         /// </summary>
         /// <param name="key">
@@ -152,6 +268,25 @@
         public static long Count(RedisKey key, long eventId = -1)
         {
             return Count(
+                SharedCache.Instance.GetAnalyticsReadConnection().GetDatabase(SharedCache.Instance.Db), key, eventId);
+        }
+
+        /// <summary>
+        /// Gets the count of active bits at the key supplied.
+        /// </summary>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <param name="eventId">
+        /// You can optionally supply the id of the thing being interacted with, which will result in a count of either
+        /// 0 or 1.
+        /// </param>
+        /// <returns>
+        /// A long representing the count of bits that are set.
+        /// </returns>
+        public static Task<long> CountAsync(RedisKey key, long eventId = -1)
+        {
+            return CountAsync(
                 SharedCache.Instance.GetAnalyticsReadConnection().GetDatabase(SharedCache.Instance.Db), key, eventId);
         }
 
@@ -186,6 +321,36 @@
         }
 
         /// <summary>
+        /// Gets the count of active bits at the key supplied.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <param name="eventId">
+        /// You can optionally supply the id of the thing being interacted with, which will result in a count of either
+        /// 0 or 1.
+        /// </param>
+        /// <returns>
+        /// A long representing the count of bits that are set.
+        /// </returns>
+        public static async Task<long> CountAsync(IDatabase database, RedisKey key, long eventId = -1)
+        {
+            if (eventId < 0)
+            {
+                return await database.StringBitCountAsync(key, 0, -1);
+            }
+            else
+            {
+                return await database.StringGetBitAsync(key, eventId) ? 1 : 0;
+            }
+        }
+
+        /// <summary>
         /// Determines if the key exists.
         /// </summary>
         /// <param name="key">
@@ -197,6 +362,21 @@
         public static bool Exists(RedisKey key)
         {
             return Exists(SharedCache.Instance.GetAnalyticsReadConnection().GetDatabase(SharedCache.Instance.Db), key);
+        }
+
+        /// <summary>
+        /// Determines if the key exists.
+        /// </summary>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <returns>
+        /// True if the key exists.
+        /// </returns>
+        public static Task<bool> ExistsAsync(RedisKey key)
+        {
+            return ExistsAsync(
+                SharedCache.Instance.GetAnalyticsReadConnection().GetDatabase(SharedCache.Instance.Db), key);
         }
 
         /// <summary>
@@ -219,6 +399,25 @@
         }
 
         /// <summary>
+        /// Determines if the key exists.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="key">
+        /// The key.
+        /// </param>
+        /// <returns>
+        /// True if the key exists.
+        /// </returns>
+        public static Task<bool> ExistsAsync(IDatabase database, RedisKey key)
+        {
+            return database.KeyExistsAsync(key);
+        }
+
+        /// <summary>
         /// Gets the key for the 15 minute interval covered by the DateTime supplied.
         /// </summary>
         /// <param name="category">
@@ -234,6 +433,31 @@
         /// The key for the 15 minute interval.
         /// </returns>
         public static RedisKey GetFifteenMinutes(string category, string action, DateTime dateTime)
+        {
+            // get the key
+            string fifteenMinutes = BitwiseAnalytics.DateTimeUtil.FifteenMinutes(dateTime);
+            RedisKey key = EventKey(category, action, fifteenMinutes);
+            return key;
+        }
+
+        /// <summary>
+        /// Gets the key for the 15 minute interval covered by the DateTime supplied.
+        /// </summary>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// The key for the 15 minute interval.
+        /// </returns>
+#pragma warning disable 1998
+        public static async Task<RedisKey> GetFifteenMinutesAsync(string category, string action, DateTime dateTime)
+#pragma warning restore 1998
         {
             // get the key
             string fifteenMinutes = BitwiseAnalytics.DateTimeUtil.FifteenMinutes(dateTime);
@@ -285,6 +509,50 @@
         }
 
         /// <summary>
+        /// Gets the key for the hour covered by the DateTime supplied, creating the data at the key if necessary.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// The key for the hour.
+        /// </returns>
+        public static async Task<RedisKey> GetHourAsync(
+            IDatabase database, string category, string action, DateTime dateTime)
+        {
+            // get the key
+            string hour = BitwiseAnalytics.DateTimeUtil.OneHour(dateTime);
+            RedisKey key = EventKey(category, action, hour);
+
+            // return it if there's already data for this hour
+            bool hourExists = await BitwiseAnalytics.ExistsAsync(database, key);
+            if (hourExists)
+            {
+                return key;
+            }
+
+            // no data for the hour, so we need to create it from the 15 minute intervals
+            string[] fifteenMinutesInHour = BitwiseAnalytics.DateTimeUtil.FifteenMinutesInHour(dateTime);
+            await BitwiseAnalytics.BitwiseOrAsync(
+                database,
+                key,
+                fifteenMinutesInHour.Select(x => EventKey(category, action, x)).ToArray());
+
+            return key;
+        }
+
+        /// <summary>
         /// Gets the key for the day covered by the DateTime supplied, creating the data at the key if necessary.
         /// </summary>
         /// <param name="database">
@@ -328,6 +596,67 @@
 
             // combine the hours to form one day
             BitwiseAnalytics.BitwiseOr(
+                database,
+                key,
+                hoursInDay.Select(x => EventKey(category, action, x)).ToArray());
+
+            return key;
+        }
+
+        /// <summary>
+        /// Gets the key for the day covered by the DateTime supplied, creating the data at the key if necessary.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// The key for the day.
+        /// </returns>
+        public static async Task<RedisKey> GetDayAsync(
+            IDatabase database, string category, string action, DateTime dateTime)
+        {
+            // get the key
+            string day = BitwiseAnalytics.DateTimeUtil.OneDay(dateTime);
+            RedisKey key = EventKey(category, action, day);
+
+            // return it if there's already data for this day
+            bool dayExists = await BitwiseAnalytics.ExistsAsync(database, key);
+            if (dayExists)
+            {
+                return key;
+            }
+
+            // no data for the day, so we need to create it from the hours
+            string[] hoursInDay = BitwiseAnalytics.DateTimeUtil.HoursInDay(dateTime);
+
+            var keyTasks = new List<Task<RedisKey>>();
+
+            // make sure each hour exists
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (string hour in hoursInDay)
+            {
+                keyTasks.Add(GetHourAsync(
+                    database,
+                    category,
+                    action,
+                    DateTime.ParseExact(hour, "yyyyMMddHH", CultureInfo.InvariantCulture)));
+            }
+
+            await Task.WhenAll(keyTasks);
+
+            // combine the hours to form one day
+            await BitwiseAnalytics.BitwiseOrAsync(
                 database,
                 key,
                 hoursInDay.Select(x => EventKey(category, action, x)).ToArray());
@@ -397,6 +726,73 @@
         }
 
         /// <summary>
+        /// The get week.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <param name="firstDayOfWeek">
+        /// The first day to start each week. Defaults to Sunday which is used in the US, CA, and JP. You can
+        /// change it to Monday to get weekly aggregates which are accurate for other countries, but it'll double
+        /// the weekly data stored.
+        /// </param>
+        /// <returns>
+        /// The key for the day.
+        /// </returns>
+        public static async Task<RedisKey> GetWeekAsync(
+            IDatabase database,
+            string category,
+            string action,
+            DateTime dateTime,
+            DayOfWeek firstDayOfWeek = DayOfWeek.Sunday)
+        {
+            // get the key
+            string week = BitwiseAnalytics.DateTimeUtil.WeekNumber(dateTime, firstDayOfWeek);
+            RedisKey key = EventKey(category, action, week);
+
+            // return it if there's already data for this day
+            bool weekExists = await BitwiseAnalytics.ExistsAsync(database, key);
+            if (weekExists)
+            {
+                return key;
+            }
+
+            // no data for the week, so we need to create it from the days
+            string[] daysInWeek = BitwiseAnalytics.DateTimeUtil.DaysInWeek(dateTime, firstDayOfWeek);
+
+            var keyTasks = new List<Task<RedisKey>>();
+
+            // make sure each day exists
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (string day in daysInWeek)
+            {
+                keyTasks.Add(GetDayAsync(
+                    database, category, action, DateTime.ParseExact(day, "yyyyMMdd", CultureInfo.InvariantCulture)));
+            }
+
+            await Task.WhenAll(keyTasks);
+
+            // combine the days to form one week
+            await BitwiseAnalytics.BitwiseOrAsync(
+                database,
+                key,
+                daysInWeek.Select(x => EventKey(category, action, x)).ToArray());
+
+            return key;
+        }
+
+        /// <summary>
         /// Gets the key for the month covered by the DateTime supplied, creating the data at the key if necessary.
         /// </summary>
         /// <param name="database">
@@ -440,6 +836,64 @@
 
             // combine the days to form one month
             BitwiseAnalytics.BitwiseOr(
+                database,
+                key,
+                daysInMonth.Select(x => EventKey(category, action, x)).ToArray());
+
+            return key;
+        }
+
+        /// <summary>
+        /// Gets the key for the month covered by the DateTime supplied, creating the data at the key if necessary.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// The key for the month.
+        /// </returns>
+        public static async Task<RedisKey> GetMonthAsync(
+            IDatabase database, string category, string action, DateTime dateTime)
+        {
+            // get the key
+            string month = BitwiseAnalytics.DateTimeUtil.OneMonth(dateTime);
+            RedisKey key = EventKey(category, action, month);
+
+            // return it if there's already data for this month
+            bool monthExists = await BitwiseAnalytics.ExistsAsync(database, key);
+            if (monthExists)
+            {
+                return month;
+            }
+
+            // no data for the month, so we need to create it from the days
+            string[] daysInMonth = BitwiseAnalytics.DateTimeUtil.DaysInMonth(dateTime);
+
+            var keyTasks = new List<Task<RedisKey>>();
+
+            // make sure each day exists
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (string day in daysInMonth)
+            {
+                keyTasks.Add(GetDayAsync(
+                    database, category, action, DateTime.ParseExact(day, "yyyyMMdd", CultureInfo.InvariantCulture)));
+            }
+
+            await Task.WhenAll(keyTasks);
+
+            // combine the days to form one month
+            await BitwiseAnalytics.BitwiseOrAsync(
                 database,
                 key,
                 daysInMonth.Select(x => EventKey(category, action, x)).ToArray());
@@ -492,6 +946,65 @@
 
             // combine the days to form one month
             BitwiseAnalytics.BitwiseOr(
+                database,
+                key,
+                monthsInQuarter.Select(x => EventKey(category, action, x)).ToArray());
+
+            return key;
+        }
+
+        /// <summary>
+        /// Gets the keys for the months in the quarter covered by the DateTime supplied, creating the data at the key
+        /// if necessary.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// The key for the quarter.
+        /// </returns>
+        public static async Task<RedisKey> GetQuarterAsync(
+            IDatabase database, string category, string action, DateTime dateTime)
+        {
+            // get the key
+            string quarter = BitwiseAnalytics.DateTimeUtil.QuarterNumber(dateTime);
+            RedisKey key = EventKey(category, action, quarter);
+
+            // return it if there's already data for this quarter
+            bool quarterExists = await BitwiseAnalytics.ExistsAsync(database, key);
+            if (quarterExists)
+            {
+                return key;
+            }
+
+            // no data for the month, so we need to create it from the days
+            string[] monthsInQuarter = BitwiseAnalytics.DateTimeUtil.MonthsInQuarter(dateTime);
+
+            var keyTasks = new List<Task<RedisKey>>();
+
+            // make sure each day exists
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (string month in monthsInQuarter)
+            {
+                keyTasks.Add(GetMonthAsync(
+                    database, category, action, DateTime.ParseExact(month, "yyyyMM", CultureInfo.InvariantCulture)));
+            }
+
+            await Task.WhenAll(keyTasks);
+
+            // combine the days to form one month
+            await BitwiseAnalytics.BitwiseOrAsync(
                 database,
                 key,
                 monthsInQuarter.Select(x => EventKey(category, action, x)).ToArray());
@@ -584,6 +1097,93 @@
             }
 
             return keys;
+        }
+
+        /// <summary>
+        /// Gets the fewest number of keys required to cover the date range supplied.
+        /// </summary>
+        /// <param name="database">
+        /// The database where the query will be performed. This is passed so that we can reuse the same database to
+        /// perform multiple bitwise operations. Doing this with the same connection will guarantee that performance
+        /// is good.
+        /// </param>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="start">
+        /// The starting DateTime, inclusive.
+        /// </param>
+        /// <param name="end">
+        /// The ending DateTime, exclusive.
+        /// </param>
+        /// <param name="timeInterval">
+        /// The accuracy at which we want the data. For example, setting this to TimeInterval.OneDay means there won't
+        /// be any keys at the fifteen minute or one hour levels, so if the <paramref name="start"/> DateTime is for the
+        /// middle of a day, it'll include the entire day.
+        /// </param>
+        /// <returns>
+        /// The smallest set of <see><cref>RedisKey[]</cref></see> that cover the range supplied.
+        /// </returns>
+        public static async Task<RedisKey[]> GetMinKeysForRangeAsync(
+            IDatabase database,
+            string category,
+            string action,
+            DateTime start,
+            DateTime end,
+            TimeInterval timeInterval = TimeInterval.FifteenMinutes)
+        {
+            Tuple<TimeInterval, string, DateTime>[] requiredKeys = DateTimeUtil.MinKeysForRange(start, end, timeInterval);
+            Task<RedisKey>[] keys = new Task<RedisKey>[requiredKeys.Length];
+            int keyIndex = 0;
+
+            foreach (var tup in requiredKeys)
+            {
+                switch (tup.Item1)
+                {
+                    case TimeInterval.FifteenMinutes:
+                    {
+                        keys[keyIndex] = GetFifteenMinutesAsync(category, action, tup.Item3);
+                        break;
+                    }
+
+                    case TimeInterval.OneHour:
+                    {
+                        keys[keyIndex] = GetHourAsync(database, category, action, tup.Item3);
+                        break;
+                    }
+
+                    case TimeInterval.OneDay:
+                    {
+                        keys[keyIndex] = GetDayAsync(database, category, action, tup.Item3);
+                        break;
+                    }
+
+                    case TimeInterval.Week:
+                    {
+                        keys[keyIndex] = GetWeekAsync(database, category, action, tup.Item3);
+                        break;
+                    }
+
+                    case TimeInterval.OneMonth:
+                    {
+                        keys[keyIndex] = GetMonthAsync(database, category, action, tup.Item3);
+                        break;
+                    }
+
+                    case TimeInterval.Quarter:
+                    {
+                        keys[keyIndex] = GetQuarterAsync(database, category, action, tup.Item3);
+                        break;
+                    }
+                }
+
+                keyIndex += 1;
+            }
+
+            return await Task.WhenAll(keys);
         }
 
         /// <summary>
@@ -706,6 +1306,131 @@
 
             return results;
         } 
+
+        /// <summary>
+        /// Gets counts by TimeInterval for the date range supplied.
+        /// </summary>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="start">
+        /// The starting DateTime, inclusive.
+        /// </param>
+        /// <param name="end">
+        /// The end.
+        /// </param>
+        /// <param name="eventId">
+        /// You can optionally supply the id of the thing being interacted with, which will result in a count of just
+        /// that event.
+        /// </param>
+        /// <param name="timeInterval">
+        /// The time interval.
+        /// </param>
+        /// <param name="firstDayOfWeek">
+        /// The first day of week (only applies when doing TimeInterval.Week groupings).
+        /// </param>
+        /// <returns>
+        /// A list of DateTime:long pairs where the DateTime is the minimum value for the bucket and long is the count.
+        /// </returns>
+        /// <exception cref="Exception">
+        /// This should never occur (unhandled TimeInterval).
+        /// </exception>
+        public static async Task<List<Tuple<DateTime, long>>> GetCountsAsync(
+            string category,
+            string action,
+            DateTime start,
+            DateTime end,
+            long eventId = -1,
+            TimeInterval timeInterval = TimeInterval.FifteenMinutes,
+            DayOfWeek firstDayOfWeek = DayOfWeek.Sunday)
+        {
+            var results = new List<Tuple<DateTime, Task<long>>>();
+            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
+
+            do
+            {
+                switch (timeInterval)
+                {
+                    case TimeInterval.FifteenMinutes:
+                        {
+                            start = start.AddMinutes(-(start.Minute % 15));
+                            results.Add(new Tuple<DateTime, Task<long>>(
+                                start, CountAsync(database, GetFifteenMinutes(category, action, start), eventId)));
+                            start = start.AddMinutes(15);
+                            break;
+                        }
+
+                    case TimeInterval.OneHour:
+                        {
+                            start = start.AddMinutes(-start.Minute);
+                            results.Add(new Tuple<DateTime, Task<long>>(
+                                start, CountAsync(database, GetHour(database, category, action, start), eventId)));
+                            start = start.AddHours(1);
+                            break;
+                        }
+
+                    case TimeInterval.OneDay:
+                        {
+                            start = start.AddHours(-start.Hour);
+                            results.Add(new Tuple<DateTime, Task<long>>(
+                                start, CountAsync(database, GetDay(database, category, action, start), eventId)));
+                            start = start.AddDays(1);
+                            break;
+                        }
+
+                    case TimeInterval.Week:
+                        {
+                            int startDiff = start.DayOfWeek - firstDayOfWeek;
+                            if (startDiff < 0)
+                            {
+                                startDiff += 7;
+                            }
+
+                            start = start.AddDays(-startDiff);
+
+                            results.Add(new Tuple<DateTime, Task<long>>(
+                                start, CountAsync(database, GetWeek(database, category, action, start), eventId)));
+                            start = start.AddDays(7);
+                            break;
+                        }
+
+                    case TimeInterval.OneMonth:
+                        {
+                            start = start.AddDays(1 - start.Day);
+                            results.Add(new Tuple<DateTime, Task<long>>(
+                                start, CountAsync(database, GetMonth(database, category, action, start), eventId)));
+                            start = start.AddMonths(1);
+                            break;
+                        }
+
+                    case TimeInterval.Quarter:
+                        {
+                            int startQuarter = ((start.Month + 2) / 3) - 1;
+                            start = new DateTime(start.Year, (startQuarter * 3) + 1, 1);
+
+                            results.Add(new Tuple<DateTime, Task<long>>(
+                                start, CountAsync(database, GetQuarter(database, category, action, start), eventId)));
+                            start = start.AddMonths(3);
+                            break;
+                        }
+
+                    default:
+                        {
+                            throw new Exception(string.Format("unexpected time interval {0}", timeInterval));
+                        }
+                }
+            }
+            while (start < end);
+
+            await Task.WhenAll(results.Select(x => x.Item2));
+
+            var ret = results.Select(x => new Tuple<DateTime, long>(x.Item1, x.Item2.Result)).ToList();
+
+            return ret;
+        } 
         
         /// <summary>
         /// The delete.
@@ -728,6 +1453,29 @@
             return SharedCache.Instance.GetAnalyticsWriteConnection()
                 .GetDatabase(SharedCache.Instance.Db)
                 .KeyDelete(key);
+        }
+        
+        /// <summary>
+        /// The delete.
+        /// </summary>
+        /// <param name="category">
+        /// Typically the object that was interacted with (e.g. button)
+        /// </param>
+        /// <param name="action">
+        /// The type of interaction (e.g. click)
+        /// </param>
+        /// <param name="dateTime">
+        /// The DateTime.
+        /// </param>
+        /// <returns>
+        /// True if there was a key that was deleted.
+        /// </returns>
+        public static Task<bool> DeleteAsync(string category, string action, string dateTime)
+        {
+            RedisKey key = EventKey(category, action, dateTime);
+            return SharedCache.Instance.GetAnalyticsWriteConnection()
+                .GetDatabase(SharedCache.Instance.Db)
+                .KeyDeleteAsync(key);
         }
 
         /// <summary>

@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
 
     using BB.Caching.Redis.Analytics;
 
@@ -64,11 +65,48 @@
         }
 
         [Fact]
+        public void EnumerableWorksAsync()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 2, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 3, TimePrecision.FifteenMinutes, this._now.AddMinutes(15));
+            BitwiseAnalytics.TrackEvent("video", "watch", 12, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 77, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 3, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 12, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 77, TimePrecision.FifteenMinutes, this._now);
+
+            var key = Ops.AndAsync(
+                new Event("video", "watch", this._now, this._now.AddMinutes(16), TimeInterval.FifteenMinutes),
+                new Event("anything", "purchase", this._now, this._now.AddMinutes(1), TimeInterval.FifteenMinutes)).Result;
+
+            var ids = new RedisKeyBitEnumerable(key).ToList();
+
+            Assert.Equal(4, ids.Count);
+
+            Assert.Equal(1, ids.ElementAt(0));
+            Assert.Equal(3, ids.ElementAt(1));
+            Assert.Equal(12, ids.ElementAt(2));
+            Assert.Equal(77, ids.ElementAt(3));
+        }
+
+        [Fact]
         public void HasEventEvents()
         {
             BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes);
 
             bool actual = BitwiseAnalytics.HasEvent("video", "watch", 1);
+
+            Assert.True(actual);
+        }
+
+        [Fact]
+        public void HasEventEventsAsync()
+        {
+            BitwiseAnalytics.TrackEventAsync("video", "watch", 1, TimePrecision.FifteenMinutes).Wait();
+
+            bool actual = BitwiseAnalytics.HasEventAsync("video", "watch", 1).Result;
 
             Assert.True(actual);
         }
@@ -91,6 +129,23 @@
         }
 
         [Fact]
+        public void HasEventAcrossTimeAsync()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now.AddDays(2));
+
+            bool actual = BitwiseAnalytics.HasEventAsync(
+                "video", "watch", 1, this._now, this._now.AddDays(2).AddMinutes(1)).Result;
+
+            Assert.True(actual);
+
+            actual = BitwiseAnalytics.HasEventAsync(
+                "video", "watch", 1, this._now.AddMonths(1), this._now.AddMonths(2)).Result;
+
+            Assert.False(actual);
+        }
+
+        [Fact]
         public void GetCountsFifteen()
         {
             BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
@@ -103,6 +158,45 @@
                 this._now,
                 this._now.AddHours(1).AddMinutes(1),
                 timeInterval: TimeInterval.FifteenMinutes);
+
+            Assert.Equal(5, counts.Count);
+            Assert.Equal(3, counts.Select(x => x.Item2).Sum());
+
+            var first = counts.ElementAt(0);
+            var second = counts.ElementAt(1);
+            var third = counts.ElementAt(2);
+            var fourth = counts.ElementAt(3);
+            var fifth = counts.ElementAt(4);
+
+            Assert.Equal(this._now.AddMinutes(-(this._now.Minute % 15)), first.Item1);
+            Assert.Equal(2, first.Item2);
+
+            Assert.Equal(this._now.AddMinutes(-(this._now.Minute % 15)).AddMinutes(15), second.Item1);
+            Assert.Equal(1, second.Item2);
+
+            Assert.Equal(this._now.AddMinutes(-(this._now.Minute % 15)).AddMinutes(30), third.Item1);
+            Assert.Equal(0, third.Item2);
+
+            Assert.Equal(this._now.AddMinutes(-(this._now.Minute % 15)).AddMinutes(45), fourth.Item1);
+            Assert.Equal(0, fourth.Item2);
+
+            Assert.Equal(this._now.AddMinutes(-(this._now.Minute % 15)).AddMinutes(60), fifth.Item1);
+            Assert.Equal(0, fifth.Item2);
+        }
+
+        [Fact]
+        public void GetCountsFifteenAsync()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 2, TimePrecision.FifteenMinutes, this._now);
+            BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now.AddMinutes(16));
+
+            var counts = BitwiseAnalytics.GetCountsAsync(
+                "video",
+                "watch",
+                this._now,
+                this._now.AddHours(1).AddMinutes(1),
+                timeInterval: TimeInterval.FifteenMinutes).Result;
 
             Assert.Equal(5, counts.Count);
             Assert.Equal(3, counts.Select(x => x.Item2).Sum());
@@ -491,6 +585,23 @@
         }
 
         [Fact]
+        public void OrCohortAsync()
+        {
+            BitwiseAnalytics.TrackEvent("video", "watch", 1);
+            BitwiseAnalytics.TrackEvent("video", "watch", 2);
+            BitwiseAnalytics.TrackEvent("video", "watch", 3);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 1);
+            BitwiseAnalytics.TrackEvent("anything", "purchase", 3);
+
+            long actual = BitwiseAnalytics.CountAsync(
+                Ops.OrAsync(
+                    new Event("video", "watch", DateTime.UtcNow, DateTime.UtcNow, TimeInterval.OneDay),
+                    new Event("anything", "purchase", DateTime.UtcNow, DateTime.UtcNow, TimeInterval.OneDay)).Result).Result;
+
+            Assert.Equal(3, actual);
+        }
+
+        [Fact]
         public void OrCohortMultipleFifteenMinuteBlocks()
         {
             BitwiseAnalytics.TrackEvent("video", "watch", 1, TimePrecision.FifteenMinutes, this._now);
@@ -573,31 +684,27 @@
         [Fact]
         public void GetFifteenMinutes()
         {
-            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
-
             foreach (int i in new[] { 0, 14 })
             {
                 BitwiseAnalytics.TrackEvent("video", "watch", i, TimePrecision.FifteenMinutes, this._now);
             }
 
             long firstFifteen = BitwiseAnalytics.Count(
-                database, BitwiseAnalytics.GetFifteenMinutes("video", "watch", this._now));
+                this.GetConnection(), BitwiseAnalytics.GetFifteenMinutes("video", "watch", this._now));
             Assert.Equal(2, firstFifteen);
         }
 
         [Fact]
         public void GetHour()
         {
-            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
-
             foreach (int i in new[] { 0, 23, 44 })
             {
                 BitwiseAnalytics.TrackEvent("video", "watch", i, TimePrecision.FifteenMinutes, this._now.AddMinutes(i));
             }
 
             long oneHour = BitwiseAnalytics.Count(
-                database,
-                BitwiseAnalytics.GetHour(database, "video", "watch", this._now));
+                this.GetConnection(),
+                BitwiseAnalytics.GetHour(this.GetConnection(), "video", "watch", this._now));
 
             Assert.Equal(3, oneHour);
         }
@@ -605,16 +712,14 @@
         [Fact]
         public void GetDay()
         {
-            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
-
             foreach (int i in new[] { 0, 14, 16 })
             {
                 BitwiseAnalytics.TrackEvent("video", "watch", i, TimePrecision.FifteenMinutes, this._now.AddHours(i));
             }
 
             long oneDay = BitwiseAnalytics.Count(
-                database,
-                BitwiseAnalytics.GetDay(database, "video", "watch", this._now));
+                this.GetConnection(),
+                BitwiseAnalytics.GetDay(this.GetConnection(), "video", "watch", this._now));
 
             Assert.Equal(3, oneDay);
         }
@@ -622,8 +727,6 @@
         [Fact]
         public void GetWeek()
         {
-            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
-
             // week is 2nd to the 8th, so we use the 2nd, 5th, and 9th
             foreach (int i in new[] { 1, 4, 8 })
             {
@@ -633,8 +736,8 @@
 
             // adding 2 days to make sure we're in the right week
             long oneWeek = BitwiseAnalytics.Count(
-                database,
-                BitwiseAnalytics.GetWeek(database, "video", "watch", this._now.AddDays(2)));
+                this.GetConnection(),
+                BitwiseAnalytics.GetWeek(this.GetConnection(), "video", "watch", this._now.AddDays(2)));
 
             // only 2 days should count, since one date is in the following week
             Assert.Equal(2, oneWeek);
@@ -643,16 +746,14 @@
         [Fact]
         public void GetMonth()
         {
-            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
-
             foreach (int i in new[] { 0, 11, 16 })
             {
                 BitwiseAnalytics.TrackEvent("video", "watch", i, TimePrecision.FifteenMinutes, this._now.AddDays(i));
             }
 
             long oneMonth = BitwiseAnalytics.Count(
-                database,
-                BitwiseAnalytics.GetMonth(database, "video", "watch", this._now));
+                this.GetConnection(),
+                BitwiseAnalytics.GetMonth(this.GetConnection(), "video", "watch", this._now));
 
             Assert.Equal(3, oneMonth);
         }
@@ -660,8 +761,6 @@
         [Fact]
         public void GetQuarter()
         {
-            var database = SharedCache.Instance.GetAnalyticsWriteConnection().GetDatabase(SharedCache.Instance.Db);
-
             // week is 2nd to the 8th, so we use the 2nd, 5th, and 9th
             foreach (int i in new[] { 1, 2, 4 })
             {
@@ -670,8 +769,8 @@
             }
 
             long oneQuarter = BitwiseAnalytics.Count(
-                database,
-                BitwiseAnalytics.GetQuarter(database, "video", "watch", this._now));
+                this.GetConnection(),
+                BitwiseAnalytics.GetQuarter(this.GetConnection(), "video", "watch", this._now));
 
             // only 2 months should count, since one date is in the following quarter
             Assert.Equal(2, oneQuarter);
