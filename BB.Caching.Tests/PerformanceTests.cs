@@ -6,6 +6,8 @@
     using System.Linq;
     using System.Threading.Tasks;
 
+    using BB.Caching.Redis.Analytics;
+
     using SimpleSpeedTester.Core;
     using SimpleSpeedTester.Core.OutcomeFilters;
     using SimpleSpeedTester.Interfaces;
@@ -21,6 +23,8 @@
         [Fact]
         public void AllPerformanceTests()
         {
+            SharedCache.Instance.FlushDatabase(SharedCache.Instance.GetAnalyticsWriteConnection());
+
             // warmup
             Cache.Shared.Keys.ExistsAsync("warmup");
 
@@ -34,6 +38,8 @@
 
             Console.WriteLine(Hashing.ConsistentHashRing.All());
             Console.WriteLine(Hashing.Murmur3.All());
+
+            Console.WriteLine(BitwiseAnalytics.All());
         }
 
         public void SetFixture(DefaultTestFixture data)
@@ -317,6 +323,49 @@
 // ReSharper disable once UnusedVariable
                     ulong value = BB.Caching.Hashing.Murmur3.ComputeInt("Hash me please!");
                 }
+            }
+        }
+
+        private static class BitwiseAnalytics
+        {
+            public static string All()
+            {
+                var group = new TestGroup("Bitwise Analytics");
+
+                var now = new DateTime(2000, 01, 01);
+
+                BB.Caching.Redis.Analytics.BitwiseAnalytics.TrackEvent("video", "watch", 1, now: now);
+                BB.Caching.Redis.Analytics.BitwiseAnalytics.TrackEvent("video", "watch", 2, now: now);
+                BB.Caching.Redis.Analytics.BitwiseAnalytics.TrackEvent("video", "watch", 10000000, now: now.AddMonths(1));
+                BB.Caching.Redis.Analytics.BitwiseAnalytics.TrackEvent("anything", "purchase", 1, now: now);
+                BB.Caching.Redis.Analytics.BitwiseAnalytics.TrackEvent("anything", "purchase", 10000000, now: now);
+
+                // warmup
+                long count = BB.Caching.Redis.Analytics.BitwiseAnalytics.Count(
+                    Ops.And(
+                        new Event("video", "watch", now, now.AddMonths(2), TimeInterval.OneDay),
+                        new Event("anything", "purchase", now, now.AddMonths(2), TimeInterval.OneDay)));
+
+                group.Plan("AndOneMonthAsync", BitwiseAnalytics.AndOneMonthAsync, now, 100);
+                group.Plan("AndOneMonth", BitwiseAnalytics.AndOneMonth, now, 100);
+
+                return TestToString(group);
+            }
+
+            private static void AndOneMonthAsync(DateTime now)
+            {
+                Task<long> count = BB.Caching.Redis.Analytics.BitwiseAnalytics.CountAsync(
+                    Ops.AndAsync(
+                        new Event("video", "watch", now, now.AddMonths(2), TimeInterval.OneDay),
+                        new Event("anything", "purchase", now, now.AddMonths(2), TimeInterval.OneDay)).Result);
+            }
+
+            private static void AndOneMonth(DateTime now)
+            {
+                long count = BB.Caching.Redis.Analytics.BitwiseAnalytics.Count(
+                    Ops.And(
+                        new Event("video", "watch", now, now.AddMonths(2), TimeInterval.OneDay),
+                        new Event("anything", "purchase", now, now.AddMonths(2), TimeInterval.OneDay)));
             }
         }
 
