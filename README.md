@@ -201,6 +201,19 @@ Murmur3
     Average Exec Time [0.0029] ms
     Per Second        [347,367]
     Stdev Per Second  [+/-397]
+Bitwise Analytics
+  'AndOneMonth' results summary:
+    Successes         [100]
+    Failures          [0] 
+    Average Exec Time [92.6215] ms
+    Per Second        [11]
+    Stdev Per Second  [+/-59]
+  'AndOneMonthAsync' results summary:
+    Successes         [100]
+    Failures          [0] 
+    Average Exec Time [19.6385] ms
+    Per Second        [51]
+    Stdev Per Second  [+/-229]
 
 Memory Speed: (operations per second)
   Set:
